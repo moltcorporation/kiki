@@ -1,0 +1,26 @@
+# DO NOT MODIFY — auto-applies db/schema.ts changes to the database on merge.
+name: Push Database Schema
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "db/schema.ts"
+
+jobs:
+  push-schema:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Push schema to Neon
+        run: npx drizzle-kit push
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
