@@ -1,0 +1,47 @@
+# AGENTS.md
+
+Kiki: AI running coach iOS app. Quiz onboarding → AI-generated training plan → paywall → daily coaching. Black/white brand, premium minimal UI.
+
+## Layout
+- `nextjs/` Next.js 16 app: marketing site (`app/(site)`), REST API (`app/api`), durable AI workflows (`workflows/`). Deployed on Vercel (project `kiki`, team `moltcorporation`), domain kikirunning.com. Push to `main` = production deploy.
+- `ios/` SwiftUI app (iOS 26.5+, iPhone only, portrait). Targets: `kiki` (bundle `com.moltcorporation.kiki`), `KikiWidgets` (Live Activity). `ios/Shared/` is compiled into both. Folders are file-system synchronized: new files are picked up automatically.
+
+## Backend
+- pnpm. `pnpm dev`, `pnpm build`, `pnpm lint`, `npx tsc --noEmit` (run `npx next typegen` first if route types are stale).
+- DB: Neon Postgres (project "Kiki", `summer-wave-37335605`) via Drizzle. `db/schema.ts` is the only schema source. Don't modify `db/index.ts` or `drizzle.config.ts`. Schema auto-pushes on merge via `.github/workflows/push-db-schema.yml`; locally: `pnpm exec drizzle-kit push`. neon-http driver: no interactive transactions, use `db.batch`.
+- Units: distances in meters, durations in seconds, paces in s/km, calendar dates as `YYYY-MM-DD` strings.
+- Auth: Better Auth (`lib/auth.ts`), **Sign in with Apple only** (native ID token, audience = bundle ID), `bearer` plugin. iOS sends `Authorization: Bearer <token>`. `withUser()` in `lib/api.ts` wraps every API route.
+- AI: AI SDK + AI Gateway, model `anthropic/claude-sonnet-5.5` with OpenAI fallback, structured output (`Output.object` + Zod). Prompts, coaching rules and safety normalization are in `lib/training/coach.ts`.
+- Workflows (Vercel Workflow): `generatePlanWorkflow` (blueprint, then parallel 4-week chunks, then save) and `adjustPlanWorkflow`. The AI work runs inside `"use step"` functions. `app/.well-known/workflow/` is generated (gitignored).
+- Subscription gate: `lib/subscription.ts` checks the RevenueCat v1 API (entitlement `premium`). Coach adjustments require it; plan creation allows 3 free.
+
+## iOS
+- Build: `xcodebuild -project ios/kiki.xcodeproj -scheme kiki -destination 'platform=iOS Simulator,name=iPhone 17' build`.
+- Default actor isolation is MainActor; Codable models are `nonisolated`.
+- Data: `TrainingStore` = disk cache + optimistic updates + persistent outbox (runs and workout status). Client-generated UUIDs make writes idempotent.
+- Routing (`RootView`): onboarding (persisted in UserDefaults) → welcome → paywall (hard) → `MainTabView` (Today / Plan / Progress).
+- API base URL comes from the `KIKI_API_BASE_URL` build setting: Debug = `http://localhost:3000`, Release = `https://kikirunning.com`.
+- RevenueCat: Debug uses the Test Store key (simulated purchases), Release uses the `appl_` key. Custom paywall (`PaywallView`), Customer Center in Settings.
+- SDK identity: `Identity.identify` / `ensureIdentified` sets the same user ID in PostHog, RevenueCat (`logIn` + AppsFlyer/PostHog attribution) and AppsFlyer (`customerUserID`).
+- AppsFlyer SDK 7: `initialize(devKey:appId:)` + `registerSessionReadyListener`. The ATT prompt is requested inside the listener on app open, then `start()`.
+- Simulator testing without Apple sign-in: launch with `SIMCTL_CHILD_KIKI_DEBUG_SESSION_TOKEN` and `SIMCTL_CHILD_KIKI_DEBUG_USER_ID` (DEBUG only). Drive the UI with the AXe CLI (`axe tap --label`, `axe describe-ui`).
+
+## Services
+- App Store Connect: app ID `6817469393`, team `46696JNF4G`. Subscription group "Kiki Pro": `kiki_premium_yearly` ($59.99), `kiki_premium_monthly` ($11.99), 7-day free trial, all territories. Use the `asc` CLI (skills in `~/.agents/skills/asc-*`).
+- RevenueCat: project `proj49f9be7f`, iOS app `app7a71f33a94`, entitlement `premium` ("Kiki Pro"), offering `default` (`$rc_annual`, `$rc_monthly`). AppsFlyer and PostHog integrations are enabled (default event names, no sandbox).
+- PostHog: project 134644, US cloud. Analytics + error tracking; session replay off.
+- AppsFlyer: app `id6817469393`.
+
+## Env (`nextjs/.env.local`, Vercel)
+`DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `AI_GATEWAY_API_KEY` (local only; Vercel uses OIDC), `REVENUECAT_SECRET_KEY`, `NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN`, `NEXT_PUBLIC_POSTHOG_HOST`, optional `NEXT_PUBLIC_APP_STORE_URL`. See `nextjs/.env.example`. Never commit `.env*`.
+
+## Rules
+- Contact email everywhere: hello@moltcorporation.com. Company: Moltcorp Inc.
+- No fabricated testimonials or user counts (App Review / FTC).
+- Keep it minimal: haptics on every button, black/white only, respect Dynamic Type and VoiceOver.
+- Account deletion must stay reachable in-app (Settings and the paywall menu).
+
+## Open items
+- Revoke Sign in with Apple tokens on account deletion (needs a SIWA key).
+- TestFlight build, App Store listing, screenshots, privacy label.
+- On the first submission, attach both subscriptions on the version page in ASC.
