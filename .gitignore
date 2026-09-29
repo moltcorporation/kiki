@@ -1,0 +1,11 @@
+# Secrets
+.env*
+!.env.example
+
+# macOS
+.DS_Store
+
+# Xcode
+xcuserdata/
+DerivedData/
+*.xcuserstate

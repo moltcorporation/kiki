@@ -2,9 +2,34 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>KikiAPIBaseURL</key>
+	<string>$(KIKI_API_BASE_URL)</string>
 	<key>UIBackgroundModes</key>
 	<array>
-		<string>remote-notification</string>
+		<string>location</string>
 	</array>
+	<key>UILaunchScreen</key>
+	<dict>
+		<key>UIColorName</key>
+		<string>Paper</string>
+	</dict>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Kiki uses your location while you record a run to measure your distance, pace and route.</string>
+	<key>NSLocationTemporaryUsageDescriptionDictionary</key>
+	<dict>
+		<key>RunTracking</key>
+		<string>Precise location lets Kiki measure your run's distance and pace accurately.</string>
+	</dict>
+	<key>NSUserTrackingUsageDescription</key>
+	<string>This helps us understand which ads bring runners to Kiki. We never sell your data.</string>
+	<key>NSSupportsLiveActivities</key>
+	<true/>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
 </dict>
 </plist>

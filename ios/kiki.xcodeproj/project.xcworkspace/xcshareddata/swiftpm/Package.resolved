@@ -1,0 +1,33 @@
+{
+  "originHash" : "36b090abae6b201c2e180cc5ba870d59bece9d3b6009f39fc08b28f539bae9e9",
+  "pins" : [
+    {
+      "identity" : "appsflyerframework",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/AppsFlyerSDK/AppsFlyerFramework",
+      "state" : {
+        "revision" : "861777e06bd4585ed1aac716dec0fbffdd41677c",
+        "version" : "7.0.2"
+      }
+    },
+    {
+      "identity" : "posthog-ios",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/PostHog/posthog-ios",
+      "state" : {
+        "revision" : "d97d9a0babda42ecee026bd0a5a9ea1756349dc1",
+        "version" : "3.85.3"
+      }
+    },
+    {
+      "identity" : "purchases-ios",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/RevenueCat/purchases-ios",
+      "state" : {
+        "revision" : "d654b8b85143c29e5bb73d0ff92f5f5766fbbedc",
+        "version" : "5.91.0"
+      }
+    }
+  ],
+  "version" : 3
+}

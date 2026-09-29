@@ -6,8 +6,49 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		B1D000000000000000000006 /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = B1D000000000000000000005 /* RevenueCat */; };
+		B1D000000000000000000008 /* RevenueCatUI in Frameworks */ = {isa = PBXBuildFile; productRef = B1D000000000000000000007 /* RevenueCatUI */; };
+		B1D00000000000000000000A /* PostHog in Frameworks */ = {isa = PBXBuildFile; productRef = B1D000000000000000000009 /* PostHog */; };
+		B1D00000000000000000000C /* AppsFlyerLib in Frameworks */ = {isa = PBXBuildFile; productRef = B1D00000000000000000000B /* AppsFlyerLib */; };
+		B1D00000000000000000001B /* KikiWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B1D000000000000000000013 /* KikiWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		B1D00000000000000000001C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A9C46F4B306C1C9D0011EFD6 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B1D000000000000000000012;
+			remoteInfo = KikiWidgets;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		B1D00000000000000000001A /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				B1D00000000000000000001B /* KikiWidgets.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		B1D00000000000000000001D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B1D000000000000000000012 /* KikiWidgets */;
+			targetProxy = B1D00000000000000000001C /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin PBXFileReference section */
 		A9C46F53306C1C9D0011EFD6 /* kiki.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = kiki.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B1D000000000000000000013 /* KikiWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = KikiWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -17,6 +58,13 @@
 				Info.plist,
 			);
 			target = A9C46F52306C1C9D0011EFD6 /* kiki */;
+		};
+		B1D000000000000000000011 /* Exceptions for "KikiWidgets" folder in "KikiWidgets" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = B1D000000000000000000012 /* KikiWidgets */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -29,10 +77,34 @@
 			path = kiki;
 			sourceTree = "<group>";
 		};
+		B1D00000000000000000000F /* Shared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		B1D000000000000000000010 /* KikiWidgets */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				B1D000000000000000000011 /* Exceptions for "KikiWidgets" folder in "KikiWidgets" target */,
+			);
+			path = KikiWidgets;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		A9C46F50306C1C9D0011EFD6 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B1D000000000000000000006 /* RevenueCat in Frameworks */,
+				B1D000000000000000000008 /* RevenueCatUI in Frameworks */,
+				B1D00000000000000000000A /* PostHog in Frameworks */,
+				B1D00000000000000000000C /* AppsFlyerLib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B1D000000000000000000015 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -46,6 +118,8 @@
 			isa = PBXGroup;
 			children = (
 				A9C46F55306C1C9D0011EFD6 /* kiki */,
+				B1D00000000000000000000F /* Shared */,
+				B1D000000000000000000010 /* KikiWidgets */,
 				A9C46F54306C1C9D0011EFD6 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -54,6 +128,7 @@
 			isa = PBXGroup;
 			children = (
 				A9C46F53306C1C9D0011EFD6 /* kiki.app */,
+				B1D000000000000000000013 /* KikiWidgets.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -68,20 +143,50 @@
 				A9C46F4F306C1C9D0011EFD6 /* Sources */,
 				A9C46F50306C1C9D0011EFD6 /* Frameworks */,
 				A9C46F51306C1C9D0011EFD6 /* Resources */,
+				B1D00000000000000000001A /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				B1D00000000000000000001D /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				A9C46F55306C1C9D0011EFD6 /* kiki */,
+				B1D00000000000000000000F /* Shared */,
+			);
+			name = kiki;
+			packageProductDependencies = (
+				B1D000000000000000000005 /* RevenueCat */,
+				B1D000000000000000000007 /* RevenueCatUI */,
+				B1D000000000000000000009 /* PostHog */,
+				B1D00000000000000000000B /* AppsFlyerLib */,
+			);
+			productName = kiki;
+			productReference = A9C46F53306C1C9D0011EFD6 /* kiki.app */;
+			productType = "com.apple.product-type.application";
+		};
+		B1D000000000000000000012 /* KikiWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B1D000000000000000000017 /* Build configuration list for PBXNativeTarget "KikiWidgets" */;
+			buildPhases = (
+				B1D000000000000000000014 /* Sources */,
+				B1D000000000000000000015 /* Frameworks */,
+				B1D000000000000000000016 /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				A9C46F55306C1C9D0011EFD6 /* kiki */,
+				B1D000000000000000000010 /* KikiWidgets */,
+				B1D00000000000000000000F /* Shared */,
 			);
-			name = kiki;
+			name = KikiWidgets;
 			packageProductDependencies = (
 			);
-			productName = kiki;
-			productReference = A9C46F53306C1C9D0011EFD6 /* kiki.app */;
-			productType = "com.apple.product-type.application";
+			productName = KikiWidgets;
+			productReference = B1D000000000000000000013 /* KikiWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -96,6 +201,9 @@
 					A9C46F52306C1C9D0011EFD6 = {
 						CreatedOnToolsVersion = 26.6;
 					};
+					B1D000000000000000000012 = {
+						CreatedOnToolsVersion = 26.6;
+					};
 				};
 			};
 			buildConfigurationList = A9C46F4E306C1C9D0011EFD6 /* Build configuration list for PBXProject "kiki" */;
@@ -107,12 +215,18 @@
 			);
 			mainGroup = A9C46F4A306C1C9D0011EFD6;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				B1D000000000000000000001 /* XCRemoteSwiftPackageReference "purchases-ios" */,
+				B1D000000000000000000002 /* XCRemoteSwiftPackageReference "posthog-ios" */,
+				B1D000000000000000000003 /* XCRemoteSwiftPackageReference "AppsFlyerFramework" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = A9C46F54306C1C9D0011EFD6 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
 				A9C46F52306C1C9D0011EFD6 /* kiki */,
+				B1D000000000000000000012 /* KikiWidgets */,
 			);
 		};
 /* End PBXProject section */
@@ -125,10 +239,24 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		B1D000000000000000000016 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		A9C46F4F306C1C9D0011EFD6 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B1D000000000000000000014 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -146,15 +274,16 @@
 				CODE_SIGN_ENTITLEMENTS = kiki/kiki.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				KIKI_API_BASE_URL = "http://localhost:3000";
 				DEVELOPMENT_TEAM = 46696JNF4G;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = kiki/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_CFBundleDisplayName = Kiki;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -168,7 +297,7 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -180,15 +309,16 @@
 				CODE_SIGN_ENTITLEMENTS = kiki/kiki.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				KIKI_API_BASE_URL = "https://kikirunning.com";
 				DEVELOPMENT_TEAM = 46696JNF4G;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = kiki/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_CFBundleDisplayName = Kiki;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -202,7 +332,7 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
@@ -327,6 +457,62 @@
 			};
 			name = Release;
 		};
+		B1D000000000000000000018 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 46696JNF4G;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = KikiWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Kiki;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.moltcorporation.kiki.KikiWidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		B1D000000000000000000019 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 46696JNF4G;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = KikiWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Kiki;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.moltcorporation.kiki.KikiWidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -348,7 +534,66 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		B1D000000000000000000017 /* Build configuration list for PBXNativeTarget "KikiWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B1D000000000000000000018 /* Debug */,
+				B1D000000000000000000019 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		B1D000000000000000000001 /* XCRemoteSwiftPackageReference "purchases-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/RevenueCat/purchases-ios";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.91.0;
+			};
+		};
+		B1D000000000000000000002 /* XCRemoteSwiftPackageReference "posthog-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/PostHog/posthog-ios";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.85.3;
+			};
+		};
+		B1D000000000000000000003 /* XCRemoteSwiftPackageReference "AppsFlyerFramework" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/AppsFlyerSDK/AppsFlyerFramework";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 7.0.2;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		B1D000000000000000000005 /* RevenueCat */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B1D000000000000000000001 /* XCRemoteSwiftPackageReference "purchases-ios" */;
+			productName = RevenueCat;
+		};
+		B1D000000000000000000007 /* RevenueCatUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B1D000000000000000000001 /* XCRemoteSwiftPackageReference "purchases-ios" */;
+			productName = RevenueCatUI;
+		};
+		B1D000000000000000000009 /* PostHog */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B1D000000000000000000002 /* XCRemoteSwiftPackageReference "posthog-ios" */;
+			productName = PostHog;
+		};
+		B1D00000000000000000000B /* AppsFlyerLib */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B1D000000000000000000003 /* XCRemoteSwiftPackageReference "AppsFlyerFramework" */;
+			productName = AppsFlyerLib;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = A9C46F4B306C1C9D0011EFD6 /* Project object */;
 }

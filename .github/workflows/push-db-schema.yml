@@ -1,26 +1,36 @@
-# DO NOT MODIFY — auto-applies db/schema.ts changes to the database on merge.
+# Auto-applies nextjs/db/schema.ts changes to the database on merge.
 name: Push Database Schema
 
 on:
   push:
     branches: [main]
     paths:
-      - "db/schema.ts"
+      - "nextjs/db/schema.ts"
+  workflow_dispatch:
 
 jobs:
   push-schema:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: nextjs
     steps:
       - uses: actions/checkout@v4
 
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
+          cache: pnpm
+          cache-dependency-path: nextjs/pnpm-lock.yaml
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Push schema to Neon
-        run: npx drizzle-kit push
+        run: pnpm exec drizzle-kit push --force
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
