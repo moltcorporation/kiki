@@ -31,6 +31,31 @@ enum Analytics {
     }
 }
 
+/// On-device AppsFlyer events. These drive SKAdNetwork conversion values for
+/// Meta and TikTok iOS campaigns (server events from RevenueCat can't update
+/// SKAN). No revenue here: RevenueCat reports revenue server-to-server.
+enum Attribution {
+    static func completedRegistration(method: String) {
+        AppsFlyerLib.shared().logEvent(name: "af_complete_registration", values: [
+            "af_registration_method": method,
+        ])
+    }
+
+    static func startedTrial(productID: String, currency: String?) {
+        AppsFlyerLib.shared().logEvent(name: "af_start_trial", values: [
+            "af_content_id": productID,
+            "af_currency": currency ?? "USD",
+        ])
+    }
+
+    static func subscribed(productID: String, currency: String?) {
+        AppsFlyerLib.shared().logEvent(name: "af_subscribe", values: [
+            "af_content_id": productID,
+            "af_currency": currency ?? "USD",
+        ])
+    }
+}
+
 /// Keeps the signed-in user ID consistent across PostHog, RevenueCat and AppsFlyer.
 enum Identity {
     static func identify(userID: String, email: String?) {

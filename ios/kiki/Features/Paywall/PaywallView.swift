@@ -162,8 +162,12 @@ struct PaywallView: View {
                 case .purchased:
                     Haptics.success()
                     Analytics.track("purchase_completed", ["package": package.identifier, "trial": trialEligible])
+                    let product = package.storeProduct
                     if subscriptions.isInTrial {
+                        Attribution.startedTrial(productID: product.productIdentifier, currency: product.currencyCode)
                         await Notifications.scheduleTrialReminder(planName: package == annual ? "yearly" : "monthly")
+                    } else {
+                        Attribution.subscribed(productID: product.productIdentifier, currency: product.currencyCode)
                     }
                 case .cancelled:
                     Analytics.track("purchase_cancelled", ["package": package.identifier])

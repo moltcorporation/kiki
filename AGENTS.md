@@ -24,6 +24,7 @@ Kiki: AI running coach iOS app. Quiz onboarding â†’ AI-generated training plan â
 - API base URL comes from the `KIKI_API_BASE_URL` build setting: Debug = `http://localhost:3000`, Release = `https://kikirunning.com`.
 - RevenueCat: Debug uses the Test Store key (simulated purchases), Release uses the `appl_` key. Custom paywall (`PaywallView`), Customer Center in Settings.
 - SDK identity: `Identity.identify` / `ensureIdentified` sets the same user ID in PostHog, RevenueCat (`logIn` + AppsFlyer/PostHog attribution) and AppsFlyer (`customerUserID`).
+- AppsFlyer on-device events (`Attribution` in `Analytics.swift`): `af_complete_registration` (new users), `af_start_trial`, `af_subscribe`. They feed SKAN conversion values for Meta/TikTok; no revenue (RevenueCat sends revenue S2S). Campaigns optimize for StartTrial.
 - AppsFlyer SDK 7: `initialize(devKey:appId:)` + `registerSessionReadyListener`. The ATT prompt is requested inside the listener on app open, then `start()`.
 - Simulator testing without Apple sign-in: launch with `SIMCTL_CHILD_KIKI_DEBUG_SESSION_TOKEN` and `SIMCTL_CHILD_KIKI_DEBUG_USER_ID` (DEBUG only). Drive the UI with the AXe CLI (`axe tap --label`, `axe describe-ui`).
 

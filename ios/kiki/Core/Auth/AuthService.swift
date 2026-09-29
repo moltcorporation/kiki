@@ -104,7 +104,7 @@ final class AuthService {
 
     private func complete(data: Data, response: HTTPURLResponse) throws {
         struct SessionBody: Decodable {
-            struct User: Decodable { let id: String; let email: String? }
+            struct User: Decodable { let id: String; let email: String?; let createdAt: Date? }
             let user: User
         }
         guard let token = response.value(forHTTPHeaderField: "set-auth-token"),
@@ -116,7 +116,9 @@ final class AuthService {
         userID = body.user.id
         email = body.user.email
         Identity.identify(userID: body.user.id, email: body.user.email)
-        Analytics.track("signed_in", ["method": "apple"])
+        let isNewUser = body.user.createdAt.map { Date.now.timeIntervalSince($0) < 120 } ?? false
+        Analytics.track("signed_in", ["method": "apple", "new_user": isNewUser])
+        if isNewUser { Attribution.completedRegistration(method: "apple") }
     }
 
     // MARK: Nonce helpers
