@@ -137,7 +137,8 @@ struct PaywallView: View {
         let yearly = annual.storeProduct.price as Decimal
         let monthlyTotal = (monthly.storeProduct.price as Decimal) * 12
         guard monthlyTotal > 0 else { return nil }
-        let percent = NSDecimalNumber(decimal: (1 - yearly / monthlyTotal) * 100).intValue
+        // NSDecimalNumber.intValue is unreliable for high-precision values.
+        let percent = Int(NSDecimalNumber(decimal: (1 - yearly / monthlyTotal) * 100).doubleValue)
         return percent > 0 ? percent : nil
     }
 
@@ -240,6 +241,7 @@ private struct PackageOption: View {
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                     .font(.title2)
                     .foregroundStyle(isSelected ? Color.ink : Color.secondary.opacity(0.5))
+                    .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: 8) {
                         Text(title).font(.headline)

@@ -39,6 +39,8 @@ struct RootView: View {
         .task(id: auth.isSignedIn) {
             guard auth.isSignedIn else { return }
             onboarding.isSignedIn = true
+            // Already signed in (e.g. resumed onboarding): skip the account step.
+            if onboarding.current == .account { onboarding.go(to: .generating) }
             await store.refresh()
         }
         .onChange(of: route) { _, route in

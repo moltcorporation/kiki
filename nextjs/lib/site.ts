@@ -11,7 +11,7 @@ export const site = {
   pricing: {
     monthly: "$11.99",
     yearly: "$59.99",
-    yearlyPerMonth: "$5.00",
+    yearlyPerMonth: "$4.99",
     trialDays: 7,
   },
 };

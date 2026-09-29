@@ -88,6 +88,7 @@ struct InfoRow: View {
                 .font(.body.weight(.semibold))
                 .frame(width: 40, height: 40)
                 .background(Color.wash, in: .circle)
+                .accessibilityHidden(true)
             Text(text).font(.body)
         }
     }

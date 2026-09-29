@@ -172,11 +172,12 @@ struct WorkoutHeroCard: View {
                         Button(action: onStart) {
                             Image(systemName: "figure.run")
                                 .font(.headline)
+                                .foregroundStyle(.paper)
                                 .frame(width: 50, height: 50)
+                                .overlay(Circle().stroke(Color.paper.opacity(0.35), lineWidth: 1.5))
+                                .contentShape(.circle)
                         }
-                        .buttonStyle(.glass)
-                        .buttonBorderShape(.circle)
-                        .tint(.paper)
+                        .buttonStyle(.haptic)
                         .accessibilityLabel("Start run with GPS")
                     }
                 }
