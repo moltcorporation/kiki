@@ -37,7 +37,8 @@ struct RootView: View {
         }
         .animation(.smooth, value: route)
         .task(id: auth.isSignedIn) {
-            guard auth.isSignedIn else { return }
+            guard let userID = auth.userID else { return }
+            Identity.ensureIdentified(userID: userID, email: auth.email)
             onboarding.isSignedIn = true
             // Already signed in (e.g. resumed onboarding): skip the account step.
             if onboarding.current == .account { onboarding.go(to: .generating) }

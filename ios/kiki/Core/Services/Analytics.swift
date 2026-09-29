@@ -54,6 +54,18 @@ enum Identity {
         }
     }
 
+    /// Re-identifies on launch when a session exists but an SDK lost the user
+    /// (e.g. after a reinstall, where the Keychain session survives).
+    static func ensureIdentified(userID: String, email: String?) {
+        let needsRevenueCat = Purchases.shared.appUserID != userID
+        let needsPostHog = PostHogSDK.shared.getDistinctId() != userID
+        if needsRevenueCat || needsPostHog {
+            identify(userID: userID, email: email)
+        } else {
+            AppsFlyerLib.shared().customerUserID = userID
+        }
+    }
+
     static func reset() {
         PostHogSDK.shared.reset()
         AppsFlyerLib.shared().customerUserID = nil
