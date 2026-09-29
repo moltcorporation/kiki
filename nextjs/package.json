@@ -14,6 +14,7 @@
     "ai": "^7.0.122",
     "better-auth": "^1.7.6",
     "drizzle-orm": "^0.45.3",
+    "jose": "^6.2.12",
     "next": "16.3.7",
     "posthog-js": "^1.434.18",
     "posthog-node": "^5.54.1",

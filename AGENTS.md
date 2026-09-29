@@ -11,6 +11,7 @@ Kiki: AI running coach iOS app. Quiz onboarding â†’ AI-generated training plan â
 - DB: Neon Postgres (project "Kiki", `summer-wave-37335605`) via Drizzle. `db/schema.ts` is the only schema source. Don't modify `db/index.ts` or `drizzle.config.ts`. Schema auto-pushes on merge via `.github/workflows/push-db-schema.yml`; locally: `pnpm exec drizzle-kit push`. neon-http driver: no interactive transactions, use `db.batch`.
 - Units: distances in meters, durations in seconds, paces in s/km, calendar dates as `YYYY-MM-DD` strings.
 - Auth: Better Auth (`lib/auth.ts`), **Sign in with Apple only** (native ID token, audience = bundle ID), `bearer` plugin. iOS sends `Authorization: Bearer <token>`. `withUser()` in `lib/api.ts` wraps every API route.
+- Apple token revocation (5.1.1(v)): after sign-in the app posts the authorization code to `/api/me/apple-token`; `lib/apple.ts` exchanges it for a refresh token (stored in `account.refreshToken`) and `DELETE /api/me` revokes it. SIWA key ID `NZ56QW5STV`.
 - AI: AI SDK + AI Gateway, model `anthropic/claude-sonnet-5.5` with OpenAI fallback, structured output (`Output.object` + Zod). Prompts, coaching rules and safety normalization are in `lib/training/coach.ts`.
 - Workflows (Vercel Workflow): `generatePlanWorkflow` (blueprint, then parallel 4-week chunks, then save) and `adjustPlanWorkflow`. The AI work runs inside `"use step"` functions. `app/.well-known/workflow/` is generated (gitignored).
 - Subscription gate: `lib/subscription.ts` checks the RevenueCat v1 API (entitlement `premium`). Coach adjustments require it; plan creation allows 3 free.
@@ -33,7 +34,7 @@ Kiki: AI running coach iOS app. Quiz onboarding â†’ AI-generated training plan â
 - AppsFlyer: app `id6817469393`.
 
 ## Env (`nextjs/.env.local`, Vercel)
-`DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `AI_GATEWAY_API_KEY` (local only; Vercel uses OIDC), `REVENUECAT_SECRET_KEY`, `NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN`, `NEXT_PUBLIC_POSTHOG_HOST`, optional `NEXT_PUBLIC_APP_STORE_URL`. See `nextjs/.env.example`. Never commit `.env*`.
+`DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `AI_GATEWAY_API_KEY` (local only; Vercel uses OIDC), `REVENUECAT_SECRET_KEY`, `APPLE_PRIVATE_KEY`, `APPLE_KEY_ID`, `APPLE_TEAM_ID`, `NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN`, `NEXT_PUBLIC_POSTHOG_HOST`, optional `NEXT_PUBLIC_APP_STORE_URL`. See `nextjs/.env.example`. Never commit `.env*`.
 
 ## Rules
 - Contact email everywhere: hello@moltcorporation.com. Company: Moltcorp Inc.
@@ -42,6 +43,5 @@ Kiki: AI running coach iOS app. Quiz onboarding â†’ AI-generated training plan â
 - Account deletion must stay reachable in-app (Settings and the paywall menu).
 
 ## Open items
-- Revoke Sign in with Apple tokens on account deletion (needs a SIWA key).
 - TestFlight build, App Store listing, screenshots, privacy label.
 - On the first submission, attach both subscriptions on the version page in ASC.

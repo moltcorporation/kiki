@@ -49,7 +49,22 @@ final class AuthService {
                 throw APIError.unexpected
             }
             try await signInWithIDToken(token: token, nonce: appleNonce)
+            if let codeData = credential.authorizationCode,
+               let code = String(data: codeData, encoding: .utf8) {
+                await registerAppleAuthorization(code)
+            }
             return true
+        }
+    }
+
+    /// Lets the server exchange Apple's one-time code for a refresh token, so
+    /// the authorization can be revoked if the account is deleted. Non-fatal.
+    private func registerAppleAuthorization(_ code: String) async {
+        struct Body: Encodable { let authorizationCode: String }
+        do {
+            let _: Empty = try await api.post("api/me/apple-token", Body(authorizationCode: code))
+        } catch {
+            Analytics.captureError(error, context: ["step": "apple_token_exchange"])
         }
     }
 
