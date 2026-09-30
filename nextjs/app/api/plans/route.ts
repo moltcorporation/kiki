@@ -8,7 +8,7 @@ import { addDays, dateFor, todayIn, weekCount } from "@/lib/training/dates";
 import { planInputSchema, RACE_DISTANCE_M } from "@/lib/training/types";
 import { generatePlanWorkflow } from "@/workflows/generate-plan";
 
-const MAX_WEEKS = 24;
+const MAX_WEEKS = 52;
 /** Plan length for goals without a race date. */
 const DEFAULT_WEEKS = 8;
 const FREE_PLAN_LIMIT = 3;

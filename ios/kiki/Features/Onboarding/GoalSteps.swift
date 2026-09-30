@@ -82,13 +82,13 @@ private struct CustomDistanceSheet: View {
 }
 
 /// Race date on a calendar where only realistic dates are selectable (at
-/// least a week out, at most 24 weeks), plus an optional race name for a
+/// least a week out, at most a year), plus an optional race name for a
 /// more personal plan. "I don't have a date yet" uses a suggested date.
 struct RaceDateStep: View {
     @Environment(OnboardingModel.self) private var model
 
     private var range: ClosedRange<Date> {
-        Day.today.adding(days: 7).date...Day.today.adding(days: 24 * 7 - 1).date
+        Day.today.adding(days: 7).date...Day.today.adding(days: 52 * 7 - 1).date
     }
 
     var body: some View {
@@ -97,7 +97,6 @@ struct RaceDateStep: View {
 
         OnboardingScaffold(
             title: "When's your race?",
-            subtitle: "Your plan counts down to race day.",
             onContinue: {
                 model.answers.raceDate = date
                 model.answers.noRaceDate = false
@@ -123,6 +122,8 @@ struct RaceDateStep: View {
                 // Months need 5 or 6 week rows; reserving 6 keeps everything
                 // below the calendar from jumping when the month changes.
                 .frame(height: 340, alignment: .top)
+                // The calendar has its own top inset; pull it up to the title.
+                .padding(.top, -12)
                 .onChange(of: model.answers.raceDate) { Haptics.select() }
 
                 VStack(alignment: .leading, spacing: 8) {

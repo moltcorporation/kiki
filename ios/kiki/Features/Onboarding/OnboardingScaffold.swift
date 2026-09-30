@@ -90,30 +90,31 @@ struct OnboardingHeader: View {
             .accessibilityLabel("Progress")
             .accessibilityValue("Step \(step) of \(total)")
         }
-        // The 44pt tap area overhangs the circle by 2pt; this keeps the
+        // The 44pt tap area overhangs the 36pt circle by 4pt; this keeps the
         // circle itself on the 24pt margin.
-        .padding(.leading, 22)
+        .padding(.leading, 20)
         .padding(.trailing, 24)
         .padding(.top, 4)
     }
 }
 
-/// The round back button used at the top of full-screen flows: a 40pt
-/// circle in `wash` inside a 44pt tap area.
+/// The round back button used at the top of full-screen flows. Kept quiet
+/// (small, light, regular-weight arrow) so the title leads; the tap area is
+/// still 44pt.
 struct BackButton: View {
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
             Image(systemName: "arrow.left")
-                .font(.body.weight(.semibold))
-                .frame(width: 40, height: 40)
-                .background(Color.wash, in: .circle)
+                .font(.callout.weight(.regular))
+                .foregroundStyle(.secondary)
+                .frame(width: 36, height: 36)
+                .background(Color.wash.opacity(0.8), in: .circle)
                 .frame(width: 44, height: 44)
                 .contentShape(.circle)
         }
         .buttonStyle(.haptic)
-        .foregroundStyle(.ink)
         .accessibilityLabel("Back")
     }
 }
