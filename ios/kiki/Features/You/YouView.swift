@@ -74,7 +74,7 @@ struct YouView: View {
 
     /// Photo, name and join date in a standard card.
     private var profileCard: some View {
-        HStack(spacing: 14) {
+        HStack(spacing: RowMetrics.spacing) {
             ProfileAvatar(userID: auth.userID, name: store.profile?.firstName, size: 56)
             VStack(alignment: .leading, spacing: 2) {
                 Text(store.profile?.firstName ?? "Runner")
@@ -89,8 +89,8 @@ struct YouView: View {
             }
             Spacer(minLength: 0)
         }
-        .padding(.horizontal, 18)
-        .padding(.vertical, 16)
+        .padding(.horizontal, RowMetrics.horizontalPadding)
+        .padding(.vertical, RowMetrics.verticalPadding + 2)
         .elevatedCard(cornerRadius: 24)
     }
 
@@ -255,14 +255,11 @@ private struct GoalCard: View {
     var body: some View {
         // The same row anatomy as every settings row (icon column, 14pt
         // gap, chevron), with a semibold title and gray detail lines.
-        HStack(alignment: .center, spacing: 14) {
-            Image(systemName: plan.goalKind.icon)
-                .font(.body)
-                .frame(width: 28)
-                .accessibilityHidden(true)
+        HStack(alignment: .center, spacing: RowMetrics.spacing) {
+            RowIcon(systemName: plan.goalKind.icon)
             VStack(alignment: .leading, spacing: 2) {
                 Text(plan.displayName)
-                    .font(.headline)
+                    .font(.body.weight(.semibold))
                     .multilineTextAlignment(.leading)
                 ForEach(plan.goalDetails(units: units), id: \.self) { line in
                     Text(line)
@@ -271,13 +268,11 @@ private struct GoalCard: View {
                 }
             }
             Spacer(minLength: 8)
-            Image(systemName: "chevron.right")
-                .font(.footnote.weight(.semibold))
-                .foregroundStyle(.tertiary)
+            RowChevron()
         }
         .foregroundStyle(.ink)
-        .padding(.horizontal, 18)
-        .padding(.vertical, 16)
+        .padding(.horizontal, RowMetrics.horizontalPadding)
+        .padding(.vertical, RowMetrics.verticalPadding + 2)
         .frame(maxWidth: .infinity, alignment: .leading)
         .elevatedCard(cornerRadius: 24)
         .accessibilityElement(children: .combine)

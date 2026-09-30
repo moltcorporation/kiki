@@ -39,12 +39,10 @@ struct PreferenceRow: View {
     var body: some View {
         VStack(spacing: 0) {
             Button(role: role, action: action) {
-                HStack(spacing: 14) {
-                    Image(systemName: icon)
-                        .font(.body)
-                        .frame(width: 28)
-                        .accessibilityHidden(true)
+                HStack(spacing: RowMetrics.spacing) {
+                    RowIcon(systemName: icon, isDestructive: role == .destructive)
                     Text(label)
+                        .font(.body.weight(.semibold))
                         .foregroundStyle(role == .destructive ? Color.red : Color.ink)
                     Spacer(minLength: 12)
                     if let value {
@@ -54,19 +52,16 @@ struct PreferenceRow: View {
                             .lineLimit(2)
                     }
                     if role != .destructive {
-                        Image(systemName: "chevron.right")
-                            .font(.footnote.weight(.semibold))
-                            .foregroundStyle(.tertiary)
-                            .accessibilityHidden(true)
+                        RowChevron()
                     }
                 }
                 .foregroundStyle(role == .destructive ? Color.red : Color.ink)
-                .padding(.horizontal, 18)
-                .padding(.vertical, 16)
+                .padding(.horizontal, RowMetrics.horizontalPadding)
+                .padding(.vertical, RowMetrics.verticalPadding)
                 .contentShape(.rect)
             }
             .buttonStyle(.haptic)
-            if showsDivider { Divider().padding(.leading, 60) }
+            if showsDivider { Divider().padding(.leading, RowMetrics.textInset) }
         }
     }
 }
@@ -81,18 +76,15 @@ struct PreferenceToggleRow: View {
     var body: some View {
         VStack(spacing: 0) {
             Toggle(isOn: $isOn) {
-                HStack(spacing: 14) {
-                    Image(systemName: icon)
-                        .font(.body)
-                        .frame(width: 28)
-                        .accessibilityHidden(true)
-                    Text(label)
+                HStack(spacing: RowMetrics.spacing) {
+                    RowIcon(systemName: icon)
+                    Text(label).font(.body.weight(.semibold))
                 }
             }
             .tint(.ink)
-            .padding(.horizontal, 18)
-            .padding(.vertical, 12)
-            if showsDivider { Divider().padding(.leading, 60) }
+            .padding(.horizontal, RowMetrics.horizontalPadding)
+            .padding(.vertical, RowMetrics.verticalPadding - 2)
+            if showsDivider { Divider().padding(.leading, RowMetrics.textInset) }
         }
     }
 }

@@ -317,3 +317,41 @@ extension View {
             .shadow(color: .black.opacity(0.06), radius: 18, y: 8)
     }
 }
+
+/// The one row pattern used in every list card (workouts, profile,
+/// settings): a circled icon, a semibold title with an optional gray
+/// subtitle, an optional trailing value, and a chevron when tappable.
+enum RowMetrics {
+    static let horizontalPadding: CGFloat = 16
+    static let verticalPadding: CGFloat = 12
+    static let iconSize: CGFloat = 36
+    static let spacing: CGFloat = 12
+    /// Where row text starts, for inset dividers (no date column).
+    static let textInset: CGFloat = horizontalPadding + iconSize + spacing
+}
+
+/// An outlined glyph in a light circle: the icon style for every row.
+struct RowIcon: View {
+    let systemName: String
+    var isDestructive = false
+    var size: CGFloat = RowMetrics.iconSize
+
+    var body: some View {
+        Image(systemName: systemName)
+            .font(.system(size: size * 0.42, weight: .medium))
+            .foregroundStyle(isDestructive ? Color.red : Color.ink)
+            .frame(width: size, height: size)
+            .background(isDestructive ? Color.red.opacity(0.1) : Color.wash, in: .circle)
+            .accessibilityHidden(true)
+    }
+}
+
+/// The trailing chevron on tappable rows.
+struct RowChevron: View {
+    var body: some View {
+        Image(systemName: "chevron.right")
+            .font(.footnote.weight(.semibold))
+            .foregroundStyle(.tertiary)
+            .accessibilityHidden(true)
+    }
+}

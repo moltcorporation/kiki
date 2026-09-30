@@ -7,12 +7,12 @@ struct WorkoutRow: View {
     let units: Units
     var showsDate = true
 
-    /// Where the text starts, for inset dividers.
-    static let textInset: CGFloat = 16 + 40 + 12 + 36 + 12
+    /// Where the text starts, for inset dividers (after the date column).
+    static let textInset: CGFloat = RowMetrics.textInset + 40 + RowMetrics.spacing
 
     var body: some View {
         let isToday = workout.date == .today
-        HStack(spacing: 12) {
+        HStack(spacing: RowMetrics.spacing) {
             if showsDate {
                 VStack(spacing: 1) {
                     Text(Format.weekday(workout.date, style: .abbreviated).uppercased())
@@ -39,9 +39,10 @@ struct WorkoutRow: View {
             }
             Spacer(minLength: 0)
             StatusBadge(status: workout.status, isToday: isToday)
+            RowChevron()
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
+        .padding(.horizontal, RowMetrics.horizontalPadding)
+        .padding(.vertical, RowMetrics.verticalPadding)
         .opacity(workout.isRest || workout.status == .skipped ? 0.55 : 1)
         .contentShape(.rect)
         .accessibilityElement(children: .combine)
@@ -52,15 +53,10 @@ struct WorkoutRow: View {
 /// every type, so rows read evenly.
 struct WorkoutIcon: View {
     let workout: Workout
-    var size: CGFloat = 36
+    var size: CGFloat = RowMetrics.iconSize
 
     var body: some View {
-        Image(systemName: workout.type.symbol)
-            .font(.system(size: size * 0.42, weight: .medium))
-            .foregroundStyle(.ink)
-            .frame(width: size, height: size)
-            .background(Color.wash, in: .circle)
-            .accessibilityHidden(true)
+        RowIcon(systemName: workout.type.symbol, size: size)
     }
 }
 
