@@ -93,7 +93,7 @@ extension WorkoutType {
         case .tempo, .progression: .tempo
         case .intervals, .fartlek, .hills: .interval
         case .racePace, .race: .race
-        case .rest, .crossTraining: nil
+        case .rest, .crossTraining, .runWalk: nil
         }
     }
 }

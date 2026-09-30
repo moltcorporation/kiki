@@ -70,11 +70,17 @@ struct PrimaryButton: View {
     }
 }
 
-/// Selectable row used throughout onboarding and pickers.
+/// Selectable card used throughout onboarding: a light card with a radio (or
+/// checkbox) on the right; the selected card gets an ink outline.
 struct OptionCard: View {
+    enum Indicator { case radio, checkbox }
+
     let title: String
     var subtitle: String?
     var icon: String?
+    /// 1–4: draws an ability ring that fills with the level.
+    var level: Int?
+    var indicator: Indicator = .radio
     let isSelected: Bool
     let action: () -> Void
 
@@ -83,33 +89,86 @@ struct OptionCard: View {
             Haptics.select()
             action()
         } label: {
-            HStack(spacing: 14) {
-                if let icon {
+            HStack(spacing: 16) {
+                if let level {
+                    LevelRing(level: level)
+                } else if let icon {
                     Image(systemName: icon)
                         .font(.title3)
                         .frame(width: 28)
+                        .accessibilityHidden(true)
                 }
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 4) {
                     Text(title).font(.body.weight(.semibold))
                     if let subtitle {
                         Text(subtitle)
                             .font(.subheadline)
-                            .foregroundStyle(isSelected ? Color.paper.opacity(0.7) : .secondary)
+                            .foregroundStyle(.secondary)
                     }
                 }
-                Spacer(minLength: 0)
+                Spacer(minLength: 8)
+                SelectionIndicator(style: indicator, isSelected: isSelected)
             }
             .multilineTextAlignment(.leading)
+            .foregroundStyle(.ink)
             .padding(.horizontal, 20)
             .padding(.vertical, subtitle == nil ? 20 : 16)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .foregroundStyle(isSelected ? Color.paper : Color.ink)
-            .background(isSelected ? Color.ink : Color.wash, in: .rect(cornerRadius: 20))
+            .background(Color.wash, in: .rect(cornerRadius: 20))
+            .overlay(
+                RoundedRectangle(cornerRadius: 20)
+                    .stroke(isSelected ? Color.ink : Color.primary.opacity(0.06), lineWidth: isSelected ? 1.5 : 1)
+            )
             .contentShape(.rect(cornerRadius: 20))
         }
         .buttonStyle(.plain)
         .animation(.snappy(duration: 0.2), value: isSelected)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
+    }
+}
+
+private struct SelectionIndicator: View {
+    let style: OptionCard.Indicator
+    let isSelected: Bool
+
+    var body: some View {
+        Group {
+            switch style {
+            case .radio:
+                ZStack {
+                    Circle().stroke(isSelected ? Color.ink : Color.secondary.opacity(0.35), lineWidth: isSelected ? 2 : 1.5)
+                    if isSelected { Circle().fill(Color.ink).padding(6) }
+                }
+            case .checkbox:
+                RoundedRectangle(cornerRadius: 7)
+                    .fill(isSelected ? Color.ink : .clear)
+                    .stroke(isSelected ? Color.ink : Color.secondary.opacity(0.35), lineWidth: 1.5)
+                    .overlay {
+                        if isSelected {
+                            Image(systemName: "checkmark").font(.caption.weight(.bold)).foregroundStyle(.paper)
+                        }
+                    }
+            }
+        }
+        .frame(width: 26, height: 26)
+        .accessibilityHidden(true)
+    }
+}
+
+/// Ring that fills a quarter per level (1–4).
+private struct LevelRing: View {
+    let level: Int
+
+    var body: some View {
+        ZStack {
+            Circle().stroke(Color.primary.opacity(0.1), lineWidth: 4)
+            Circle()
+                .trim(from: 0, to: CGFloat(min(max(level, 1), 4)) / 4)
+                .stroke(Color.ink, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+        }
+        .frame(width: 38, height: 38)
+        .accessibilityHidden(true)
     }
 }
 

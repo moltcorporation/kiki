@@ -42,6 +42,18 @@ enum Format {
         "\(pace(Double(range.min), units, withUnit: false))–\(pace(Double(range.max), units))"
     }
 
+    /// "178 cm" or "5′ 10″" (imperial follows the distance unit).
+    static func height(_ cm: Double, _ units: Units) -> String {
+        guard units == .mi else { return "\(Int(cm.rounded())) cm" }
+        let inches = Int((cm / 2.54).rounded())
+        return "\(inches / 12)′ \(inches % 12)″"
+    }
+
+    /// "72 kg" or "159 lb".
+    static func weight(_ kg: Double, _ units: Units) -> String {
+        units == .mi ? "\(Int((kg / 0.453592).rounded())) lb" : "\(Int(kg.rounded())) kg"
+    }
+
     /// "1:05:30" or "45:10".
     static func duration(_ seconds: Int) -> String {
         let h = seconds / 3600, m = (seconds % 3600) / 60, s = seconds % 60

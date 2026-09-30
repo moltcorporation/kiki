@@ -35,6 +35,11 @@ final class APIClient {
         let config = URLSessionConfiguration.default
         config.timeoutIntervalForRequest = 30
         config.waitsForConnectivity = false
+        // Bearer-token auth only. Never store or send cookies: Better Auth's
+        // CSRF protection rejects cookie-bearing requests without an Origin.
+        config.httpCookieStorage = nil
+        config.httpShouldSetCookies = false
+        config.httpCookieAcceptPolicy = .never
         session = URLSession(configuration: config)
 
         encoder = JSONEncoder()

@@ -19,8 +19,10 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 import type {
+  CoachingStyle,
   Experience,
   Feeling,
+  GoalKind,
   GoalType,
   PaceZones,
   PlanPhase,
@@ -140,6 +142,7 @@ export const profile = pgTable("profile", {
   heightCm: real("height_cm"),
   weightKg: real("weight_kg"),
   experience: text("experience").$type<Experience>().notNull(),
+  coachingStyle: text("coaching_style").$type<CoachingStyle>().default("balanced").notNull(),
   weeklyDistanceM: integer("weekly_distance_m").notNull(),
   longestRunM: integer("longest_run_m").notNull(),
   /** ISO weekdays the runner can train, 1 = Monday … 7 = Sunday. */
@@ -161,9 +164,12 @@ export const plan = pgTable(
     status: text("status")
       .$type<"generating" | "ready" | "failed" | "archived">()
       .notNull(),
-    raceDistance: text("race_distance").$type<RaceDistance>().notNull(),
-    raceDistanceM: integer("race_distance_m").notNull(),
+    goalKind: text("goal_kind").$type<GoalKind>().default("race").notNull(),
+    /** Set for race and "get faster" goals. */
+    raceDistance: text("race_distance").$type<RaceDistance>(),
+    raceDistanceM: integer("race_distance_m"),
     raceName: text("race_name"),
+    /** Last day of the plan: race day, time-trial day, or the plan's end. */
     raceDate: date("race_date").notNull(),
     startDate: date("start_date").notNull(),
     goalType: text("goal_type").$type<GoalType>().notNull(),

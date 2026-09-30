@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { plan, profile } from "@/db/schema";
-import type { RaceContext, RunnerContext } from "./coach";
+import type { GoalContext, RunnerContext } from "./coach";
 import { weekCount } from "./dates";
 
 export async function loadRunner(userId: string): Promise<RunnerContext> {
@@ -15,25 +15,23 @@ export async function loadRunner(userId: string): Promise<RunnerContext> {
     heightCm: p.heightCm,
     weightKg: p.weightKg,
     experience: p.experience,
+    coachingStyle: p.coachingStyle,
     weeklyDistanceM: p.weeklyDistanceM,
-    longestRunM: p.longestRunM,
     runDays: [...p.runDays].sort(),
     longRunDay: p.longRunDay,
-    injury: p.injury,
   };
 }
 
-export function toRaceContext(row: typeof plan.$inferSelect): RaceContext {
+export function toGoalContext(row: typeof plan.$inferSelect): GoalContext {
   return {
+    goalKind: row.goalKind,
     raceDistance: row.raceDistance,
     raceDistanceM: row.raceDistanceM,
     raceName: row.raceName,
-    raceDate: row.raceDate,
-    startDate: row.startDate,
-    weeks: weekCount(row.startDate, row.raceDate),
     goalType: row.goalType,
     goalTimeS: row.goalTimeS,
-    recentRaceDistanceM: row.recentRaceDistanceM,
-    recentRaceTimeS: row.recentRaceTimeS,
+    startDate: row.startDate,
+    endDate: row.raceDate,
+    weeks: weekCount(row.startDate, row.raceDate),
   };
 }

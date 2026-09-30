@@ -82,8 +82,10 @@ final class TrainingStore {
 
     // MARK: Loading
 
-    func refresh() async {
-        guard Keychain.sessionToken != nil else { return }
+    /// Returns true when the server answered and local state is current.
+    @discardableResult
+    func refresh() async -> Bool {
+        guard Keychain.sessionToken != nil else { return false }
         isRefreshing = true
         defer { isRefreshing = false }
         await flush()
@@ -99,6 +101,7 @@ final class TrainingStore {
             hasLoaded = true
             lastError = nil
             persist()
+            return true
         } catch let error as APIError {
             lastError = error
             hasLoaded = true
@@ -106,6 +109,7 @@ final class TrainingStore {
         } catch {
             lastError = .unexpected
         }
+        return false
     }
 
     private func apply(_ response: CurrentPlanResponse) {
@@ -144,7 +148,7 @@ final class TrainingStore {
         struct Response: Decodable { let plan: Plan }
         let response: Response = try await api.post("api/plans", request)
         pendingPlan = response.plan
-        Analytics.track("plan_requested", ["race_distance": request.raceDistance.rawValue, "goal": request.goalType.rawValue])
+        Analytics.track("plan_requested", ["goal_kind": request.goalKind.rawValue, "race_distance": request.raceDistance?.rawValue ?? "none", "goal": request.goalType.rawValue])
         return response.plan
     }
 

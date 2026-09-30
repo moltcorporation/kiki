@@ -7,6 +7,8 @@ struct AdjustPlanView: View {
     @Environment(\.dismiss) private var dismiss
 
     var initialReason: AdjustReason?
+    /// Prefilled note, e.g. describing a training change made in the You tab.
+    var initialMessage: String?
 
     @State private var reason: AdjustReason?
     @State private var message = ""
@@ -42,6 +44,7 @@ struct AdjustPlanView: View {
         .interactiveDismissDisabled(phaseKey == 1)
         .onAppear {
             reason = reason ?? initialReason
+            if message.isEmpty, let initialMessage { message = initialMessage }
             Analytics.screen("Adjust Plan")
         }
     }

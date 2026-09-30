@@ -83,28 +83,39 @@ struct TodayView: View {
                 .padding(.bottom, 24)
             }
             .refreshable { await store.refresh() }
-            .navigationTitle("Today")
+            .navigationTitle(greeting)
             .navigationDestination(for: Workout.self) { WorkoutDetailView(workoutID: $0.id) }
-            .settingsToolbar($sheet)
             .appSheets($sheet)
             .overlay(alignment: .bottom) { OfflineBanner() }
         }
         .onAppear { Analytics.screen("Today") }
     }
 
+    private var greeting: String {
+        let hour = Calendar.current.component(.hour, from: .now)
+        let part = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening"
+        return store.profile?.firstName.map { "\(part), \($0)" } ?? part
+    }
+
+    /// Week progress plus a countdown to the plan's final workout (race, time
+    /// trial or goal run), whatever the goal.
     @ViewBuilder
     private var header: some View {
-        if let plan = store.plan {
-            let daysLeft = Day.today.days(until: plan.raceDate)
+        if store.plan != nil {
             VStack(alignment: .leading, spacing: 4) {
                 if let week = store.currentWeekNumber {
                     Text("Week \(week) of \(store.totalWeeks)")
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(.secondary)
                 }
-                Text(daysLeft > 0 ? "\(daysLeft) days to \(plan.displayName)" : daysLeft == 0 ? "Race day! 🏁" : "\(plan.displayName) is done")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                if let finale = store.workouts.last(where: { $0.type == .race }) {
+                    let daysLeft = Day.today.days(until: finale.date)
+                    if daysLeft >= 0 {
+                        Text(daysLeft == 0 ? "\(finale.title) is today 🏁" : "\(daysLeft) days to your \(finale.title)")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                }
             }
         }
     }

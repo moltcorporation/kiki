@@ -4,11 +4,13 @@ import { db } from "@/db";
 import { plan, profile } from "@/db/schema";
 import { ApiError, parseBody, withUser } from "@/lib/api";
 import { isSubscribed } from "@/lib/subscription";
-import { addDays, todayIn, weekCount } from "@/lib/training/dates";
+import { addDays, dateFor, todayIn, weekCount } from "@/lib/training/dates";
 import { planInputSchema, RACE_DISTANCE_M } from "@/lib/training/types";
 import { generatePlanWorkflow } from "@/workflows/generate-plan";
 
-const MAX_WEEKS = 40;
+const MAX_WEEKS = 24;
+/** Plan length for goals without a race date. */
+const DEFAULT_WEEKS = 8;
 const FREE_PLAN_LIMIT = 3;
 const DAILY_PLAN_LIMIT = 10;
 
@@ -20,16 +22,29 @@ export const POST = withUser(async (req, me) => {
   if (!runner) throw new ApiError(409, "profile_required", "Complete your profile first");
 
   const today = todayIn(runner.timezone);
-  if (input.raceDate < addDays(today, 7)) {
-    throw new ApiError(400, "race_too_soon", "Pick a race at least a week away");
-  }
-  if (weekCount(today, input.raceDate) > MAX_WEEKS) {
-    throw new ApiError(400, "race_too_far", `Pick a race within ${MAX_WEEKS} weeks`);
+  let endDate: string;
+  if (input.goalKind === "race") {
+    endDate = input.raceDate!;
+    if (endDate < addDays(today, 7)) {
+      throw new ApiError(400, "race_too_soon", "Pick a race at least a week away");
+    }
+    if (weekCount(today, endDate) > MAX_WEEKS) {
+      throw new ApiError(400, "race_too_far", `Pick a race within ${MAX_WEEKS} weeks`);
+    }
+  } else {
+    // Ends with the finale on the runner's long-run day in the last week.
+    const weeks = input.goalKind === "faster" ? (input.weeks ?? DEFAULT_WEEKS) : DEFAULT_WEEKS;
+    endDate = dateFor(today, weeks, runner.longRunDay);
   }
 
-  const raceDistanceM =
-    input.raceDistance === "other" ? input.raceDistanceM : RACE_DISTANCE_M[input.raceDistance];
-  if (!raceDistanceM) throw new ApiError(400, "invalid_request", "Race distance is required");
+  const raceDistanceM = !input.raceDistance
+    ? null
+    : input.raceDistance === "other"
+      ? (input.raceDistanceM ?? null)
+      : RACE_DISTANCE_M[input.raceDistance];
+  if (input.raceDistance && !raceDistanceM) {
+    throw new ApiError(400, "invalid_request", "Race distance is required");
+  }
 
   // A double-tap or retry while a plan is generating returns that plan.
   const inFlight = await db.query.plan.findFirst({
@@ -58,15 +73,14 @@ export const POST = withUser(async (req, me) => {
     .values({
       userId: me.id,
       status: "generating",
-      raceDistance: input.raceDistance,
+      goalKind: input.goalKind,
+      raceDistance: input.raceDistance ?? null,
       raceDistanceM,
-      raceName: input.raceName || null,
-      raceDate: input.raceDate,
+      raceName: input.goalKind === "race" ? input.raceName || null : null,
+      raceDate: endDate,
       startDate: today,
       goalType: input.goalType,
-      goalTimeS: input.goalType === "time" ? (input.goalTimeS ?? null) : null,
-      recentRaceDistanceM: input.recentRaceDistanceM ?? null,
-      recentRaceTimeS: input.recentRaceTimeS ?? null,
+      goalTimeS: input.goalType === "time" || input.goalKind === "faster" ? (input.goalTimeS ?? null) : null,
       progress: 5,
     })
     .returning();

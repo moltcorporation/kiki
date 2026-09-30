@@ -106,12 +106,23 @@ nonisolated enum RaceDistance: String, Codable, CaseIterable, Sendable {
     }
 }
 
+/// What the runner wants from Kiki. Only used as input to plan generation;
+/// the app itself never branches on it beyond labels.
+nonisolated enum GoalKind: String, Codable, CaseIterable, Sendable {
+    case start, race, faster, fit
+}
+
+nonisolated enum CoachingStyle: String, Codable, CaseIterable, Sendable {
+    case gentle, balanced, push
+}
+
 nonisolated enum GoalType: String, Codable, Sendable {
     case finish, time
 }
 
 nonisolated enum WorkoutType: String, Codable, CaseIterable, Sendable {
     case rest, easy, recovery, long, tempo, intervals, hills, fartlek, progression
+    case runWalk = "run_walk"
     case racePace = "race_pace"
     case crossTraining = "cross_training"
     case race
@@ -119,6 +130,7 @@ nonisolated enum WorkoutType: String, Codable, CaseIterable, Sendable {
     var label: String {
         switch self {
         case .rest: "Rest"
+        case .runWalk: "Run/Walk"
         case .easy: "Easy"
         case .recovery: "Recovery"
         case .long: "Long Run"
@@ -136,6 +148,7 @@ nonisolated enum WorkoutType: String, Codable, CaseIterable, Sendable {
     var symbol: String {
         switch self {
         case .rest: "moon.zzz.fill"
+        case .runWalk: "figure.walk"
         case .easy, .recovery: "figure.run"
         case .long: "road.lanes"
         case .tempo, .progression, .racePace: "speedometer"
@@ -182,6 +195,7 @@ nonisolated struct Profile: Codable, Equatable, Sendable {
     var birthYear: Int?
     var heightCm: Double?
     var weightKg: Double?
+    var coachingStyle: CoachingStyle?
     var experience: Experience
     var weeklyDistanceM: Int
     var longestRunM: Int
@@ -220,21 +234,16 @@ nonisolated enum PaceZone: String, Codable, Hashable, Sendable {
     case easy, long, tempo, interval, race, recovery
 }
 
-nonisolated struct PlanPhase: Codable, Hashable, Sendable {
-    let name: String
-    let startWeek: Int
-    let endWeek: Int
-    let focus: String
-}
-
 nonisolated struct Plan: Codable, Identifiable, Hashable, Sendable {
     nonisolated enum Status: String, Codable, Sendable { case generating, ready, failed, archived }
 
     let id: UUID
     let status: Status
-    let raceDistance: RaceDistance
-    let raceDistanceM: Int
+    let goalKind: GoalKind
+    let raceDistance: RaceDistance?
+    let raceDistanceM: Int?
     let raceName: String?
+    /// Last day of the plan (race day for race goals).
     let raceDate: Day
     let startDate: Day
     let goalType: GoalType
@@ -243,10 +252,18 @@ nonisolated struct Plan: Codable, Identifiable, Hashable, Sendable {
     let summary: String?
     let predictedTimeS: Int?
     let paces: PaceZones?
-    let phases: [PlanPhase]?
     let progress: Int
 
-    var displayName: String { raceName ?? raceDistance.label }
+    /// The one place goal-specific wording lives.
+    var displayName: String {
+        if let raceName { return raceName }
+        switch goalKind {
+        case .start: return "Start running"
+        case .fit: return "Stay fit"
+        case .race: return raceDistance?.label ?? "Race"
+        case .faster: return "Faster \(raceDistance?.label ?? "running")"
+        }
+    }
 }
 
 nonisolated struct WorkoutStep: Codable, Hashable, Sendable {
@@ -351,14 +368,16 @@ nonisolated enum AdjustReason: String, Codable, CaseIterable, Sendable {
 // MARK: - Requests / responses
 
 nonisolated struct PlanRequest: Encodable, Sendable {
-    var raceDistance: RaceDistance
+    var goalKind: GoalKind
+    var raceDistance: RaceDistance?
     var raceDistanceM: Int?
     var raceName: String?
-    var raceDate: Day
+    /// Race goals only; the server sets the end date for other goals.
+    var raceDate: Day?
+    /// "Get faster" goals only: 8 or 12.
+    var weeks: Int?
     var goalType: GoalType
     var goalTimeS: Int?
-    var recentRaceDistanceM: Int?
-    var recentRaceTimeS: Int?
 }
 
 nonisolated struct CurrentPlanResponse: Codable, Sendable {

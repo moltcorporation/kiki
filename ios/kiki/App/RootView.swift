@@ -40,9 +40,24 @@ struct RootView: View {
             guard let userID = auth.userID else { return }
             Identity.ensureIdentified(userID: userID, email: auth.email)
             onboarding.isSignedIn = true
-            // Already signed in (e.g. resumed onboarding): skip the account step.
-            if onboarding.current == .account { onboarding.go(to: .generating) }
-            await store.refresh()
+            var loaded = await store.refresh()
+            // Signed in from onboarding's account step (or resumed there): a
+            // returning runner with a plan goes to the app, otherwise build one.
+            // Decide only on a confirmed server answer, never on a failed load.
+            if onboarding.current == .account {
+                var delay = 1.0
+                while !loaded {
+                    try? await Task.sleep(for: .seconds(delay))
+                    if Task.isCancelled { return }
+                    delay = min(delay * 2, 10)
+                    loaded = await store.refresh()
+                }
+                if store.plan != nil {
+                    onboarding.reset()
+                } else {
+                    onboarding.go(to: .generating)
+                }
+            }
         }
         .onChange(of: route) { _, route in
             // Signed in without a plan (e.g. a returning runner): build one.

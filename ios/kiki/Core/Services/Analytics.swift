@@ -17,8 +17,8 @@ enum Analytics {
         PostHogSDK.shared.setup(config)
     }
 
-    static func track(_ event: String, _ properties: [String: Any] = [:]) {
-        PostHogSDK.shared.capture(event, properties: properties)
+    static func track(_ event: String, _ properties: [String: Any] = [:], personProperties: [String: Any]? = nil) {
+        PostHogSDK.shared.capture(event, properties: properties, userProperties: personProperties)
     }
 
     static func screen(_ name: String, _ properties: [String: Any] = [:]) {

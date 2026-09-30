@@ -30,9 +30,14 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
         appsFlyer.registerSessionReadyListener {
             Task { @MainActor in
                 await Self.requestTrackingAuthorizationIfNeeded()
-                AppsFlyerLib.shared().start { dictionary, error in
+                do {
+                    let dictionary = try await AppsFlyerLib.shared().start()
                     #if DEBUG
-                    if let error { print("[AppsFlyer] start error: \(error)") } else { print("[AppsFlyer] started: \(dictionary ?? [:])") }
+                    print("[AppsFlyer] started: \(dictionary)")
+                    #endif
+                } catch {
+                    #if DEBUG
+                    print("[AppsFlyer] start error: \(error)")
                     #endif
                 }
             }

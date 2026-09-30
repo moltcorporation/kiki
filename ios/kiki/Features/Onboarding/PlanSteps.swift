@@ -18,9 +18,15 @@ struct AccountStep: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.bottom, 16)
 
-                SignInOptions {
-                    model.isSignedIn = true
-                    model.go(to: .generating)
+                if model.isSignedIn {
+                    // RootView continues once the account loads (plan → app, else build one).
+                    HStack(spacing: 10) {
+                        ProgressView()
+                        Text("Loading your account…").foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 56)
+                } else {
+                    SignInOptions {}
                 }
 
                 LegalFootnote(prefix: "By continuing, you agree to our")
@@ -53,11 +59,11 @@ struct GeneratingStep: View {
     @State private var attempt = 0
 
     private let milestones = [
-        (8, "Analyzing your running"),
-        (25, "Setting your training paces"),
-        (45, "Mapping your training phases"),
-        (70, "Building your weeks"),
-        (90, "Balancing hard and easy days"),
+        (8, "Reading your answers"),
+        (25, "Setting your starting point"),
+        (45, "Planning your weeks"),
+        (70, "Balancing runs and rest"),
+        (90, "Adding the finishing touches"),
     ]
 
     var body: some View {
@@ -79,9 +85,10 @@ struct GeneratingStep: View {
             .accessibilityValue("\(Int(displayed)) percent")
 
             VStack(spacing: 8) {
-                Text(error == nil ? "Building your plan" : "Something went wrong")
+                Text(error == nil ? (model.firstName.map { "Building your plan, \($0)" } ?? "Building your plan") : "Something went wrong")
                     .font(.title.weight(.bold))
-                Text(error ?? "Kiki is designing every workout around you. This usually takes under a minute.")
+                    .multilineTextAlignment(.center)
+                Text(error ?? "Kiki is designing every run around you. This usually takes under a minute.")
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }
@@ -123,7 +130,8 @@ struct GeneratingStep: View {
             if let pending = store.pendingPlan, pending.status == .generating {
                 planID = pending.id
             } else {
-                try await store.saveProfile(model.profile)
+                // A new goal keeps the saved profile; first-run onboarding saves it.
+                if model.mode == .full { try await store.saveProfile(model.profile) }
                 planID = try await store.createPlan(model.planRequest).id
             }
             _ = try await store.waitForPlan(planID) { serverProgress = $0 }
@@ -152,20 +160,24 @@ struct GeneratingStep: View {
     }
 }
 
-/// The finished plan, before the paywall.
+/// The finished plan: a quick look before the paywall (or back to the app
+/// when changing goals).
 struct PlanPreviewStep: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(TrainingStore.self) private var store
 
     var body: some View {
         let units = store.units
+        let runs = store.workouts.filter { !$0.isRest }
+        let finale = store.workouts.last { $0.type == .race }
+
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
                 VStack(alignment: .leading, spacing: 10) {
-                    Text(greeting)
+                    Text(model.firstName.map { "\($0), your plan is ready" } ?? "Your plan is ready")
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(.secondary)
-                    Text(store.plan?.title ?? "Your plan is ready")
+                    Text(store.plan?.title ?? "Your plan")
                         .font(.display(.largeTitle))
                         .fixedSize(horizontal: false, vertical: true)
                     if let summary = store.plan?.summary {
@@ -173,28 +185,17 @@ struct PlanPreviewStep: View {
                     }
                 }
 
-                if let plan = store.plan {
-                    HStack(spacing: 12) {
-                        Stat(value: "\(store.totalWeeks)", label: "weeks")
-                        Stat(value: "\(store.workouts.filter { !$0.isRest }.count)", label: "runs")
-                        if let predicted = plan.predictedTimeS {
-                            Stat(value: Format.duration(predicted), label: "predicted")
-                        } else {
-                            Stat(value: Format.shortDate(plan.raceDate), label: "race day")
-                        }
-                    }
-
-                    if let phases = plan.phases, !phases.isEmpty {
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("Your journey").font(.headline)
-                            PhaseTimeline(phases: phases, totalWeeks: store.totalWeeks)
-                        }
+                HStack(spacing: 12) {
+                    Stat(value: "\(store.totalWeeks)", label: "weeks")
+                    Stat(value: "\(Int((Double(runs.count) / Double(max(store.totalWeeks, 1))).rounded()))", label: "runs a week")
+                    if let finale {
+                        Stat(value: Format.shortDate(finale.date), label: finale.title)
                     }
                 }
 
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Your first week").font(.headline)
-                    ForEach(firstWeek) { workout in
+                    ForEach(Array(runs.prefix(4))) { workout in
                         WorkoutRow(workout: workout, units: units)
                     }
                 }
@@ -203,8 +204,8 @@ struct PlanPreviewStep: View {
         }
         .safeAreaInset(edge: .bottom) {
             PrimaryButton("Start my plan") {
-                Analytics.track("onboarding_completed")
-                model.reset()
+                Analytics.track(model.mode == .full ? "onboarding_completed" : "goal_changed")
+                model.finish()
             }
             .padding(.horizontal, 24)
             .padding(.bottom, 8)
@@ -214,15 +215,6 @@ struct PlanPreviewStep: View {
         .onAppear { Analytics.screen("Plan Preview") }
     }
 
-    private var greeting: String {
-        if let name = store.profile?.firstName { return "\(name), your plan is ready" }
-        return "Your plan is ready"
-    }
-
-    private var firstWeek: [Workout] {
-        Array(store.workouts.filter { !$0.isRest }.prefix(5))
-    }
-
     private struct Stat: View {
         let value: String
         let label: String
@@ -230,40 +222,11 @@ struct PlanPreviewStep: View {
         var body: some View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(value).font(.metric(.title2)).minimumScaleFactor(0.6).lineLimit(1)
-                Text(label).font(.footnote).foregroundStyle(.secondary)
+                Text(label).font(.footnote).foregroundStyle(.secondary).lineLimit(1)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(16)
             .background(Color.wash, in: .rect(cornerRadius: 18))
-        }
-    }
-}
-
-struct PhaseTimeline: View {
-    let phases: [PlanPhase]
-    let totalWeeks: Int
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            GeometryReader { proxy in
-                HStack(spacing: 3) {
-                    ForEach(Array(phases.enumerated()), id: \.offset) { index, phase in
-                        let weeks = max(1, phase.endWeek - phase.startWeek + 1)
-                        Capsule()
-                            .fill(Color.ink.opacity(0.35 + 0.65 * Double(index + 1) / Double(phases.count)))
-                            .frame(width: max(8, (proxy.size.width - CGFloat(phases.count - 1) * 3) * CGFloat(weeks) / CGFloat(max(totalWeeks, 1))))
-                    }
-                }
-            }
-            .frame(height: 10)
-            ForEach(Array(phases.enumerated()), id: \.offset) { _, phase in
-                HStack(alignment: .firstTextBaseline) {
-                    Text(phase.name).font(.subheadline.weight(.semibold))
-                    Text("Weeks \(phase.startWeek)–\(phase.endWeek)").font(.subheadline).foregroundStyle(.secondary)
-                    Spacer()
-                }
-                Text(phase.focus).font(.footnote).foregroundStyle(.secondary)
-            }
         }
     }
 }

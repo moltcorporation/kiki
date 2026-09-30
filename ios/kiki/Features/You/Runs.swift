@@ -2,33 +2,31 @@ import Charts
 import MapKit
 import SwiftUI
 
-struct ProgressScreen: View {
+/// The runner's week, weekly distance and every logged or tracked run.
+/// Pushed from the You tab, which owns the navigation stack.
+struct RunsView: View {
     @Environment(TrainingStore.self) private var store
     @State private var sheet: AppSheet?
 
     var body: some View {
         let units = store.units
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    thisWeek(units)
-                    volumeChart(units)
-                    history(units)
-                }
-                .padding(20)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                thisWeek(units)
+                volumeChart(units)
+                history(units)
             }
-            .refreshable { await store.refresh() }
-            .navigationTitle("Progress")
-            .navigationDestination(for: Run.self) { RunDetailView(run: $0) }
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Log a run", systemImage: "plus") { sheet = .log(nil, nil) }
-                }
-            }
-            .settingsToolbar($sheet)
-            .appSheets($sheet)
+            .padding(20)
         }
-        .onAppear { Analytics.screen("Progress") }
+        .refreshable { await store.refresh() }
+        .navigationTitle("Runs")
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button("Log a run", systemImage: "plus") { sheet = .log(nil, nil) }
+            }
+        }
+        .appSheets($sheet)
+        .onAppear { Analytics.screen("Runs") }
     }
 
     private func thisWeek(_ units: Units) -> some View {
@@ -134,7 +132,7 @@ struct ProgressScreen: View {
     }
 }
 
-private struct RunRow: View {
+struct RunRow: View {
     let run: Run
     let units: Units
 

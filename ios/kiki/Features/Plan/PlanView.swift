@@ -59,7 +59,7 @@ private struct WeekListView: View {
                                 .buttonStyle(.plain)
                             }
                         } header: {
-                            WeekHeader(week: week, workouts: workouts, units: units, phase: phase(for: week))
+                            WeekHeader(week: week, workouts: workouts, units: units)
                         }
                         .id(week)
                     }
@@ -75,17 +75,12 @@ private struct WeekListView: View {
             }
         }
     }
-
-    private func phase(for week: Int) -> String? {
-        store.plan?.phases?.first { week >= $0.startWeek && week <= $0.endWeek }?.name
-    }
 }
 
 private struct WeekHeader: View {
     let week: Int
     let workouts: [Workout]
     let units: Units
-    let phase: String?
 
     var body: some View {
         let planned = workouts.compactMap(\.distanceM).reduce(0, +)
@@ -93,7 +88,6 @@ private struct WeekHeader: View {
         let runs = workouts.filter { !$0.isRest }.count
         HStack(alignment: .firstTextBaseline) {
             Text("Week \(week)").font(.title3.weight(.bold))
-            if let phase { Text(phase).font(.subheadline).foregroundStyle(.secondary) }
             Spacer()
             Text("\(done)/\(runs) · \(Format.distance(Double(planned), units, decimals: 0))")
                 .font(.subheadline.weight(.medium))

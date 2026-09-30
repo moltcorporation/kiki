@@ -1,7 +1,8 @@
 import SwiftUI
 
-/// Shared layout for onboarding questions: back button + progress, a large
-/// title, the question content, and an optional pinned Continue button.
+/// Shared layout for onboarding questions: a large title, the question
+/// content, and an optional pinned Continue button. The back button and
+/// progress bar live in `OnboardingFlow` so they stay fixed between screens.
 struct OnboardingScaffold<Content: View>: View {
     @Environment(OnboardingModel.self) private var model
 
@@ -11,14 +12,13 @@ struct OnboardingScaffold<Content: View>: View {
     var canContinue = true
     var showsContinue = true
     var onContinue: (() -> Void)?
+    /// Optional text button under Continue, e.g. "Skip".
+    var secondaryTitle: LocalizedStringKey?
+    var onSecondary: (() -> Void)?
     @ViewBuilder let content: Content
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            OnboardingHeader(progress: model.progress, canGoBack: model.path.count > 1) {
-                model.back()
-            }
-
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
                     Text(title)
@@ -42,8 +42,17 @@ struct OnboardingScaffold<Content: View>: View {
         }
         .safeAreaInset(edge: .bottom) {
             if showsContinue {
-                PrimaryButton(continueTitle, isEnabled: canContinue) {
-                    (onContinue ?? model.advance)()
+                VStack(spacing: 4) {
+                    PrimaryButton(continueTitle, isEnabled: canContinue) {
+                        (onContinue ?? model.advance)()
+                    }
+                    if let secondaryTitle {
+                        Button(secondaryTitle) { (onSecondary ?? model.advance)() }
+                            .font(.body.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity, minHeight: 44)
+                            .buttonStyle(.haptic)
+                    }
                 }
                 .padding(.horizontal, 24)
                 .padding(.bottom, 8)
@@ -54,18 +63,21 @@ struct OnboardingScaffold<Content: View>: View {
     }
 }
 
+/// Back arrow above a segmented bar: one segment per question, filled up to
+/// the current one, so runners can see how far along they are.
 struct OnboardingHeader: View {
-    let progress: Double
+    let step: Int
+    let total: Int
     let canGoBack: Bool
     let onBack: () -> Void
 
     var body: some View {
-        HStack(spacing: 20) {
+        VStack(alignment: .leading, spacing: 14) {
             Button(action: onBack) {
                 Image(systemName: "arrow.left")
-                    .font(.body.weight(.semibold))
-                    .frame(width: 44, height: 44)
-                    .background(Color.wash, in: .circle)
+                    .font(.title3.weight(.medium))
+                    .frame(width: 44, height: 44, alignment: .leading)
+                    .contentShape(.rect)
             }
             .buttonStyle(.haptic)
             .foregroundStyle(.ink)
@@ -73,50 +85,19 @@ struct OnboardingHeader: View {
             .disabled(!canGoBack)
             .accessibilityLabel("Back")
 
-            GeometryReader { proxy in
-                ZStack(alignment: .leading) {
-                    Capsule().fill(Color.wash)
-                    Capsule().fill(Color.ink)
-                        .frame(width: proxy.size.width * progress)
+            HStack(spacing: 5) {
+                ForEach(0..<max(total, 1), id: \.self) { index in
+                    Capsule()
+                        .fill(index < step ? Color.ink : Color.primary.opacity(0.1))
+                        .frame(height: 4)
                 }
             }
-            .frame(height: 4)
-            .animation(.snappy, value: progress)
+            .animation(.snappy, value: step)
             .accessibilityElement()
             .accessibilityLabel("Progress")
-            .accessibilityValue(Text(progress, format: .percent.precision(.fractionLength(0))))
+            .accessibilityValue("Step \(step) of \(total)")
         }
         .padding(.horizontal, 24)
-        .padding(.top, 8)
-    }
-}
-
-/// A single-choice list that advances to the next step after a selection.
-struct ChoiceList<Value: Hashable>: View {
-    @Environment(OnboardingModel.self) private var model
-
-    let options: [(value: Value, title: String, subtitle: String?, icon: String?)]
-    let selection: Value?
-    let onSelect: (Value) -> Void
-    var autoAdvance = true
-
-    var body: some View {
-        VStack(spacing: 12) {
-            ForEach(options, id: \.value) { option in
-                OptionCard(
-                    title: option.title,
-                    subtitle: option.subtitle,
-                    icon: option.icon,
-                    isSelected: selection == option.value
-                ) {
-                    onSelect(option.value)
-                    guard autoAdvance else { return }
-                    Task {
-                        try? await Task.sleep(for: .milliseconds(250))
-                        model.advance()
-                    }
-                }
-            }
-        }
+        .padding(.top, 4)
     }
 }

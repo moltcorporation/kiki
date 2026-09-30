@@ -5,7 +5,7 @@ struct MainTabView: View {
     @Environment(RunTracker.self) private var tracker
     @State private var tab: AppTab = .today
 
-    enum AppTab: Hashable { case today, plan, progress }
+    enum AppTab: Hashable { case today, plan, you }
 
     var body: some View {
         @Bindable var tracker = tracker
@@ -16,8 +16,8 @@ struct MainTabView: View {
             Tab("Plan", systemImage: "calendar", value: .plan) {
                 PlanView()
             }
-            Tab("Progress", systemImage: "chart.bar.fill", value: .progress) {
-                ProgressScreen()
+            Tab("You", systemImage: "person.crop.circle", value: .you) {
+                YouView()
             }
         }
         .tabBarMinimizeBehavior(.onScrollDown)
@@ -38,13 +38,11 @@ struct MainTabView: View {
 enum AppSheet: Identifiable {
     case log(Workout?, Run?)
     case adjust
-    case settings
 
     var id: String {
         switch self {
         case .log(let workout, let run): "log-\(workout?.id.uuidString ?? "")-\(run?.id.uuidString ?? "")"
         case .adjust: "adjust"
-        case .settings: "settings"
         }
     }
 }
@@ -57,18 +55,6 @@ extension View {
                 LogRunView(workout: workout, existing: run)
             case .adjust:
                 AdjustPlanView()
-            case .settings:
-                SettingsView()
-            }
-        }
-    }
-
-    func settingsToolbar(_ sheet: Binding<AppSheet?>) -> some View {
-        toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button("Settings", systemImage: "person.crop.circle") {
-                    sheet.wrappedValue = .settings
-                }
             }
         }
     }

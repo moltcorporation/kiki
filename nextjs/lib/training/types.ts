@@ -16,11 +16,19 @@ export const RACE_DISTANCE_M: Record<Exclude<RaceDistance, "other">, number> = {
   marathon: 42195,
 };
 
+export const COACHING_STYLES = ["gentle", "balanced", "push"] as const;
+export type CoachingStyle = (typeof COACHING_STYLES)[number];
+
+/** What the runner wants from Kiki. Only affects inputs to the AI. */
+export const GOAL_KINDS = ["start", "race", "faster", "fit"] as const;
+export type GoalKind = (typeof GOAL_KINDS)[number];
+
 export const GOAL_TYPES = ["finish", "time"] as const;
 export type GoalType = (typeof GOAL_TYPES)[number];
 
 export const WORKOUT_TYPES = [
   "rest",
+  "run_walk",
   "easy",
   "recovery",
   "long",
@@ -94,6 +102,7 @@ export const profileInputSchema = z.object({
   heightCm: z.number().min(100).max(250).nullish(),
   weightKg: z.number().min(30).max(250).nullish(),
   experience: z.enum(EXPERIENCES),
+  coachingStyle: z.enum(COACHING_STYLES).default("balanced"),
   weeklyDistanceM: z.number().int().min(0).max(300_000),
   longestRunM: z.number().int().min(0).max(100_000),
   runDays: z.array(weekday).min(2).max(7),
@@ -106,16 +115,31 @@ export const profileInputSchema = z.object({
 });
 export type ProfileInput = z.infer<typeof profileInputSchema>;
 
-export const planInputSchema = z.object({
-  raceDistance: z.enum(RACE_DISTANCES),
-  raceDistanceM: z.number().int().min(1000).max(250_000).nullish(),
-  raceName: z.string().trim().max(100).nullish(),
-  raceDate: isoDate,
-  goalType: z.enum(GOAL_TYPES),
-  goalTimeS: z.number().int().min(600).max(86_400).nullish(),
-  recentRaceDistanceM: z.number().int().min(1000).max(250_000).nullish(),
-  recentRaceTimeS: z.number().int().min(180).max(86_400).nullish(),
-});
+export const planInputSchema = z
+  .object({
+    goalKind: z.enum(GOAL_KINDS),
+    raceDistance: z.enum(RACE_DISTANCES).nullish(),
+    raceDistanceM: z.number().int().min(1000).max(250_000).nullish(),
+    raceName: z.string().trim().max(100).nullish(),
+    /** Race day (race goals only). */
+    raceDate: isoDate.nullish(),
+    /** Plan length for "get faster" goals. */
+    weeks: z.union([z.literal(8), z.literal(12)]).nullish(),
+    goalType: z.enum(GOAL_TYPES).default("finish"),
+    goalTimeS: z.number().int().min(600).max(86_400).nullish(),
+  })
+  .refine((p) => (p.goalKind !== "race" && p.goalKind !== "faster") || p.raceDistance, {
+    message: "A distance is required for this goal",
+    path: ["raceDistance"],
+  })
+  .refine((p) => p.goalKind !== "race" || p.raceDate, {
+    message: "Race date is required",
+    path: ["raceDate"],
+  })
+  .refine((p) => p.goalKind !== "faster" || p.goalTimeS, {
+    message: "Goal time is required",
+    path: ["goalTimeS"],
+  });
 export type PlanInput = z.infer<typeof planInputSchema>;
 
 export const runInputSchema = z.object({

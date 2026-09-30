@@ -7,7 +7,7 @@ import {
   type AdjustmentContext,
   type PlannedWorkout,
 } from "@/lib/training/coach";
-import { loadRunner, toRaceContext } from "@/lib/training/context";
+import { loadRunner, toGoalContext } from "@/lib/training/context";
 import { addDays } from "@/lib/training/dates";
 
 /** Applies an AI coach adjustment to the runner's upcoming workouts. */
@@ -51,11 +51,10 @@ async function loadContext(adjustmentId: string, today: string): Promise<Adjustm
 
   return {
     runner,
-    race: toRaceContext(planRow),
+    goal: toGoalContext(planRow),
     today,
     planSummary: planRow.summary,
     paces: planRow.paces,
-    phases: planRow.phases,
     workouts: workouts.map((w) => ({
       date: w.date,
       week: w.week,

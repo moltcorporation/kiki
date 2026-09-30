@@ -12,17 +12,20 @@ Kiki: AI running coach iOS app. Quiz onboarding → AI-generated training plan �
 - Units: distances in meters, durations in seconds, paces in s/km, calendar dates as `YYYY-MM-DD` strings.
 - Auth: Better Auth (`lib/auth.ts`), **Sign in with Apple only** (native ID token, audience = bundle ID), `bearer` plugin. iOS sends `Authorization: Bearer <token>`. `withUser()` in `lib/api.ts` wraps every API route.
 - Apple token revocation (5.1.1(v)): after sign-in the app posts the authorization code to `/api/me/apple-token`; `lib/apple.ts` exchanges it for a refresh token (stored in `account.refreshToken`) and `DELETE /api/me` revokes it. SIWA key ID `NZ56QW5STV`.
-- AI: AI SDK + AI Gateway, model `anthropic/claude-sonnet-5.5` with OpenAI fallback, structured output (`Output.object` + Zod). Prompts, coaching rules and safety normalization are in `lib/training/coach.ts`.
-- Workflows (Vercel Workflow): `generatePlanWorkflow` (blueprint, then parallel 4-week chunks, then save) and `adjustPlanWorkflow`. The AI work runs inside `"use step"` functions. `app/.well-known/workflow/` is generated (gitignored).
+- AI: AI SDK + AI Gateway, model `google/gemini-3.8-flash` with `anthropic/claude-sonnet-5.5` fallback, structured output (`Output.object` + Zod). A plan is ONE AI call; adjustments use a separate prompt. Prompts, coaching rules, concise-writing rules and safety normalization (weekly growth cap, run days only, goal finale) are in `lib/training/coach.ts`.
+- Goals: `goalKind` is `start` (run 30 min non-stop), `race`, `faster` (time trial finale) or `fit` (no finale). `plan.raceDate` is the plan's end date for every goal. No phases/peak/taper in UI or output; keep wording beginner-friendly and jargon-free.
+- Workflows (Vercel Workflow): `generatePlanWorkflow` (load context, one AI step, save) and `adjustPlanWorkflow`. The AI work runs inside `"use step"` functions. `app/.well-known/workflow/` is generated (gitignored).
 - Subscription gate: `lib/subscription.ts` checks the RevenueCat v1 API (entitlement `premium`). Coach adjustments require it; plan creation allows 3 free.
 
 ## iOS
 - Build: `xcodebuild -project ios/kiki.xcodeproj -scheme kiki -destination 'platform=iOS Simulator,name=iPhone 17' build`.
 - Default actor isolation is MainActor; Codable models are `nonisolated`.
 - Data: `TrainingStore` = disk cache + optimistic updates + persistent outbox (runs and workout status). Client-generated UUIDs make writes idempotent.
-- Routing (`RootView`): onboarding (persisted in UserDefaults) → welcome → paywall (hard) → `MainTabView` (Today / Plan / Progress).
+- Routing (`RootView`): onboarding (persisted in UserDefaults) → welcome → paywall (hard) → `MainTabView` (Today / Plan / You).
+- Onboarding answers are only AI inputs: the main app never branches on goal (goal wording lives in `Plan.displayName`). Question options and inputs live in `Features/Shared/Questions.swift` and `Design/Inputs.swift`, shared by onboarding and the You tab (`ProfileFieldEditor`). "Change goal" reuses `OnboardingFlow` with `OnboardingModel(mode: .newGoal, profile:)`. Every answer must stay editable from You.
+- `APIClient` never sends cookies (Better Auth rejects cookie requests without an Origin); auth is the bearer token only.
 - API base URL comes from the `KIKI_API_BASE_URL` build setting: Debug = `http://localhost:3000`, Release = `https://kikirunning.com`.
-- RevenueCat: Debug uses the Test Store key (simulated purchases), Release uses the `appl_` key. Custom paywall (`PaywallView`), Customer Center in Settings.
+- RevenueCat: Debug uses the Test Store key (simulated purchases), Release uses the `appl_` key. Custom paywall (`PaywallView`), Customer Center in the You tab.
 - SDK identity: `Identity.identify` / `ensureIdentified` sets the same user ID in PostHog, RevenueCat (`logIn` + AppsFlyer/PostHog attribution) and AppsFlyer (`customerUserID`).
 - AppsFlyer on-device events (`Attribution` in `Analytics.swift`): `af_complete_registration` (new users), `af_start_trial`, `af_subscribe`. They feed SKAN conversion values for Meta/TikTok; no revenue (RevenueCat sends revenue S2S). Campaigns optimize for StartTrial.
 - AppsFlyer SDK 7: `initialize(devKey:appId:)` + `registerSessionReadyListener`. The ATT prompt is requested inside the listener on app open, then `start()`.
@@ -41,7 +44,7 @@ Kiki: AI running coach iOS app. Quiz onboarding → AI-generated training plan �
 - Contact email everywhere: hello@moltcorporation.com. Company: Moltcorp Inc.
 - No fabricated testimonials or user counts (App Review / FTC).
 - Keep it minimal: haptics on every button, black/white only, respect Dynamic Type and VoiceOver.
-- Account deletion must stay reachable in-app (Settings and the paywall menu).
+- Account deletion must stay reachable in-app (You tab and the paywall menu).
 
 ## Open items
 - TestFlight build, App Store listing, screenshots, privacy label.
