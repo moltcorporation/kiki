@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Today: the goal countdown and progress, today's workout, and the next
-/// few days. Each block has a heading at the same size.
+/// few days, as cards that carry their own titles (Apple's card pattern).
 struct TodayView: View {
     @Environment(TrainingStore.self) private var store
     @Environment(RunTracker.self) private var tracker
@@ -14,15 +14,9 @@ struct TodayView: View {
 
         NavigationStack(path: $path) {
             ScrollView {
-                VStack(alignment: .leading, spacing: 28) {
-                    VStack(alignment: .leading, spacing: 12) {
-                        // Same size as the section titles; the wordmark leads.
-                        Text(greeting)
-                            .font(.sectionTitle)
-                            .accessibilityAddTraits(.isHeader)
-                        if let plan = store.plan {
-                            GoalProgressCard(plan: plan, units: units)
-                        }
+                VStack(alignment: .leading, spacing: 16) {
+                    if let plan = store.plan {
+                        GoalProgressCard(title: greeting, plan: plan, units: units)
                     }
 
                     if let pending = store.pendingPlan, pending.status == .generating {
@@ -32,39 +26,25 @@ struct TodayView: View {
                         }
                     }
 
-
-                    VStack(alignment: .leading, spacing: 12) {
-                        SectionTitle("Today")
-                        if let workout = store.workouts.first(where: { $0.date == .today }) {
-                            WorkoutHeroCard(
-                                workout: workout,
-                                run: store.run(for: workout),
-                                units: units,
-                                paces: store.plan?.paces,
-                                onDone: { sheet = .log(workout, store.run(for: workout)) },
-                                onStart: workout.isRest ? nil : { tracker.start(for: workout) }
-                            )
-                            .contentShape(.rect(cornerRadius: 28))
-                            .onTapGesture { path.append(workout) }
-                            .accessibilityAction(named: "Show details") { path.append(workout) }
-                        } else {
-                            OutsidePlanCard(day: .today, plan: store.plan)
-                        }
+                    if let workout = store.workouts.first(where: { $0.date == .today }) {
+                        WorkoutHeroCard(
+                            heading: "Today",
+                            workout: workout,
+                            run: store.run(for: workout),
+                            units: units,
+                            paces: store.plan?.paces,
+                            onDone: { sheet = .log(workout, store.run(for: workout)) },
+                            onStart: workout.isRest ? nil : { tracker.start(for: workout) }
+                        )
+                        .contentShape(.rect(cornerRadius: 28))
+                        .onTapGesture { path.append(workout) }
+                        .accessibilityAction(named: "Show details") { path.append(workout) }
+                    } else {
+                        OutsidePlanCard(day: .today, plan: store.plan)
                     }
 
                     if !upcoming.isEmpty {
-                        VStack(alignment: .leading, spacing: 12) {
-                            SectionTitle("Upcoming")
-                            VStack(spacing: 8) {
-                                ForEach(upcoming) { workout in
-                                    NavigationLink(value: workout) {
-                                        WorkoutRow(workout: workout, units: units)
-                                            .background(Color.wash, in: .rect(cornerRadius: 18))
-                                    }
-                                    .buttonStyle(.plain)
-                                }
-                            }
-                        }
+                        UpcomingCard(workouts: upcoming, units: units)
                     }
 
                     Button {
@@ -122,21 +102,43 @@ struct TodayView: View {
     }
 }
 
-/// A section heading on Today.
-private struct SectionTitle: View {
-    let text: LocalizedStringKey
-    init(_ text: LocalizedStringKey) { self.text = text }
+/// The next few days in one card, with its title inside (Apple's card
+/// pattern). Rows open the workout.
+private struct UpcomingCard: View {
+    let workouts: [Workout]
+    let units: Units
 
     var body: some View {
-        Text(text)
-            .font(.sectionTitle)
-            .accessibilityAddTraits(.isHeader)
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Upcoming")
+                .font(.sectionTitle)
+                .accessibilityAddTraits(.isHeader)
+                .padding(.horizontal, 6)
+                .padding(.bottom, 4)
+            VStack(spacing: 0) {
+                ForEach(Array(workouts.enumerated()), id: \.element.id) { index, workout in
+                    NavigationLink(value: workout) {
+                        WorkoutRow(workout: workout, units: units)
+                    }
+                    .buttonStyle(.plain)
+                    if index < workouts.count - 1 {
+                        Divider().padding(.leading, 68)
+                    }
+                }
+            }
+        }
+        .padding(14)
+        .padding(.top, 6)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.wash, in: .rect(cornerRadius: 28))
     }
 }
 
 /// The first thing on Today: a countdown to the goal and progress so far.
 private struct GoalProgressCard: View {
     @Environment(TrainingStore.self) private var store
+    /// The card's title (the greeting).
+    let title: String
     let plan: Plan
     let units: Units
 
@@ -148,6 +150,9 @@ private struct GoalProgressCard: View {
         let distance = planRuns.reduce(0) { $0 + $1.distanceM }
 
         VStack(alignment: .leading, spacing: 18) {
+            Text(title)
+                .font(.sectionTitle)
+                .accessibilityAddTraits(.isHeader)
             VStack(alignment: .leading, spacing: 4) {
                 Text(finale?.title ?? plan.displayName)
                     .font(.subheadline.weight(.semibold))
@@ -189,6 +194,8 @@ private struct GoalProgressCard: View {
 }
 
 struct WorkoutHeroCard: View {
+    /// Optional card title (e.g. "Today"), shown above the workout.
+    var heading: LocalizedStringKey?
     let workout: Workout
     let run: Run?
     let units: Units
@@ -199,6 +206,19 @@ struct WorkoutHeroCard: View {
     var body: some View {
         let inverted = !workout.isRest
         VStack(alignment: .leading, spacing: 16) {
+            if let heading {
+                HStack {
+                    Text(heading)
+                        .font(.sectionTitle)
+                        .accessibilityAddTraits(.isHeader)
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.footnote.weight(.bold))
+                        .frame(width: 28, height: 28)
+                        .background((inverted ? Color.paper : Color.ink).opacity(0.12), in: .circle)
+                        .accessibilityHidden(true)
+                }
+            }
             HStack {
                 Text(workout.type.label.uppercased())
                     .font(.caption.weight(.bold))
