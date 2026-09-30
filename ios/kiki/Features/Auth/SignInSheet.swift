@@ -28,7 +28,8 @@ struct SignInSheet: View {
         .presentationDetents([.height(contentHeight)])
         .presentationCornerRadius(32)
         .presentationBackground(Color.white)
-        .presentationDragIndicator(.hidden)
+        // The grabber signals swipe-to-dismiss (there is no close button).
+        .presentationDragIndicator(.visible)
         .onAppear { Analytics.screen("Sign In") }
     }
 
