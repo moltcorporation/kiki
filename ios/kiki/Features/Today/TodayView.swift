@@ -16,14 +16,7 @@ struct TodayView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     if let plan = store.plan {
-                        // Top row: goal progress plus a short note from Kiki.
-                        HStack(alignment: .top, spacing: 12) {
-                            GoalProgressCard(title: greeting, plan: plan, units: units)
-                            // Placeholder until the coach writes daily notes.
-                            KikiNoteCard(text: "Rest day. Tomorrow's tempo is your first real test.")
-                                .frame(width: 140)
-                        }
-                        .fixedSize(horizontal: false, vertical: true)
+                        GoalProgressCard(title: greeting, plan: plan, units: units)
                     }
 
                     if let pending = store.pendingPlan, pending.status == .generating {
@@ -371,28 +364,6 @@ struct OfflineBanner: View {
                 .padding(.bottom, 8)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
         }
-    }
-}
-
-/// A short note from Kiki (a sentence or two) in a square card, in italics
-/// as the app speaking directly to the runner.
-private struct KikiNoteCard: View {
-    let text: String
-
-    var body: some View {
-        // No logo: the italic voice reads as Kiki speaking to the runner.
-        VStack(alignment: .leading, spacing: 0) {
-            Text(text)
-                .font(.body.weight(.medium).italic())
-                .fixedSize(horizontal: false, vertical: true)
-            Spacer(minLength: 0)
-        }
-        .foregroundStyle(.ink)
-        .padding(16)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .background(Color.wash, in: .rect(cornerRadius: 28))
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Kiki says: \(text)")
     }
 }
 
