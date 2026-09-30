@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// A profile answer editable from the You tab.
+/// A profile answer editable from the Profile tab.
 enum ProfileField: Hashable {
     case experience, weeklyVolume, runDays, coachingStyle, units
     case name, age, height, weight

@@ -30,7 +30,7 @@ struct YouView: View {
 
     var body: some View {
         NavigationStack(path: $path) {
-            TabPage(.text("You")) {
+            TabPage(.text("Profile")) {
                 profileCard
                 goalSection
                 if let profile = store.profile {
@@ -67,7 +67,7 @@ struct YouView: View {
                 Button("OK") { message = nil }
             }
         }
-        .onAppear { Analytics.screen("You") }
+        .onAppear { Analytics.screen("Profile") }
     }
 
     // MARK: Header

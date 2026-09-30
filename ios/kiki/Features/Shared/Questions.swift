@@ -1,7 +1,7 @@
 import SwiftUI
 
 // The single source of truth for runner questions: options, labels and inputs.
-// Onboarding and the You tab both use these, so a question only changes here.
+// Onboarding and the Profile tab both use these, so a question only changes here.
 
 extension GoalKind {
     var title: String {
@@ -158,7 +158,7 @@ enum Questions {
 // MARK: - Defaults
 
 /// Starting values for inputs: realistic for an average runner and rounded
-/// the way a person would pick them. Used by onboarding and the You tab.
+/// the way a person would pick them. Used by onboarding and the Profile tab.
 enum Defaults {
     static let age = 35
     static let heightCm = 170.0     // 5′7″

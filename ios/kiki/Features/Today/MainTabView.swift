@@ -16,7 +16,7 @@ struct MainTabView: View {
             Tab("Plan", systemImage: "calendar", value: .plan) {
                 PlanView()
             }
-            Tab("You", systemImage: "person.crop.circle", value: .you) {
+            Tab("Profile", systemImage: "person.crop.circle", value: .you) {
                 YouView()
             }
         }

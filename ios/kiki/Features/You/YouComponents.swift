@@ -1,6 +1,6 @@
 import SwiftUI
 
-// Building blocks for the You tab: rounded groups of rows in the same style
+// Building blocks for the Profile tab: rounded groups of rows in the same style
 // as the onboarding summary, instead of a stock Settings list.
 
 /// A titled group of rows on a rounded `wash` card.

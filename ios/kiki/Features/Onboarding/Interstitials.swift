@@ -86,7 +86,7 @@ struct GoalCheckStep: View {
 
     var body: some View {
         let summary = GoalSummary(answers: model.answers, raceDate: model.answers.raceDate ?? model.suggestedRaceDate)
-        // From the You tab this screen is the confirmation before a rebuild.
+        // From the Profile tab this screen is the confirmation before a rebuild.
         let isRebuild = model.mode != .full
         OnboardingScaffold(
             title: LocalizedStringKey(summary.checkTitle),

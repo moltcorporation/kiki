@@ -3,7 +3,7 @@ import MapKit
 import SwiftUI
 
 /// The runner's week, weekly distance and every logged or tracked run.
-/// Pushed from the You tab, which owns the navigation stack.
+/// Pushed from the Profile tab, which owns the navigation stack.
 struct RunsView: View {
     @Environment(TrainingStore.self) private var store
     @State private var sheet: AppSheet?

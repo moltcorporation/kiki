@@ -9,9 +9,9 @@ final class OnboardingModel {
     enum Mode: Equatable {
         /// First-run onboarding, persisted so it can resume.
         case full
-        /// "Change goal" from the You tab: all goal questions, prefilled.
+        /// "Change goal" from the Profile tab: all goal questions, prefilled.
         case newGoal
-        /// Changing one goal detail from the You tab (e.g. the race date):
+        /// Changing one goal detail from the Profile tab (e.g. the race date):
         /// that question plus any follow-up it needs, then the rebuild.
         case editGoal(Step)
     }
