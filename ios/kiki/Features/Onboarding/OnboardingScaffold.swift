@@ -73,20 +73,10 @@ struct OnboardingHeader: View {
 
     var body: some View {
         HStack(spacing: 14) {
-            Button(action: onBack) {
-                Image(systemName: "arrow.left")
-                    .font(.body.weight(.semibold))
-                    .frame(width: 40, height: 40)
-                    .background(Color.wash, in: .circle)
-                    .frame(width: 44, height: 44)
-                    .contentShape(.circle)
-            }
-            .buttonStyle(.haptic)
-            .foregroundStyle(.ink)
-            // Keeps its space when hidden so the bar never shifts.
-            .opacity(canGoBack ? 1 : 0)
-            .disabled(!canGoBack)
-            .accessibilityLabel("Back")
+            BackButton(action: onBack)
+                // Keeps its space when hidden so the bar never shifts.
+                .opacity(canGoBack ? 1 : 0)
+                .disabled(!canGoBack)
 
             HStack(spacing: 5) {
                 ForEach(0..<max(total, 1), id: \.self) { index in
@@ -105,5 +95,25 @@ struct OnboardingHeader: View {
         .padding(.leading, 22)
         .padding(.trailing, 24)
         .padding(.top, 4)
+    }
+}
+
+/// The round back button used at the top of full-screen flows: a 40pt
+/// circle in `wash` inside a 44pt tap area.
+struct BackButton: View {
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: "arrow.left")
+                .font(.body.weight(.semibold))
+                .frame(width: 40, height: 40)
+                .background(Color.wash, in: .circle)
+                .frame(width: 44, height: 44)
+                .contentShape(.circle)
+        }
+        .buttonStyle(.haptic)
+        .foregroundStyle(.ink)
+        .accessibilityLabel("Back")
     }
 }

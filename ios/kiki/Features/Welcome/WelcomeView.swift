@@ -5,9 +5,8 @@ import SwiftUI
 /// appearance, so the brand colors invert to white on the footage.
 struct WelcomeView: View {
     let onGetStarted: () -> Void
-    let onSignedIn: () -> Void
+    let onSignIn: () -> Void
 
-    @State private var showSignIn = false
     /// The entrance plays once per launch; coming back from onboarding the
     /// screen slides in already settled.
     private static var didPlayEntrance = false
@@ -81,7 +80,7 @@ struct WelcomeView: View {
                     PrimaryButton("Get started", action: onGetStarted)
                     // Secondary: same size, translucent so "Get started" leads.
                     Button {
-                        showSignIn = true
+                        onSignIn()
                     } label: {
                         Text("I already have an account")
                             .font(.headline)
@@ -107,17 +106,6 @@ struct WelcomeView: View {
                 withAnimation(.smooth(duration: 0.9).delay(0.15)) { appeared = true }
             }
             Analytics.screen("Welcome")
-        }
-        .sheet(isPresented: $showSignIn) {
-            VStack(alignment: .leading, spacing: 24) {
-                Text("Welcome back!").font(.title.weight(.bold))
-                SignInOptions(requiresConsent: false) {
-                    showSignIn = false
-                    onSignedIn()
-                }
-            }
-            .padding(24)
-            .presentationDetents([.height(200)])
         }
     }
 }
