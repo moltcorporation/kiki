@@ -27,7 +27,7 @@ struct GoalDetailView: View {
                     Text("Changing your goal, distance, date or goal time builds a new plan from today. You'll see it before anything changes, and runs you've logged are kept.")
                         .font(.footnote)
                         .foregroundStyle(.muted)
-                        .padding(.horizontal, 4)
+
                 }
                 .padding(.horizontal, 24)
                 .padding(.top, 8)

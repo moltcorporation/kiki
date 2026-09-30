@@ -18,7 +18,6 @@ struct PreferenceGroup<Content: View>: View {
             if let title {
                 Text(title)
                     .font(.sectionTitle)
-                    .padding(.horizontal, 4)
             }
             VStack(spacing: 0) {
                 content

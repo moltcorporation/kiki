@@ -1,20 +1,26 @@
 import SwiftUI
 
-/// Compact row used in week lists and previews.
+/// One workout in a list card: date, a consistent icon, title and summary,
+/// and a status on the right. Rows own their padding; the card adds none.
 struct WorkoutRow: View {
     let workout: Workout
     let units: Units
     var showsDate = true
 
+    /// Where the text starts, for inset dividers.
+    static let textInset: CGFloat = 16 + 40 + 12 + 36 + 12
+
     var body: some View {
-        HStack(spacing: 14) {
+        let isToday = workout.date == .today
+        HStack(spacing: 12) {
             if showsDate {
-                VStack(spacing: 2) {
+                VStack(spacing: 1) {
                     Text(Format.weekday(workout.date, style: .abbreviated).uppercased())
-                        .font(.caption2.weight(.bold))
-                        .foregroundStyle(.muted)
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(isToday ? Color.ink : Color.muted)
                     Text("\(workout.date.day)")
-                        .font(.title3.weight(.bold))
+                        .font(.title3.weight(isToday ? .bold : .semibold))
+                        .monospacedDigit()
                 }
                 .frame(width: 40)
             }
@@ -32,27 +38,28 @@ struct WorkoutRow: View {
                 }
             }
             Spacer(minLength: 0)
-            StatusBadge(status: workout.status, isToday: workout.date == .today)
+            StatusBadge(status: workout.status, isToday: isToday)
         }
-        .padding(.vertical, 12)
-        .padding(.horizontal, 14)
-        .background(workout.date == .today ? Color.wash : .clear, in: .rect(cornerRadius: 18))
-        .opacity(workout.isRest || workout.status == .skipped ? 0.6 : 1)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .opacity(workout.isRest || workout.status == .skipped ? 0.55 : 1)
         .contentShape(.rect)
         .accessibilityElement(children: .combine)
     }
 }
 
+/// The workout type as an outlined glyph in a light circle. One style for
+/// every type, so rows read evenly.
 struct WorkoutIcon: View {
     let workout: Workout
-    var size: CGFloat = 40
+    var size: CGFloat = 36
 
     var body: some View {
         Image(systemName: workout.type.symbol)
-            .font(.system(size: size * 0.4, weight: .semibold))
-            .foregroundStyle(workout.type.isQuality ? Color.paper : Color.ink)
+            .font(.system(size: size * 0.42, weight: .medium))
+            .foregroundStyle(.ink)
             .frame(width: size, height: size)
-            .background(workout.type.isQuality ? Color.ink : Color.wash, in: .circle)
+            .background(Color.wash, in: .circle)
             .accessibilityHidden(true)
     }
 }

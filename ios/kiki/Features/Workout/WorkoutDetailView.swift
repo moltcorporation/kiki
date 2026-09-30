@@ -1,5 +1,7 @@
 import SwiftUI
 
+/// One workout, made simple: the date big at the top, what to run, exactly
+/// what to do, and clear actions (Mark as done, Skip, Change workout).
 struct WorkoutDetailView: View {
     @Environment(TrainingStore.self) private var store
     @Environment(RunTracker.self) private var tracker
@@ -7,8 +9,7 @@ struct WorkoutDetailView: View {
     let workoutID: UUID
 
     @State private var sheet: AppSheet?
-    @State private var showMove = false
-    @State private var error: String?
+    @State private var showChangeSoon = false
 
     var body: some View {
         if let workout = store.workouts.first(where: { $0.id == workoutID }) {
@@ -23,125 +24,153 @@ struct WorkoutDetailView: View {
         let run = store.run(for: workout)
 
         return ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
-                HStack(spacing: 12) {
-                    WorkoutIcon(workout: workout, size: 48)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(workout.type.label).font(.subheadline.weight(.semibold)).foregroundStyle(.muted)
-                        Text(workout.date.date, format: .dateTime.weekday(.wide).month(.wide).day())
-                            .font(.subheadline)
+            VStack(alignment: .leading, spacing: Metrics.sectionSpacing) {
+                // The date leads.
+                VStack(alignment: .leading, spacing: 2) {
+                    if let relative = relativeDay(workout.date) {
+                        Text(relative)
+                            .font(.headline)
                             .foregroundStyle(.muted)
                     }
-                    Spacer()
-                    StatusBadge(status: workout.status, isToday: workout.date == .today)
+                    Text(workout.date.date, format: .dateTime.weekday(.wide).month(.wide).day())
+                        .font(.screenTitle)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
 
-                Text(workout.title).font(.display(.largeTitle))
-
-                if !workout.isRest {
-                    HStack(alignment: .firstTextBaseline, spacing: 32) {
-                        if let metric = Format.workoutMetric(workout, units: units) {
-                            MetricView(value: metric.value, label: metric.unit)
+                // What to run.
+                VStack(alignment: .leading, spacing: 16) {
+                    HStack(spacing: 12) {
+                        WorkoutIcon(workout: workout, size: 44)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(workout.type.label)
+                                .font(.subheadline.weight(.medium))
+                                .foregroundStyle(.muted)
+                            Text(workout.title)
+                                .font(.title2.weight(.bold))
                         }
-                        if let zone = workout.type.paceZone, let range = store.plan?.paces?[zone] {
-                            MetricView(value: Format.paceRange(range, units).replacingOccurrences(of: " /\(units.rawValue)", with: ""), label: "\(zone.rawValue) pace /\(units.rawValue)")
+                        Spacer(minLength: 0)
+                        StatusBadge(status: workout.status, isToday: false)
+                    }
+                    if !workout.isRest {
+                        HStack(alignment: .firstTextBaseline, spacing: 32) {
+                            if let metric = Format.workoutMetric(workout, units: units) {
+                                MetricView(value: metric.value, label: metric.unit)
+                            }
+                            if let zone = workout.type.paceZone, let range = store.plan?.paces?[zone] {
+                                MetricView(
+                                    value: Format.paceRange(range, units).replacingOccurrences(of: " /\(units.rawValue)", with: ""),
+                                    label: "\(zone.rawValue) pace /\(units.rawValue)"
+                                )
+                            }
                         }
                     }
                 }
+                .padding(20)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .elevatedCard(cornerRadius: 24)
 
-                Text(workout.description)
-                    .font(.body)
-                    .foregroundStyle(.muted)
-
-                if !workout.steps.isEmpty {
+                // Exactly what to do.
+                TabSection("What to do") {
                     VStack(alignment: .leading, spacing: 0) {
-                        Text("Workout").font(.headline).padding(.bottom, 12)
+                        Text(workout.description)
+                            .font(.body)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(.bottom, workout.steps.isEmpty ? 0 : 8)
                         ForEach(Array(workout.steps.enumerated()), id: \.offset) { index, step in
+                            Divider()
                             StepRow(step: step, units: units, paces: store.plan?.paces)
-                            if index < workout.steps.count - 1 { Divider().padding(.leading, 44) }
                         }
                     }
+                    .padding(20)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .elevatedCard(cornerRadius: 24)
                 }
 
                 if let run {
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text("Your run").font(.headline)
-                        RunSummaryLine(run: run, units: units)
-                        if let notes = run.notes, !notes.isEmpty {
-                            Text("“\(notes)”").font(.subheadline).foregroundStyle(.muted)
+                    TabSection("Your run") {
+                        VStack(alignment: .leading, spacing: 10) {
+                            RunSummaryLine(run: run, units: units)
+                            if let notes = run.notes, !notes.isEmpty {
+                                Text("“\(notes)”").font(.subheadline).foregroundStyle(.muted)
+                            }
                         }
+                        .padding(20)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .elevatedCard(cornerRadius: 24)
                     }
-                }
-
-                if let error {
-                    Text(error).font(.footnote).foregroundStyle(.red)
                 }
             }
-            .padding(20)
+            .padding(.horizontal, Metrics.screenMargin)
+            .padding(.top, 8)
+            .padding(.bottom, 24)
         }
+        .background { PageBackground() }
         .safeAreaInset(edge: .bottom) {
             if !workout.isRest || workout.status == .completed {
-                HStack(spacing: 10) {
-                    PrimaryButton(workout.status == .completed ? "Edit run" : "Mark as done") {
-                        sheet = .log(workout, run)
-                    }
-                    if workout.date == .today, workout.status != .completed, !workout.isRest {
-                        Button {
-                            tracker.start(for: workout)
-                        } label: {
-                            Image(systemName: "figure.run").font(.headline).frame(width: 56, height: 56)
-                        }
-                        .buttonStyle(.glass)
-                        .buttonBorderShape(.circle)
-                        .accessibilityLabel("Start run with GPS")
-                    }
-                }
-                .padding(.horizontal, 20)
-                .padding(.bottom, 8)
+                actions(workout, run: run)
             }
         }
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Menu {
-                    if workout.status != .completed && workout.type != .race {
-                        Button("Move to another day", systemImage: "calendar") { showMove = true }
+        .appSheets($sheet)
+        .alert("Coming soon", isPresented: $showChangeSoon) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Soon you'll be able to swap this for a different workout.")
+        }
+        .onAppear { Analytics.screen("Workout Detail", ["type": workout.type.rawValue]) }
+    }
+
+    /// Mark as done leads; Skip and Change workout sit below it.
+    private func actions(_ workout: Workout, run: Run?) -> some View {
+        VStack(spacing: 10) {
+            HStack(spacing: 10) {
+                PrimaryButton(workout.status == .completed ? "Edit run" : "Mark as done") {
+                    sheet = .log(workout, run)
+                }
+                if workout.date == .today, workout.status != .completed {
+                    Button {
+                        tracker.start(for: workout)
+                    } label: {
+                        Image(systemName: "figure.run")
+                            .font(.headline)
+                            .frame(width: Metrics.buttonHeight, height: Metrics.buttonHeight)
                     }
-                    if workout.status == .planned && !workout.isRest {
-                        Button("Skip workout", systemImage: "forward.fill") {
+                    .buttonStyle(.glass)
+                    .buttonBorderShape(.circle)
+                    .accessibilityLabel("Start run with GPS")
+                }
+            }
+            if workout.status != .completed {
+                HStack(spacing: 10) {
+                    if workout.status == .skipped {
+                        SecondaryButton("Undo skip") {
+                            Haptics.tap()
+                            store.setStatus(.planned, for: workout)
+                        }
+                    } else {
+                        SecondaryButton("Skip workout") {
                             Haptics.tap()
                             store.setStatus(.skipped, for: workout)
                         }
                     }
-                    if workout.status == .skipped {
-                        Button("Undo skip", systemImage: "arrow.uturn.backward") { store.setStatus(.planned, for: workout) }
-                    }
-                    Button("Adjust my plan", systemImage: "sparkles") { sheet = .adjust }
-                    if let run {
-                        Button("Delete run", systemImage: "trash", role: .destructive) { store.delete(run) }
-                    }
-                } label: {
-                    Image(systemName: "ellipsis")
-                }
-                .accessibilityLabel("More actions")
-            }
-        }
-        .appSheets($sheet)
-        .sheet(isPresented: $showMove) {
-            MoveWorkoutSheet(workout: workout) { day in
-                Task {
-                    do {
-                        try await store.move(workout, to: day)
-                        Haptics.success()
-                    } catch {
-                        Haptics.error()
-                        self.error = (error as? LocalizedError)?.errorDescription
-                    }
+                    // Placeholder until swapping workouts is designed.
+                    SecondaryButton("Change workout") { showChangeSoon = true }
                 }
             }
-            .presentationDetents([.medium, .large])
         }
-        .onAppear { Analytics.screen("Workout Detail", ["type": workout.type.rawValue]) }
+        .padding(.horizontal, Metrics.screenMargin)
+        .padding(.top, 8)
+        .padding(.bottom, 8)
+    }
+
+    /// "Today", "Tomorrow" or "Yesterday", else nil.
+    private func relativeDay(_ day: Day) -> String? {
+        switch Day.today.days(until: day) {
+        case 0: "Today"
+        case 1: "Tomorrow"
+        case -1: "Yesterday"
+        default: nil
+        }
     }
 }
 
@@ -153,25 +182,26 @@ private struct StepRow: View {
     var body: some View {
         HStack(alignment: .top, spacing: 14) {
             Image(systemName: symbol)
-                .font(.subheadline.weight(.semibold))
-                .frame(width: 30, height: 30)
-                .background(step.kind == .work ? Color.ink : Color.wash, in: .circle)
-                .foregroundStyle(step.kind == .work ? Color.paper : Color.ink)
+                .font(.system(size: 14, weight: .medium))
+                .frame(width: 32, height: 32)
+                .background(Color.wash, in: .circle)
+                .foregroundStyle(.ink)
+                .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
                 Text(title).font(.body.weight(.semibold))
                 if let detail { Text(detail).font(.subheadline).foregroundStyle(.muted) }
             }
             Spacer(minLength: 0)
         }
-        .padding(.vertical, 12)
+        .padding(.vertical, 14)
     }
 
     private var symbol: String {
         switch step.kind {
-        case .warmup: "sunrise.fill"
-        case .work: "bolt.fill"
-        case .recovery: "pause.fill"
-        case .cooldown: "sunset.fill"
+        case .warmup: "sunrise"
+        case .work: "bolt"
+        case .recovery: "pause"
+        case .cooldown: "sunset"
         }
     }
 
@@ -195,59 +225,5 @@ private struct StepRow: View {
         }
         if let note = step.note, !note.isEmpty { parts.append(note) }
         return parts.isEmpty ? nil : parts.joined(separator: " · ")
-    }
-}
-
-/// Pick another day this week or next to swap this workout with.
-struct MoveWorkoutSheet: View {
-    @Environment(TrainingStore.self) private var store
-    @Environment(\.dismiss) private var dismiss
-
-    let workout: Workout
-    let onMove: (Day) -> Void
-
-    var body: some View {
-        let options = store.workouts.filter {
-            $0.id != workout.id
-                && $0.date >= .today
-                && $0.date < workout.date.mondayOfWeek.adding(days: 14)
-                && $0.status != .completed
-                && $0.type != .race
-        }
-
-        NavigationStack {
-            List(options) { other in
-                Button {
-                    Haptics.tap()
-                    onMove(other.date)
-                    dismiss()
-                } label: {
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text(other.date.date, format: .dateTime.weekday(.wide).month().day())
-                                .font(.body.weight(.semibold))
-                            Text(other.isRest ? "Rest day" : "Swap with \(other.title)")
-                                .font(.subheadline)
-                                .foregroundStyle(.muted)
-                        }
-                        Spacer()
-                    }
-                    .contentShape(.rect)
-                }
-                .foregroundStyle(.ink)
-            }
-            .navigationTitle("Move \(workout.title)")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Close", systemImage: "xmark") { dismiss() }
-                }
-            }
-            .overlay {
-                if options.isEmpty {
-                    ContentUnavailableView("No days available", systemImage: "calendar", description: Text("There are no open days in the next two weeks."))
-                }
-            }
-        }
     }
 }

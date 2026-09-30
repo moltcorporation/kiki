@@ -148,13 +148,13 @@ nonisolated enum WorkoutType: String, Codable, CaseIterable, Sendable {
 
     var symbol: String {
         switch self {
-        case .rest: "moon.zzz.fill"
+        case .rest: "moon.zzz"
         case .runWalk: "figure.walk"
         case .easy, .recovery: "figure.run"
         case .long: "road.lanes"
         case .tempo, .progression, .racePace: "speedometer"
-        case .intervals, .fartlek: "bolt.fill"
-        case .hills: "mountain.2.fill"
+        case .intervals, .fartlek: "bolt"
+        case .hills: "mountain.2"
         case .crossTraining: "figure.mixed.cardio"
         case .race: "flag.checkered"
         }

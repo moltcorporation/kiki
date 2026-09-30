@@ -103,7 +103,6 @@ struct TabSection<Content: View>: View {
                         .monospacedDigit()
                 }
             }
-            .padding(.horizontal, 4)
             content
         }
     }

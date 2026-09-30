@@ -99,22 +99,20 @@ struct WorkoutListCard: View {
     let units: Units
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            VStack(spacing: 0) {
-                ForEach(Array(workouts.enumerated()), id: \.element.id) { index, workout in
-                    NavigationLink(value: workout) {
-                        WorkoutRow(workout: workout, units: units)
-                    }
-                    .buttonStyle(.plain)
-                    if index < workouts.count - 1 {
-                        Divider().padding(.leading, 68)
-                    }
+        VStack(spacing: 0) {
+            ForEach(Array(workouts.enumerated()), id: \.element.id) { index, workout in
+                NavigationLink(value: workout) {
+                    WorkoutRow(workout: workout, units: units)
+                }
+                .buttonStyle(.plain)
+                if index < workouts.count - 1 {
+                    Divider().padding(.leading, WorkoutRow.textInset)
                 }
             }
         }
-        .padding(8)
+        .padding(.vertical, 4)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .elevatedCard()
+        .elevatedCard(cornerRadius: 24)
     }
 }
 
