@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// Today: the goal countdown and progress, a note from Kiki, today's
-/// workout, and the next few days.
+/// Today: the goal countdown and progress, today's workout, and the next
+/// few days. Each block has a heading at the same size.
 struct TodayView: View {
     @Environment(TrainingStore.self) private var store
     @Environment(RunTracker.self) private var tracker
@@ -32,8 +32,6 @@ struct TodayView: View {
                         }
                     }
 
-                    // Placeholder until the coach writes daily messages.
-                    CoachMessage(text: "Rest up today, Sam. Tomorrow's tempo run is your first real test, and you're ready for it.")
 
                     VStack(alignment: .leading, spacing: 12) {
                         SectionTitle("Today")
@@ -344,31 +342,6 @@ struct OfflineBanner: View {
                 .padding(.bottom, 8)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
         }
-    }
-}
-
-/// A short note from Kiki (one or two sentences): the coach's avatar and a
-/// chat bubble. Not a conversation, just the coach checking in.
-struct CoachMessage: View {
-    let text: String
-
-    var body: some View {
-        HStack(alignment: .bottom, spacing: 10) {
-            KikiLogo(size: 32)
-            Text(text)
-                .font(.subheadline)
-                .foregroundStyle(.ink)
-                .fixedSize(horizontal: false, vertical: true)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
-                .background(Color.wash, in: UnevenRoundedRectangle(
-                    topLeadingRadius: 20, bottomLeadingRadius: 6,
-                    bottomTrailingRadius: 20, topTrailingRadius: 20
-                ))
-            Spacer(minLength: 24)
-        }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Message from Kiki: \(text)")
     }
 }
 
