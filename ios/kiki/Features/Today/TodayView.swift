@@ -91,7 +91,7 @@ struct TodayView: View {
                 // Wordmark centered in the bar, like a home tab logo.
                 ToolbarItem(placement: .principal) {
                     Text("Kiki")
-                        .font(.system(size: 20, weight: .black).italic())
+                        .font(.system(size: 24, weight: .black).italic())
                         .accessibilityAddTraits(.isHeader)
                 }
             }
