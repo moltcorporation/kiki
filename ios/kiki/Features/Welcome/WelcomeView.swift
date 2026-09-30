@@ -44,44 +44,33 @@ struct WelcomeView: View {
                 .ignoresSafeArea()
                 .allowsHitTesting(false)
 
-            // Soft corner vignette so the wordmark reads over the bright sky
-            // (worst frame of the film is 5:1 contrast behind it).
-            RadialGradient(
-                stops: [
-                    .init(color: .black.opacity(0.7), location: 0),
-                    .init(color: .black.opacity(0.4), location: 0.5),
-                    .init(color: .black.opacity(0), location: 1),
-                ],
-                center: .topLeading,
-                startRadius: 0,
-                endRadius: 320
-            )
-            .ignoresSafeArea()
+            // Centered at the bottom: wordmark, headline, then the actions.
+            // 20pt side margins, 8pt above the home indicator.
+            VStack(spacing: 32) {
+                VStack(spacing: 10) {
+                    Text("Kiki")
+                        .font(.system(size: 26, weight: .black).italic())
+                        .opacity(0.9)
+                        .accessibilityAddTraits(.isHeader)
+                    Text("Your AI\nrunning coach.")
+                        .font(.system(size: headlineSize, weight: .black).italic())
+                        .multilineTextAlignment(.center)
+                        .minimumScaleFactor(0.7)
+                }
+                .shadow(color: .black.opacity(0.25), radius: 12, y: 4)
 
-            // Wordmark top-left, set like the logo (heavy italic).
-            Text("Kiki")
-                .font(.system(size: 28, weight: .black).italic())
-                .shadow(color: .black.opacity(0.25), radius: 10)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                .padding(.horizontal, Metrics.screenMargin)
-                .padding(.top, 8)
-                .opacity(appeared ? 1 : 0)
-
-            // 24pt side margins, 12pt between the two full-width buttons,
-            // 8pt above the home indicator (like the onboarding footer).
-            VStack(alignment: .leading, spacing: 32) {
-                Text("Your AI\nrunning coach.")
-                    .font(.system(size: headlineSize, weight: .black).italic())
-                    .multilineTextAlignment(.leading)
-                    .minimumScaleFactor(0.7)
-                    .shadow(color: .black.opacity(0.25), radius: 12, y: 4)
-
-                VStack(spacing: 12) {
+                VStack(spacing: 4) {
                     PrimaryButton("Get started", action: onGetStarted)
-                    SecondaryButton("Sign in") { showSignIn = true }
+                    Button {
+                        showSignIn = true
+                    } label: {
+                        Text("Already have an account? **Sign in**")
+                            .foregroundStyle(.ink)
+                            .frame(maxWidth: .infinity, minHeight: 44)
+                    }
+                    .buttonStyle(.haptic)
                 }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, Metrics.screenMargin)
             .padding(.bottom, 8)
             .opacity(appeared ? 1 : 0)
