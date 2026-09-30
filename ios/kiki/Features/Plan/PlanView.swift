@@ -10,7 +10,7 @@ struct PlanView: View {
         let units = store.units
         NavigationStack {
             ScrollViewReader { proxy in
-                TabPage(.text("Plan")) {
+                TabPage(.text("Your plan")) {
                     if let plan = store.plan {
                         PlanHeader(plan: plan)
                     }
