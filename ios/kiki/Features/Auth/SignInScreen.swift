@@ -1,20 +1,20 @@
 import SwiftUI
 
-/// "Sign in" from the welcome screen: a full screen in the onboarding style,
-/// pushed from the welcome screen, with Sign in with Apple right under the
-/// title.
+/// "Sign in" from the welcome screen: a traditional login page. Content is
+/// centered, with a help link at the bottom for anyone who gets stuck.
 struct SignInScreen: View {
     let onBack: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(spacing: 0) {
             BackButton(action: onBack)
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.leading, 22)
                 .padding(.top, 4)
 
-            VStack(alignment: .leading, spacing: 12) {
-                KikiLogo(size: 56)
-                    .padding(.bottom, 8)
+            Spacer()
+
+            VStack(spacing: 12) {
                 Text("Welcome back!")
                     .font(.system(.largeTitle, weight: .bold))
                 Text("Sign in to continue.")
@@ -24,12 +24,20 @@ struct SignInScreen: View {
                 SignInOptions(requiresConsent: false) {}
                     .padding(.top, 20)
             }
+            .multilineTextAlignment(.center)
             .padding(.horizontal, 24)
-            .padding(.top, 20)
 
             Spacer()
+
+            Link(destination: URL(string: "mailto:\(Config.supportEmail)")!) {
+                Text("Trouble signing in? **Contact support**")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .frame(minHeight: 44)
+            }
+            .tint(.ink)
+            .padding(.bottom, 8)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color.paper)
         .onAppear { Analytics.screen("Sign In") }
     }
