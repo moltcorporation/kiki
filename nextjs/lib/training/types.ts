@@ -69,14 +69,6 @@ export const paceZonesSchema = z.object({
 });
 export type PaceZones = z.infer<typeof paceZonesSchema>;
 
-export const planPhaseSchema = z.object({
-  name: z.string().describe("Short phase name, e.g. Base, Build, Peak, Taper"),
-  startWeek: z.number().int(),
-  endWeek: z.number().int(),
-  focus: z.string().describe("One sentence on the purpose of this phase"),
-});
-export type PlanPhase = z.infer<typeof planPhaseSchema>;
-
 export const workoutStepSchema = z.object({
   kind: z.enum(["warmup", "work", "recovery", "cooldown"]),
   distanceM: z.number().int().nullable(),
@@ -107,7 +99,6 @@ export const profileInputSchema = z.object({
   longestRunM: z.number().int().min(0).max(100_000),
   runDays: z.array(weekday).min(2).max(7),
   longRunDay: weekday,
-  injury: z.string().trim().max(500).nullish(),
   extras: z.record(z.string(), z.unknown()).nullish(),
 }).refine((p) => p.runDays.includes(p.longRunDay), {
   message: "Long run day must be one of the run days",

@@ -234,7 +234,6 @@ final class OnboardingModel {
             longestRunM: experience.typicalLongestRunM,
             runDays: answers.runDays.sorted(),
             longRunDay: Questions.longRunDay(for: answers.runDays),
-            injury: nil,
             extras: answers.referralSource.map { ["referralSource": $0] }
         )
     }

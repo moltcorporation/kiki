@@ -63,7 +63,6 @@ async function savePlan(planId: string, userId: string, generated: GeneratedPlan
         summary: generated.summary,
         predictedTimeS: generated.predictedTimeS,
         paces: generated.paces,
-        phases: null,
         error: null,
       })
       .where(eq(plan.id, planId)),

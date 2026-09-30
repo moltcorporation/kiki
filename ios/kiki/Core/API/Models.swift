@@ -201,7 +201,6 @@ nonisolated struct Profile: Codable, Equatable, Sendable {
     var longestRunM: Int
     var runDays: [Int]
     var longRunDay: Int
-    var injury: String?
     var extras: [String: String]?
 }
 

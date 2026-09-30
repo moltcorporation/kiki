@@ -25,7 +25,6 @@ import type {
   GoalKind,
   GoalType,
   PaceZones,
-  PlanPhase,
   RaceDistance,
   RunSource,
   Units,
@@ -148,7 +147,6 @@ export const profile = pgTable("profile", {
   /** ISO weekdays the runner can train, 1 = Monday … 7 = Sunday. */
   runDays: smallint("run_days").array().notNull(),
   longRunDay: smallint("long_run_day").notNull(),
-  injury: text("injury"),
   /** Free-form onboarding answers not needed for planning (e.g. motivation). */
   extras: jsonb("extras").$type<Record<string, unknown>>(),
   ...timestamps,
@@ -174,13 +172,10 @@ export const plan = pgTable(
     startDate: date("start_date").notNull(),
     goalType: text("goal_type").$type<GoalType>().notNull(),
     goalTimeS: integer("goal_time_s"),
-    recentRaceDistanceM: integer("recent_race_distance_m"),
-    recentRaceTimeS: integer("recent_race_time_s"),
     title: text("title"),
     summary: text("summary"),
     predictedTimeS: integer("predicted_time_s"),
     paces: jsonb("paces").$type<PaceZones>(),
-    phases: jsonb("phases").$type<PlanPhase[]>(),
     /** Coarse progress for the "building your plan" screen. */
     progress: smallint("progress").default(0).notNull(),
     workflowRunId: text("workflow_run_id"),
