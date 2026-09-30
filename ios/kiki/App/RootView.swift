@@ -21,13 +21,26 @@ struct RootView: View {
         return .main
     }
 
+    /// Welcome ↔ onboarding uses the native iOS navigation push: onboarding
+    /// slides over from the right while the welcome screen tucks underneath
+    /// (a little to the left, dimmed); back is the exact reverse.
+    /// Other route changes fade.
+    private var isWelcomeHop: Bool { route == .welcome || route == .onboarding }
+
+    private var routeAnimation: Animation {
+        isWelcomeHop ? .smooth(duration: 0.45) : .smooth
+    }
+
     var body: some View {
         ZStack {
             switch route {
             case .welcome:
                 WelcomeView(onGetStarted: onboarding.start, onSignedIn: {})
+                    .transition(isWelcomeHop ? .underneath : .opacity)
             case .onboarding:
                 OnboardingFlow()
+                    .transition(isWelcomeHop ? .onTop : .opacity)
+                    .zIndex(1)
             case .consent:
                 ConsentGate()
             case .loading, .needsPlan:
@@ -39,7 +52,7 @@ struct RootView: View {
                 MainTabView()
             }
         }
-        .animation(.smooth, value: route)
+        .animation(routeAnimation, value: route)
         .task(id: auth.isSignedIn) {
             guard let userID = auth.userID else { return }
             Identity.ensureIdentified(userID: userID, email: auth.email)
@@ -100,5 +113,42 @@ struct LaunchView: View {
         }
         .background(Color.launchBackground)
         .ignoresSafeArea()
+    }
+}
+
+// MARK: - Navigation push transitions
+
+private extension AnyTransition {
+    /// The incoming screen: slides fully in from the trailing edge, on top.
+    static var onTop: AnyTransition {
+        .modifier(active: PushedOnTop(progress: 1), identity: PushedOnTop(progress: 0))
+    }
+
+    /// The screen underneath: drifts 30% toward the leading edge and dims.
+    static var underneath: AnyTransition {
+        .modifier(active: TuckedUnderneath(progress: 1), identity: TuckedUnderneath(progress: 0))
+    }
+}
+
+private struct PushedOnTop: ViewModifier {
+    let progress: CGFloat
+
+    func body(content: Content) -> some View {
+        content
+            .visualEffect { view, proxy in
+                view.offset(x: proxy.size.width * progress)
+            }
+    }
+}
+
+private struct TuckedUnderneath: ViewModifier {
+    let progress: CGFloat
+
+    func body(content: Content) -> some View {
+        content
+            .overlay(Color.black.opacity(0.25 * progress).allowsHitTesting(false))
+            .visualEffect { view, proxy in
+                view.offset(x: -proxy.size.width * 0.3 * progress)
+            }
     }
 }

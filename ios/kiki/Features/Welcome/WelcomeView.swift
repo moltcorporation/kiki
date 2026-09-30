@@ -8,7 +8,10 @@ struct WelcomeView: View {
     let onSignedIn: () -> Void
 
     @State private var showSignIn = false
-    @State private var appeared = false
+    /// The entrance plays once per launch; coming back from onboarding the
+    /// screen slides in already settled.
+    private static var didPlayEntrance = false
+    @State private var appeared = WelcomeView.didPlayEntrance
     /// The headline follows the user's text size; the wordmark is a logo
     /// and stays fixed.
     @ScaledMetric(relativeTo: .largeTitle) private var headlineSize = 44
@@ -65,10 +68,8 @@ struct WelcomeView: View {
                 .padding(.top, 8)
                 .opacity(appeared ? 1 : 0)
 
-            // Spacing matches the onboarding footer (OnboardingScaffold) so
-            // the buttons stay put when onboarding starts: 24pt side margins,
-            // 4pt between the primary and secondary action, 8pt above the
-            // home indicator, 44pt minimum tap targets.
+            // 24pt side margins, 12pt between the two full-width buttons,
+            // 8pt above the home indicator (like the onboarding footer).
             VStack(alignment: .leading, spacing: 32) {
                 Text("Your AI\nrunning coach.")
                     .font(.system(size: headlineSize, weight: .black).italic())
@@ -76,14 +77,18 @@ struct WelcomeView: View {
                     .minimumScaleFactor(0.7)
                     .shadow(color: .black.opacity(0.25), radius: 12, y: 4)
 
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(spacing: 12) {
                     PrimaryButton("Get started", action: onGetStarted)
+                    // Secondary: same size, translucent so "Get started" leads.
                     Button {
                         showSignIn = true
                     } label: {
-                        Text("Already have an account? **Sign in**")
+                        Text("I already have an account")
+                            .font(.headline)
                             .foregroundStyle(.ink)
-                            .frame(minHeight: 44)
+                            .frame(maxWidth: .infinity, minHeight: 56)
+                            .background(Color.ink.opacity(0.14), in: .capsule)
+                            .contentShape(.capsule)
                     }
                     .buttonStyle(.haptic)
                 }
@@ -97,12 +102,15 @@ struct WelcomeView: View {
         .background(Color.black)
         .environment(\.colorScheme, .dark)
         .onAppear {
-            withAnimation(.smooth(duration: 0.9).delay(0.15)) { appeared = true }
+            if !Self.didPlayEntrance {
+                Self.didPlayEntrance = true
+                withAnimation(.smooth(duration: 0.9).delay(0.15)) { appeared = true }
+            }
             Analytics.screen("Welcome")
         }
         .sheet(isPresented: $showSignIn) {
             VStack(alignment: .leading, spacing: 24) {
-                Text("Welcome back").font(.title.weight(.bold))
+                Text("Welcome back!").font(.title.weight(.bold))
                 SignInOptions(requiresConsent: false) {
                     showSignIn = false
                     onSignedIn()
