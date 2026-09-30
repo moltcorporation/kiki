@@ -146,7 +146,12 @@ private struct TuckedUnderneath: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .overlay(Color.black.opacity(0.25 * progress).allowsHitTesting(false))
+            // Edge to edge, including the status bar and home indicator areas.
+            .overlay {
+                Color.black.opacity(0.25 * progress)
+                    .ignoresSafeArea()
+                    .allowsHitTesting(false)
+            }
             .visualEffect { view, proxy in
                 view.offset(x: -proxy.size.width * 0.3 * progress)
             }
