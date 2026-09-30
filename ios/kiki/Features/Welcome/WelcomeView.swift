@@ -44,6 +44,28 @@ struct WelcomeView: View {
                 .ignoresSafeArea()
                 .allowsHitTesting(false)
 
+            // Soft vignette at the top so the wordmark reads over the sky.
+            RadialGradient(
+                stops: [
+                    .init(color: .black.opacity(0.55), location: 0),
+                    .init(color: .black.opacity(0.25), location: 0.5),
+                    .init(color: .black.opacity(0), location: 1),
+                ],
+                center: UnitPoint(x: 0.5, y: 0.06),
+                startRadius: 0,
+                endRadius: 240
+            )
+            .ignoresSafeArea()
+
+            // Wordmark centered at the top.
+            Text("Kiki")
+                .font(.system(size: 28, weight: .black).italic())
+                .shadow(color: .black.opacity(0.25), radius: 10)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                .padding(.top, 8)
+                .opacity(appeared ? 1 : 0)
+                .accessibilityAddTraits(.isHeader)
+
             // Centered at the bottom: headline, then the actions. 20pt side
             // margins, 8pt above the home indicator.
             VStack(spacing: 32) {
