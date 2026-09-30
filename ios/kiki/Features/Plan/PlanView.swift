@@ -44,7 +44,7 @@ struct PlanView: View {
                     }
                 }
             }
-            .background(Color.paper)
+            .background { PageBackground() }
             .toolbarVisibility(.hidden, for: .navigationBar)
             .navigationDestination(for: Workout.self) { WorkoutDetailView(workoutID: $0.id) }
             .appSheets($sheet)
@@ -110,7 +110,7 @@ private struct WeekHeader: View {
         }
         .padding(.vertical, 10)
         .padding(.horizontal, 4)
-        .background(Color.paper)
+        .background(Color.canvas)  // pinned header over the canvas
     }
 }
 
@@ -119,7 +119,7 @@ struct PlanHeader: View {
 
     var body: some View {
         let days = Day.today.days(until: plan.raceDate)
-        Card {
+        Group {
             VStack(alignment: .leading, spacing: 10) {
                 Text(plan.title ?? plan.displayName).font(.title3.weight(.bold))
                 HStack(spacing: 20) {
@@ -136,6 +136,9 @@ struct PlanHeader: View {
                 }
             }
         }
+        .padding(20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .elevatedCard(cornerRadius: 24)
     }
 }
 
@@ -186,7 +189,7 @@ private struct MonthCalendarView: View {
                 if let workout = byDate[selected] {
                     NavigationLink(value: workout) {
                         WorkoutRow(workout: workout, units: store.units)
-                            .background(Color.wash, in: .rect(cornerRadius: 18))
+                            .elevatedCard(cornerRadius: 18)
                     }
                     .buttonStyle(.plain)
                 }
