@@ -18,8 +18,8 @@ struct ExperienceStep: View {
 
     var body: some View {
         OnboardingScaffold(
-            title: "How would you rate your running?",
-            subtitle: "Pick what fits best. You can change this later.",
+            title: "How would you describe your running?",
+            subtitle: "Pick the closest fit.",
             canContinue: model.answers.experience != nil,
             onContinue: {
                 if model.answers.runDays.isEmpty { model.answers.runDays = model.suggestedRunDays }
@@ -39,8 +39,8 @@ struct WeeklyVolumeStep: View {
 
     var body: some View {
         OnboardingScaffold(
-            title: "How much do you run in a typical week?",
-            subtitle: "Your plan starts from where you are today.",
+            title: "How much do you run each week?",
+            subtitle: "Your plan starts from here.",
             canContinue: model.answers.weeklyDistanceM != nil
         ) {
             ChoiceList(
@@ -78,7 +78,7 @@ struct CoachingStyleStep: View {
     var body: some View {
         OnboardingScaffold(
             title: "How do you like to be coached?",
-            subtitle: "Kiki adapts your plan and messages to your style.",
+            subtitle: "Kiki will match your style.",
             canContinue: model.answers.coachingStyle != nil
         ) {
             ChoiceList(options: Questions.coachingStyles, selection: model.answers.coachingStyle) {
@@ -122,7 +122,7 @@ struct AgeStep: View {
         let age = Binding(get: { model.answers.age ?? Defaults.age }, set: { model.answers.age = $0 })
         OnboardingScaffold(
             title: model.firstName.map { "Nice to meet you, \($0)! How old are you?" } ?? "How old are you?",
-            subtitle: "Age helps Kiki balance training and recovery.",
+            subtitle: "It helps Kiki balance training and recovery.",
             onContinue: {
                 model.answers.age = age.wrappedValue
                 model.advance()
@@ -141,7 +141,7 @@ struct HeightStep: View {
         let height = Binding(get: { model.answers.heightCm ?? Defaults.heightCm }, set: { model.answers.heightCm = $0 })
         OnboardingScaffold(
             title: "How tall are you?",
-            subtitle: "Optional. It helps Kiki tailor your plan. You can change it later.",
+            subtitle: "Optional. It helps tailor your plan.",
             onContinue: {
                 model.answers.heightCm = height.wrappedValue
                 model.advance()
@@ -164,8 +164,8 @@ struct WeightStep: View {
         @Bindable var model = model
         let weight = Binding(get: { model.answers.weightKg ?? Defaults.weightKg }, set: { model.answers.weightKg = $0 })
         OnboardingScaffold(
-            title: "What's your weight?",
-            subtitle: "Optional. It helps Kiki set the right training load. You can change it later.",
+            title: "How much do you weigh?",
+            subtitle: "Optional. It helps tailor your plan.",
             onContinue: {
                 model.answers.weightKg = weight.wrappedValue
                 model.advance()
@@ -186,7 +186,7 @@ struct ReferralStep: View {
 
     var body: some View {
         OnboardingScaffold(
-            title: "Where did you hear about us?",
+            title: "How did you hear about Kiki?",
             canContinue: model.answers.referralSource != nil,
             onContinue: {
                 if let source = model.answers.referralSource {
@@ -209,7 +209,7 @@ struct NotificationsStep: View {
     var body: some View {
         OnboardingScaffold(
             title: model.firstName.map { "\($0), want a nudge on run days?" } ?? "Want a nudge on run days?",
-            subtitle: "A quick heads-up on run days, plus a reminder before your free trial ends.",
+            subtitle: "We'll remind you on run days and before your free trial ends.",
             continueTitle: "Turn on reminders",
             onContinue: {
                 Task {

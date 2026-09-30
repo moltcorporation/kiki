@@ -6,7 +6,7 @@ struct AccountStep: View {
     var body: some View {
         OnboardingScaffold(
             title: "Save your plan",
-            subtitle: "Create your account so your plan and progress are always with you.",
+            subtitle: "Create an account to keep your plan and progress.",
             showsContinue: false
         ) {
             VStack(spacing: 24) {

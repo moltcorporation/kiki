@@ -219,7 +219,7 @@ struct SummaryStep: View {
         let answers = model.answers
         let summary = GoalSummary(answers: answers, raceDate: answers.raceDate ?? model.suggestedRaceDate)
         OnboardingScaffold(
-            title: model.firstName.map { "\($0), here's your plan setup" } ?? "Here's your plan setup",
+            title: model.firstName.map { "\($0), does this look right?" } ?? "Does this look right?",
             subtitle: "You can change any of this later in the You tab.",
             continueTitle: "Looks good"
         ) {

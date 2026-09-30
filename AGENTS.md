@@ -8,6 +8,8 @@ Kiki: AI running coach iOS app. Quiz onboarding → AI-generated training plan �
 - Welcome screen: left-aligned on the 24pt margin (Nike Run Club pattern). "Kiki" wordmark top-left (28pt black italic over a soft corner vignette, away from the sun) so a new user learns the name; headline (44pt black italic) and actions at the bottom over a dark gradient. Footer spacing matches `OnboardingScaffold` (24pt sides, 4pt between actions, 8pt above the home indicator, 44pt tap targets).
 - Website: dark by default (`--paper` #0B0C0E, `--ink` white), `.asphalt` texture on hero/feature bands, Inter (true black italic) for headlines. No pricing on the website.
 
+- Voice: ask and speak like a coach would. Natural, concise, direct and simple: "Which race are you training for?", not "What distance is your race?". Short subtitles, no filler, no jargon.
+
 ### Logo specs
 - Wordmark: "Kiki" (one word, capital K, never all caps). SF Pro, Black (900) weight, italic; default tracking. SwiftUI: `.font(.system(size: …, weight: .black).italic())`.
 - Colors: Ink `#15181D` on light, white `#FFFFFF` on dark. No other logo colors.

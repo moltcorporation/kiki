@@ -6,7 +6,7 @@ struct GoalStep: View {
     var body: some View {
         OnboardingScaffold(
             title: "What's your goal?",
-            subtitle: "Kiki builds your plan around it. You can change this anytime.",
+            subtitle: "Your plan is built around it. You can change it anytime.",
             canContinue: model.answers.goalKind != nil
         ) {
             ChoiceList(
@@ -35,7 +35,7 @@ struct DistanceStep: View {
             )
         }
         OnboardingScaffold(
-            title: model.answers.goalKind == .faster ? "Which distance do you want to get faster at?" : "What distance is your race?",
+            title: model.answers.goalKind == .faster ? "Which distance do you want to run faster?" : "Which race are you training for?",
             canContinue: model.answers.raceDistance != nil
         ) {
             ChoiceList(options: options, selection: model.answers.raceDistance) { distance in
@@ -96,8 +96,8 @@ struct RaceDateStep: View {
         )
 
         OnboardingScaffold(
-            title: "When is race day?",
-            subtitle: "No race picked yet? We'll suggest a date that gives you time to train.",
+            title: "When's your race?",
+            subtitle: "No date yet? We'll pick one that gives you time to train.",
             onContinue: {
                 model.answers.noRaceDate = !hasDate
                 if !hasDate { model.answers.raceDate = nil }
@@ -142,13 +142,13 @@ struct RaceGoalStep: View {
 
     var body: some View {
         OnboardingScaffold(
-            title: "What do you want on race day?",
+            title: "What's your goal for race day?",
             canContinue: model.answers.goalType != nil
         ) {
             ChoiceList(
                 options: [
                     .init(value: GoalType.finish, title: "Just finish", subtitle: "Cross the line feeling good", icon: "flag.checkered"),
-                    .init(value: .time, title: "Hit a time", subtitle: "Train for a specific finish time", icon: "stopwatch"),
+                    .init(value: .time, title: "Hit a time", subtitle: "Train for a finish time", icon: "stopwatch"),
                 ],
                 selection: model.answers.goalType,
                 onSelect: { model.answers.goalType = $0 }
@@ -171,8 +171,8 @@ struct GoalTimeStep: View {
             : Double(model.answers.raceDistance?.meters ?? 5000)
 
         OnboardingScaffold(
-            title: "What's your goal time?",
-            subtitle: "Be ambitious but honest. Kiki will tell you if it's a stretch.",
+            title: "What time are you aiming for?",
+            subtitle: "Aim high, but be honest.",
             onContinue: {
                 model.answers.goalTimeS = time.wrappedValue
                 model.advance()
@@ -262,11 +262,11 @@ struct TimeframeStep: View {
     @Environment(OnboardingModel.self) private var model
 
     var body: some View {
-        OnboardingScaffold(title: "How long do you want to train?") {
+        OnboardingScaffold(title: "How many weeks do you want to train?") {
             ChoiceList(
                 options: [
-                    .init(value: 8, title: "8 weeks", subtitle: "A focused block to sharpen up"),
-                    .init(value: 12, title: "12 weeks", subtitle: "More time for bigger gains"),
+                    .init(value: 8, title: "8 weeks", subtitle: "Short and focused"),
+                    .init(value: 12, title: "12 weeks", subtitle: "More time to improve"),
                 ],
                 selection: model.answers.weeks,
                 onSelect: { model.answers.weeks = $0 }
