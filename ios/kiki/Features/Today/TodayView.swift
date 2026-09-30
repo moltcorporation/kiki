@@ -168,8 +168,6 @@ private struct GoalProgressCard: View {
 }
 
 struct WorkoutHeroCard: View {
-    /// Optional card title (e.g. "Today"), shown above the workout.
-    var heading: LocalizedStringKey?
     let workout: Workout
     let run: Run?
     let units: Units
@@ -180,19 +178,6 @@ struct WorkoutHeroCard: View {
     var body: some View {
         let inverted = !workout.isRest
         VStack(alignment: .leading, spacing: 16) {
-            if let heading {
-                HStack {
-                    Text(heading)
-                        .font(.sectionTitle)
-                        .accessibilityAddTraits(.isHeader)
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.footnote.weight(.bold))
-                        .frame(width: 28, height: 28)
-                        .background((inverted ? Color.paper : Color.ink).opacity(0.12), in: .circle)
-                        .accessibilityHidden(true)
-                }
-            }
             HStack {
                 Text(workout.type.label.uppercased())
                     .font(.caption.weight(.bold))

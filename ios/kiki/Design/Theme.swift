@@ -18,8 +18,9 @@ extension Font {
     static let screenTitle = Font.system(.largeTitle, weight: .bold)
     /// Titles at the top of sheets.
     static let sheetTitle = Font.system(.title3, weight: .bold)
-    /// Titles of sections and cards within a screen.
-    static let sectionTitle = Font.system(.title3, weight: .bold)
+    /// Headings above cards within a screen (Today, Week 1, Your goal…).
+    /// Semibold so they sit a clear level below the bold page title.
+    static let sectionTitle = Font.system(.title3, weight: .semibold)
 }
 
 /// Shared control sizes.
