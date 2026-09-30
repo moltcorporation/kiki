@@ -37,10 +37,10 @@ export function WelcomePhone() {
         aria-hidden
       />
       <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent via-35% to-black/90" />
-      <div className="absolute inset-x-5 bottom-6">
+      <div className="absolute inset-x-5 bottom-6 text-center">
         {/* eslint-disable-next-line @next/next/no-img-element -- tiny static asset */}
-        <img src="/kiki-wordmark.png" alt="" aria-hidden className="mb-2 h-[16px] w-auto opacity-90" />
-        <p className="text-[30px] font-black italic leading-[1.02] tracking-[-0.02em] text-white">
+        <img src="/kiki-wordmark.png" alt="" aria-hidden className="mx-auto mb-2 h-[24px] w-auto" />
+        <p className="text-[19px] font-semibold leading-tight text-white">
           Your AI
           <br />
           running coach.

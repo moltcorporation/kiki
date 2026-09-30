@@ -43,33 +43,32 @@ struct WelcomeView: View {
             // the buttons stay put when onboarding starts: 24pt side margins,
             // 4pt between the primary and secondary action, 8pt above the
             // home indicator, 44pt minimum tap targets.
-            VStack(alignment: .leading, spacing: 32) {
-                VStack(alignment: .leading, spacing: 12) {
-                    // Wordmark, set like the logo (heavy italic).
+            VStack(spacing: 32) {
+                // The wordmark leads; the headline supports it in a calmer
+                // weight so the two don't compete.
+                VStack(spacing: 10) {
                     Text("Kiki")
-                        .font(.system(size: 26, weight: .black).italic())
-                        .opacity(0.9)
+                        .font(.system(size: 40, weight: .black).italic())
 
                     Text("Your AI\nrunning coach.")
-                        .font(.system(size: 44, weight: .black).italic())
-                        .multilineTextAlignment(.leading)
+                        .font(.system(size: 28, weight: .semibold))
+                        .multilineTextAlignment(.center)
                         .minimumScaleFactor(0.7)
                 }
                 .shadow(color: .black.opacity(0.25), radius: 12, y: 4)
 
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(spacing: 4) {
                     PrimaryButton("Get started", action: onGetStarted)
                     Button {
                         showSignIn = true
                     } label: {
                         Text("Already have an account? **Sign in**")
                             .foregroundStyle(.ink)
-                            .frame(minHeight: 44)
+                            .frame(maxWidth: .infinity, minHeight: 44)
                     }
                     .buttonStyle(.haptic)
                 }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 24)
             .padding(.bottom, 8)
             .opacity(appeared ? 1 : 0)
