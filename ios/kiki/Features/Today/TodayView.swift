@@ -15,9 +15,10 @@ struct TodayView: View {
         NavigationStack(path: $path) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    // Wordmark top-left, like Apple Fitness's "Summary" title.
+                    // Wordmark centered at the top, as the page's brand mark.
                     Text("Kiki")
-                        .font(.system(size: 30, weight: .black).italic())
+                        .font(.system(size: 26, weight: .black).italic())
+                        .frame(maxWidth: .infinity)
                         .accessibilityAddTraits(.isHeader)
 
                     if let plan = store.plan {
