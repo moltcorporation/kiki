@@ -45,7 +45,7 @@ extension Experience {
     func subtitle(units: Units) -> String {
         let miles = units == .mi
         return switch self {
-        case .new: miles ? "New to running or can run less than half a mile without stopping." : "New to running or can run less than 1 km without stopping."
+        case .new: "New to running"
         case .beginner: miles ? "Can run 1–3 miles continuously." : "Can run 1.5–5 km continuously."
         case .intermediate: miles ? "Can comfortably run 3–6 miles without stopping." : "Can comfortably run 5–10 km without stopping."
         case .advanced: miles ? "Regularly runs 6+ miles without stopping." : "Regularly runs 10+ km without stopping."
