@@ -15,8 +15,14 @@ struct TodayView: View {
         NavigationStack(path: $path) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 28) {
-                    if let plan = store.plan {
-                        GoalProgressCard(plan: plan, units: units)
+                    VStack(alignment: .leading, spacing: 12) {
+                        // Same size as the section titles; the wordmark leads.
+                        Text(greeting)
+                            .font(.sectionTitle)
+                            .accessibilityAddTraits(.isHeader)
+                        if let plan = store.plan {
+                            GoalProgressCard(plan: plan, units: units)
+                        }
                     }
 
                     if let pending = store.pendingPlan, pending.status == .generating {
@@ -26,13 +32,8 @@ struct TodayView: View {
                         }
                     }
 
-                    VStack(alignment: .leading, spacing: 14) {
-                        Text(greeting)
-                            .font(.screenTitle)
-                            .accessibilityAddTraits(.isHeader)
-                        // Placeholder until the coach writes daily messages.
-                        CoachMessage(text: "Rest up today, Sam. Tomorrow's tempo run is your first real test, and you're ready for it.")
-                    }
+                    // Placeholder until the coach writes daily messages.
+                    CoachMessage(text: "Rest up today, Sam. Tomorrow's tempo run is your first real test, and you're ready for it.")
 
                     VStack(alignment: .leading, spacing: 12) {
                         SectionTitle("Today")
@@ -175,7 +176,8 @@ private struct GoalProgressCard: View {
         .foregroundStyle(.paper)
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.ink, in: .rect(cornerRadius: 28))
+        .background { AsphaltBackground() }
+        .clipShape(.rect(cornerRadius: 28))
         .accessibilityElement(children: .combine)
     }
 
@@ -367,5 +369,42 @@ struct CoachMessage: View {
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Message from Kiki: \(text)")
+    }
+}
+
+/// The splash's asphalt texture with a soft, warm "sun" that drifts slowly
+/// across and back, so the card feels alive. Still under Reduce Motion.
+struct AsphaltBackground: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var phase: CGFloat = 0
+
+    var body: some View {
+        GeometryReader { proxy in
+            let size = proxy.size
+            ZStack {
+                Color.launchBackground
+                Image(.launchTexture)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: size.width, height: size.height)
+                    .clipped()
+                RadialGradient(
+                    colors: [
+                        Color(red: 1, green: 0.74, blue: 0.4).opacity(0.28),
+                        Color(red: 1, green: 0.55, blue: 0.2).opacity(0.08),
+                        .clear,
+                    ],
+                    center: UnitPoint(x: -0.1 + 1.2 * phase, y: 0.1),
+                    startRadius: 0,
+                    endRadius: max(size.width, size.height) * 0.75
+                )
+                .blendMode(.screen)
+            }
+        }
+        .accessibilityHidden(true)
+        .onAppear {
+            guard !reduceMotion else { phase = 0.7; return }
+            withAnimation(.easeInOut(duration: 12).repeatForever(autoreverses: true)) { phase = 1 }
+        }
     }
 }
