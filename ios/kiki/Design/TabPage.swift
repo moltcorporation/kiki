@@ -19,11 +19,14 @@ struct TabPage<Content: View>: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                HStack(alignment: .firstTextBaseline, spacing: 12) {
+                // Accessory is centered on the title's height.
+                HStack(alignment: .center, spacing: 12) {
                     TabTitle(kind: title)
                         .fixedSize()
                     Spacer(minLength: 0)
                     if let accessory {
+                        // 15pt medium in `muted` (5.3:1 on the canvas, WCAG AA):
+                        // clearly secondary to the 34pt title but easy to read.
                         Text(accessory)
                             .font(.subheadline.weight(.medium))
                             .foregroundStyle(.muted)
