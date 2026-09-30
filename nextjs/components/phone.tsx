@@ -37,9 +37,9 @@ export function WelcomePhone() {
         aria-hidden
       />
       <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent via-35% to-black/90" />
-      {/* eslint-disable-next-line @next/next/no-img-element -- tiny static asset */}
-      <img src="/kiki-wordmark.png" alt="" aria-hidden className="absolute left-1/2 top-12 h-[18px] w-auto -translate-x-1/2" />
-      <div className="absolute inset-x-5 bottom-6 text-center">
+      <div className="absolute inset-x-5 bottom-6">
+        {/* eslint-disable-next-line @next/next/no-img-element -- tiny static asset */}
+        <img src="/kiki-wordmark.png" alt="" aria-hidden className="mb-2 h-[16px] w-auto opacity-90" />
         <p className="text-[30px] font-black italic leading-[1.02] tracking-[-0.02em] text-white">
           Your AI
           <br />

@@ -18,20 +18,6 @@ struct WelcomeView: View {
             LinearGradient(colors: [.black.opacity(0.35), .black.opacity(0)], startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.18))
                 .ignoresSafeArea()
 
-            // Soft vignette behind the wordmark, like a film grade,
-            // so it reads over the bright sky without a visible shape.
-            RadialGradient(
-                stops: [
-                    .init(color: .black.opacity(0.6), location: 0),
-                    .init(color: .black.opacity(0.3), location: 0.5),
-                    .init(color: .black.opacity(0), location: 1),
-                ],
-                center: .top,
-                startRadius: 0,
-                endRadius: 320
-            )
-            .ignoresSafeArea()
-
             // Darkens the lower half so the text reads cleanly on any frame.
             LinearGradient(
                 stops: [
@@ -53,37 +39,37 @@ struct WelcomeView: View {
                 .ignoresSafeArea()
                 .allowsHitTesting(false)
 
-            // Wordmark centered at the top, set like the logo (heavy italic).
-            Text("Kiki")
-                .font(.system(size: 30, weight: .black).italic())
-                .shadow(color: .black.opacity(0.25), radius: 10)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                .padding(.top, 8)
-                .opacity(appeared ? 1 : 0)
-
             // Spacing matches the onboarding footer (OnboardingScaffold) so
             // the buttons stay put when onboarding starts: 24pt side margins,
             // 4pt between the primary and secondary action, 8pt above the
             // home indicator, 44pt minimum tap targets.
-            VStack(spacing: 32) {
-                Text("Your AI\nrunning coach.")
-                    .font(.system(size: 44, weight: .black).italic())
-                    .multilineTextAlignment(.center)
-                    .minimumScaleFactor(0.7)
-                    .shadow(color: .black.opacity(0.25), radius: 12, y: 4)
+            VStack(alignment: .leading, spacing: 32) {
+                VStack(alignment: .leading, spacing: 12) {
+                    // Wordmark, set like the logo (heavy italic).
+                    Text("Kiki")
+                        .font(.system(size: 26, weight: .black).italic())
+                        .opacity(0.9)
 
-                VStack(spacing: 4) {
+                    Text("Your AI\nrunning coach.")
+                        .font(.system(size: 44, weight: .black).italic())
+                        .multilineTextAlignment(.leading)
+                        .minimumScaleFactor(0.7)
+                }
+                .shadow(color: .black.opacity(0.25), radius: 12, y: 4)
+
+                VStack(alignment: .leading, spacing: 4) {
                     PrimaryButton("Get started", action: onGetStarted)
                     Button {
                         showSignIn = true
                     } label: {
                         Text("Already have an account? **Sign in**")
                             .foregroundStyle(.ink)
-                            .frame(maxWidth: .infinity, minHeight: 44)
+                            .frame(minHeight: 44)
                     }
                     .buttonStyle(.haptic)
                 }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 24)
             .padding(.bottom, 8)
             .opacity(appeared ? 1 : 0)
