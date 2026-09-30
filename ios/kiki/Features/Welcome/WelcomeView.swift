@@ -44,27 +44,28 @@ struct WelcomeView: View {
                 .ignoresSafeArea()
                 .allowsHitTesting(false)
 
-            // Left-aligned at the bottom: wordmark just above the headline,
-            // then the actions. 20pt side margins, 8pt above the home indicator.
-            VStack(alignment: .leading, spacing: 32) {
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Kiki")
-                        .font(.system(size: 26, weight: .black).italic())
-                        .opacity(0.9)
-                        .accessibilityAddTraits(.isHeader)
-                    Text("Your AI\nrunning coach.")
-                        .font(.system(size: headlineSize, weight: .black).italic())
-                        .multilineTextAlignment(.leading)
-                        .minimumScaleFactor(0.7)
-                }
-                .shadow(color: .black.opacity(0.25), radius: 12, y: 4)
+            // Centered at the bottom: headline, then the actions. 20pt side
+            // margins, 8pt above the home indicator.
+            VStack(spacing: 32) {
+                Text("Your AI\nrunning coach.")
+                    .font(.system(size: headlineSize, weight: .black).italic())
+                    .multilineTextAlignment(.center)
+                    .minimumScaleFactor(0.7)
+                    .shadow(color: .black.opacity(0.25), radius: 12, y: 4)
+                    .accessibilityAddTraits(.isHeader)
 
-                VStack(spacing: 12) {
+                VStack(spacing: 4) {
                     PrimaryButton("Get started", action: onGetStarted)
-                    SecondaryButton("Sign in") { showSignIn = true }
+                    Button {
+                        showSignIn = true
+                    } label: {
+                        Text("Already have an account? **Sign in**")
+                            .foregroundStyle(.ink)
+                            .frame(maxWidth: .infinity, minHeight: 44)
+                    }
+                    .buttonStyle(.haptic)
                 }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, Metrics.screenMargin)
             .padding(.bottom, 8)
             .opacity(appeared ? 1 : 0)
