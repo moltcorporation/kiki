@@ -122,48 +122,82 @@ private struct GoalProgressCard: View {
         let finale = store.workouts.last { $0.type == .race }
         let endDate = finale?.date ?? plan.raceDate
         let daysLeft = max(0, Day.today.days(until: endDate))
-        let planRuns = store.runs.filter { Day($0.startedAt) >= plan.startDate }
-        let distance = planRuns.reduce(0) { $0 + $1.distanceM }
+        let week = store.currentWeekNumber
+        let total = max(store.totalWeeks, 1)
 
-        VStack(alignment: .leading, spacing: 18) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(finale?.title ?? plan.displayName)
-                    .font(.subheadline.weight(.semibold))
+        VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Your goal")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(.paper.opacity(0.6))
+                Text(plan.goalHeadline(units: units))
+                    .font(.system(.title, weight: .bold))
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.8)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text(plan.goalSubline(units: units, endDate: endDate))
+                    .font(.subheadline.weight(.medium))
                     .foregroundStyle(.paper.opacity(0.7))
-                    .lineLimit(1)
-                HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    Text(daysLeft == 0 ? "Today" : "\(daysLeft)")
-                        .font(.metric(.largeTitle))
-                        .contentTransition(.numericText())
-                    if daysLeft > 0 {
-                        Text(daysLeft == 1 ? "day to go" : "days to go")
-                            .font(.headline)
+            }
+
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(alignment: .firstTextBaseline) {
+                    Text(daysLeft == 0 ? "It's today!" : daysLeft == 1 ? "1 day to go" : "\(daysLeft) days to go")
+                        .font(.headline)
+                    Spacer()
+                    if let week {
+                        Text("Week \(week) of \(total)")
+                            .font(.subheadline.weight(.medium))
                             .foregroundStyle(.paper.opacity(0.7))
                     }
                 }
-            }
-
-            HStack(spacing: 0) {
-                stat(value: "\(planRuns.count)", label: planRuns.count == 1 ? "run" : "runs")
-                stat(value: Format.distanceNumber(distance, units, decimals: 1), label: units == .mi ? "miles" : "km")
-                stat(value: store.currentWeekNumber.map { "\($0)/\(store.totalWeeks)" } ?? "–", label: "week")
+                ProgressView(value: Double(min(week ?? 0, total)), total: Double(total))
+                    .tint(.paper)
+                    .accessibilityHidden(true)
             }
         }
         .foregroundStyle(.paper)
-        .padding(18)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .padding(20)
+        .frame(maxWidth: .infinity, alignment: .topLeading)
         .background { AsphaltBackground() }
         .clipShape(.rect(cornerRadius: 28))
         .shadow(color: .black.opacity(0.22), radius: 22, y: 10)
         .accessibilityElement(children: .combine)
     }
+}
 
-    private func stat(value: String, label: String) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(value).font(.metric(.title3))
-            Text(label).font(.caption).foregroundStyle(.paper.opacity(0.6))
+extension Plan {
+    /// What the runner is working toward, in plain words: "Finish the
+    /// Chicago Marathon", "10K in 45:00", "Run 30 minutes non-stop".
+    func goalHeadline(units: Units) -> String {
+        let distance = distanceLabel(units: units)
+        switch goalKind {
+        case .race:
+            if goalType == .time, let time = goalTimeS {
+                return "\(raceName ?? distance) in \(Format.duration(time))"
+            }
+            return "Finish the \(raceName ?? distance)"
+        case .faster:
+            if let time = goalTimeS { return "\(distance) in \(Format.duration(time))" }
+            return "A faster \(distance)"
+        case .start:
+            return "Run 30 minutes non-stop"
+        case .fit:
+            return "Run consistently"
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// The when (and the distance, if a named race hides it).
+    func goalSubline(units: Units, endDate: Day) -> String {
+        let date = endDate.date.formatted(.dateTime.weekday(.wide).month(.wide).day())
+        switch goalKind {
+        case .race:
+            return raceName == nil ? date : "\(distanceLabel(units: units)) · \(date)"
+        case .faster:
+            return "Time trial · \(date)"
+        case .start, .fit:
+            return "By \(date)"
+        }
     }
 }
 
