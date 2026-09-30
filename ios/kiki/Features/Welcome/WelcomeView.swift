@@ -63,7 +63,7 @@ struct WelcomeView: View {
                 .font(.system(size: 28, weight: .black).italic())
                 .shadow(color: .black.opacity(0.25), radius: 10)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                .padding(.horizontal, 24)
+                .padding(.horizontal, Metrics.screenMargin)
                 .padding(.top, 8)
                 .opacity(appeared ? 1 : 0)
 
@@ -82,7 +82,7 @@ struct WelcomeView: View {
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 24)
+            .padding(.horizontal, Metrics.screenMargin)
             .padding(.bottom, 8)
             .opacity(appeared ? 1 : 0)
             .offset(y: appeared ? 0 : 16)

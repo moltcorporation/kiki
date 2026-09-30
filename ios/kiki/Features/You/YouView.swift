@@ -43,7 +43,7 @@ struct YouView: View {
                     footer
                 }
                 .padding(.horizontal, Metrics.screenMargin)
-                .padding(.top, 16)
+                .padding(.top, 8)
                 .padding(.bottom, 32)
             }
             .background(Color.paper)

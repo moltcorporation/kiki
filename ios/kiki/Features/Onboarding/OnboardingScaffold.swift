@@ -33,8 +33,8 @@ struct OnboardingScaffold<Content: View>: View {
                     content
                         .padding(.top, 28)
                 }
-                .padding(.horizontal, 24)
-                .padding(.top, 20)
+                .padding(.horizontal, Metrics.screenMargin)
+                .padding(.top, 16)
                 .padding(.bottom, 24)
             }
             .scrollDismissesKeyboard(.interactively)
@@ -54,7 +54,7 @@ struct OnboardingScaffold<Content: View>: View {
                             .buttonStyle(.haptic)
                     }
                 }
-                .padding(.horizontal, 24)
+                .padding(.horizontal, Metrics.screenMargin)
                 .padding(.bottom, 8)
                 .background(Color.paper)
             }
@@ -91,9 +91,9 @@ struct OnboardingHeader: View {
             .accessibilityValue("Step \(step) of \(total)")
         }
         // The 44pt tap area overhangs the 36pt circle by 4pt; this keeps the
-        // circle itself on the 24pt margin.
-        .padding(.leading, 20)
-        .padding(.trailing, 24)
+        // circle itself on the screen margin, 8pt below the safe area.
+        .padding(.leading, Metrics.screenMargin - 4)
+        .padding(.trailing, Metrics.screenMargin)
         .padding(.top, 4)
     }
 }

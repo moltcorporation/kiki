@@ -101,7 +101,7 @@ struct GeneratingStep: View {
                     error = nil
                     attempt += 1
                 }
-                .padding(.horizontal, 24)
+                .padding(.horizontal, Metrics.screenMargin)
             }
         }
         .padding(.bottom, 8)
@@ -193,7 +193,7 @@ struct PlanPreviewStep: View {
                 Analytics.track(model.mode == .full ? "onboarding_completed" : "goal_changed")
                 model.finish()
             }
-            .padding(.horizontal, 24)
+            .padding(.horizontal, Metrics.screenMargin)
             .padding(.bottom, 8)
             .background(Color.paper)
         }

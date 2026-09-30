@@ -15,7 +15,12 @@ struct TodayView: View {
         NavigationStack(path: $path) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
-                    header
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(greeting)
+                            .font(.screenTitle)
+                            .accessibilityAddTraits(.isHeader)
+                        header
+                    }
 
                     // Placeholder until the coach writes daily messages.
                     CoachMessage(text: "Rest up today, Sam. Tomorrow's tempo run is your first real test, and you're ready for it.")
@@ -86,7 +91,7 @@ struct TodayView: View {
                 .padding(.bottom, 24)
             }
             .refreshable { await store.refresh() }
-            .navigationTitle(greeting)
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 // Wordmark centered in the bar, like a home tab logo.
                 ToolbarItem(placement: .principal) {

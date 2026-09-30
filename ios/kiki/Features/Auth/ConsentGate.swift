@@ -37,7 +37,7 @@ struct ConsentGate: View {
                 .frame(maxWidth: .infinity, minHeight: 44)
                 .buttonStyle(.haptic)
         }
-        .padding(.horizontal, 24)
+        .padding(.horizontal, Metrics.screenMargin)
         .padding(.bottom, 8)
         .background(Color.paper)
         .alert("Please agree to continue", isPresented: $showAgreeAlert) {
