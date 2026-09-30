@@ -6,18 +6,32 @@ import SwiftUI
 /// page background, and a fade under the status bar.
 struct TabPage<Content: View>: View {
     let title: TabTitle.Kind
+    /// Optional quiet text on the right of the title row (Home's greeting).
+    var accessory: String?
     @ViewBuilder let content: Content
 
-    init(_ title: TabTitle.Kind, @ViewBuilder content: () -> Content) {
+    init(_ title: TabTitle.Kind, accessory: String? = nil, @ViewBuilder content: () -> Content) {
         self.title = title
+        self.accessory = accessory
         self.content = content()
     }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                TabTitle(kind: title)
-                    .padding(.bottom, Metrics.titleSpacing)
+                HStack(alignment: .firstTextBaseline, spacing: 12) {
+                    TabTitle(kind: title)
+                        .fixedSize()
+                    Spacer(minLength: 0)
+                    if let accessory {
+                        Text(accessory)
+                            .font(.subheadline.weight(.medium))
+                            .foregroundStyle(.muted)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
+                    }
+                }
+                .padding(.bottom, Metrics.titleSpacing)
                 VStack(alignment: .leading, spacing: Metrics.sectionSpacing) {
                     content
                 }
@@ -33,7 +47,7 @@ struct TabPage<Content: View>: View {
 }
 
 /// A tab's title: 34pt (the iOS large-title size), aligned left. Home's
-/// wordmark uses the logo's black italic at the same size, centered.
+/// wordmark uses the logo's black italic at the same size.
 struct TabTitle: View {
     enum Kind {
         /// The Kiki wordmark (Home).
@@ -53,13 +67,7 @@ struct TabTitle: View {
                 Text(text).font(.system(size: 34, weight: .bold))
             }
         }
-        // The wordmark is centered as a brand mark; titles align left.
-        .frame(maxWidth: .infinity, alignment: isWordmark ? .center : .leading)
         .accessibilityAddTraits(.isHeader)
-    }
-
-    private var isWordmark: Bool {
-        if case .wordmark = kind { true } else { false }
     }
 }
 

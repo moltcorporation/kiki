@@ -13,7 +13,7 @@ struct TodayView: View {
         let units = store.units
 
         NavigationStack(path: $path) {
-            TabPage(.wordmark) {
+            TabPage(.wordmark, accessory: greeting) {
                 if let plan = store.plan {
                     GoalProgressCard(plan: plan, units: units)
                 }
@@ -77,6 +77,12 @@ struct TodayView: View {
             .overlay(alignment: .bottom) { OfflineBanner() }
         }
         .onAppear { Analytics.screen("Home") }
+    }
+
+    private var greeting: String {
+        let hour = Calendar.current.component(.hour, from: .now)
+        let part = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening"
+        return store.profile?.firstName.map { "\(part), \($0)!" } ?? "\(part)!"
     }
 
     /// The next several days after today (rest days included, so the
