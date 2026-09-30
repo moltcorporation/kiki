@@ -73,15 +73,9 @@ struct TodayView: View {
                 .padding(.bottom, 24)
             }
             .refreshable { await store.refresh() }
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                // Wordmark centered in the bar; it stays put while scrolling.
-                ToolbarItem(placement: .principal) {
-                    Text("Kiki")
-                        .font(.system(size: 24, weight: .black).italic())
-                        .accessibilityAddTraits(.isHeader)
-                }
-            }
+            // No top bar: the wordmark lives on the goal card.
+            .statusBarFade()
+            .toolbarVisibility(.hidden, for: .navigationBar)
             .navigationDestination(for: Workout.self) { WorkoutDetailView(workoutID: $0.id) }
             .appSheets($sheet)
             .overlay(alignment: .bottom) { OfflineBanner() }
@@ -150,11 +144,18 @@ private struct GoalProgressCard: View {
         let distance = planRuns.reduce(0) { $0 + $1.distanceM }
 
         VStack(alignment: .leading, spacing: 18) {
-            Text(title)
-                .font(.sectionTitle)
-                .lineLimit(2)
-                .minimumScaleFactor(0.85)
-                .accessibilityAddTraits(.isHeader)
+            HStack(alignment: .firstTextBaseline) {
+                Text(title)
+                    .font(.sectionTitle)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.85)
+                    .accessibilityAddTraits(.isHeader)
+                Spacer(minLength: 12)
+                // Brand mark on the card, like a premium card's logo.
+                Text("Kiki")
+                    .font(.system(size: 22, weight: .black).italic())
+                    .accessibilityHidden(true)
+            }
             VStack(alignment: .leading, spacing: 4) {
                 Text(finale?.title ?? plan.displayName)
                     .font(.subheadline.weight(.semibold))
