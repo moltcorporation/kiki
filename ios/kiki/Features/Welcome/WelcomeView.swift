@@ -78,18 +78,7 @@ struct WelcomeView: View {
 
                 VStack(spacing: 12) {
                     PrimaryButton("Get started", action: onGetStarted)
-                    // Secondary: same size, translucent so "Get started" leads.
-                    Button {
-                        showSignIn = true
-                    } label: {
-                        Text("Sign in")
-                            .font(.headline)
-                            .foregroundStyle(.ink)
-                            .frame(maxWidth: .infinity, minHeight: 56)
-                            .background(Color.ink.opacity(0.14), in: .capsule)
-                            .contentShape(.capsule)
-                    }
-                    .buttonStyle(.haptic)
+                    SecondaryButton("Sign in") { showSignIn = true }
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)

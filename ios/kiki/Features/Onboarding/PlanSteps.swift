@@ -72,7 +72,7 @@ struct GeneratingStep: View {
 
             VStack(spacing: 8) {
                 Text(error == nil ? (model.firstName.map { "Building your plan, \($0)" } ?? "Building your plan") : "Something went wrong")
-                    .font(.title.weight(.bold))
+                    .font(.screenTitle)
                     .multilineTextAlignment(.center)
                 Text(error ?? "Kiki is designing every run around you. This usually takes under a minute.")
                     .foregroundStyle(.secondary)

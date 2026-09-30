@@ -11,6 +11,21 @@ extension Font {
     static func metric(_ style: Font.TextStyle = .title) -> Font {
         .system(style, design: .default, weight: .heavy).italic().monospacedDigit()
     }
+
+    // The type scale for titles. Use these instead of per-screen sizes.
+
+    /// Full-screen titles: onboarding questions, gates, status screens.
+    static let screenTitle = Font.system(.largeTitle, weight: .bold)
+    /// Titles at the top of sheets.
+    static let sheetTitle = Font.system(.title3, weight: .bold)
+    /// Titles of sections and cards within a screen.
+    static let sectionTitle = Font.system(.title3, weight: .bold)
+}
+
+/// Shared control sizes.
+enum Metrics {
+    /// Height of full-width primary and secondary buttons.
+    static let buttonHeight: CGFloat = 56
 }
 
 enum Haptics {
@@ -38,15 +53,18 @@ extension ButtonStyle where Self == HapticButtonStyle {
     static var haptic: HapticButtonStyle { HapticButtonStyle() }
 }
 
-/// Full-width black pill used for primary actions.
+/// Full-width black pill used for primary actions (including Sign in with
+/// Apple, with the Apple logo as its icon).
 struct PrimaryButton: View {
     let title: LocalizedStringKey
+    var systemImage: String?
     var isLoading = false
     var isEnabled = true
     let action: () -> Void
 
-    init(_ title: LocalizedStringKey, isLoading: Bool = false, isEnabled: Bool = true, action: @escaping () -> Void) {
+    init(_ title: LocalizedStringKey, systemImage: String? = nil, isLoading: Bool = false, isEnabled: Bool = true, action: @escaping () -> Void) {
         self.title = title
+        self.systemImage = systemImage
         self.isLoading = isLoading
         self.isEnabled = isEnabled
         self.action = action
@@ -55,11 +73,15 @@ struct PrimaryButton: View {
     var body: some View {
         Button(action: action) {
             ZStack {
-                Text(title).opacity(isLoading ? 0 : 1)
+                HStack(spacing: 6) {
+                    if let systemImage { Image(systemName: systemImage) }
+                    Text(title)
+                }
+                .opacity(isLoading ? 0 : 1)
                 if isLoading { ProgressView().tint(.paper) }
             }
             .font(.headline)
-            .frame(maxWidth: .infinity, minHeight: 56)
+            .frame(maxWidth: .infinity, minHeight: Metrics.buttonHeight)
             .foregroundStyle(.paper)
             .background(isEnabled ? Color.ink : Color.secondary.opacity(0.35), in: .capsule)
             .contentShape(.capsule)
@@ -67,6 +89,30 @@ struct PrimaryButton: View {
         .buttonStyle(.haptic)
         .disabled(!isEnabled || isLoading)
         .animation(.snappy, value: isEnabled)
+    }
+}
+
+/// Full-width translucent pill for the secondary action next to a
+/// `PrimaryButton` (same size, quieter).
+struct SecondaryButton: View {
+    let title: LocalizedStringKey
+    let action: () -> Void
+
+    init(_ title: LocalizedStringKey, action: @escaping () -> Void) {
+        self.title = title
+        self.action = action
+    }
+
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .font(.headline)
+                .foregroundStyle(.ink)
+                .frame(maxWidth: .infinity, minHeight: Metrics.buttonHeight)
+                .background(Color.ink.opacity(0.14), in: .capsule)
+                .contentShape(.capsule)
+        }
+        .buttonStyle(.haptic)
     }
 }
 

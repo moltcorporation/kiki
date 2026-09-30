@@ -22,7 +22,7 @@ struct OnboardingScaffold<Content: View>: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
                     Text(title)
-                        .font(.system(.largeTitle, weight: .bold))
+                        .font(.screenTitle)
                         .fixedSize(horizontal: false, vertical: true)
                     if let subtitle {
                         Text(subtitle)

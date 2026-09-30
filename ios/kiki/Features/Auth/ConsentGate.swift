@@ -18,7 +18,7 @@ struct ConsentGate: View {
             KikiLogo(size: 56)
                 .padding(.bottom, 12)
             Text("One last thing")
-                .font(.largeTitle.weight(.bold))
+                .font(.screenTitle)
             Text("Please agree to Kiki's Terms of Service and Privacy Policy to continue.")
                 .foregroundStyle(.secondary)
             Spacer()

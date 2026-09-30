@@ -6,15 +6,14 @@ import SwiftUI
 /// version and time. Calls `onSignedIn` on success.
 struct SignInOptions: View {
     @Environment(AuthService.self) private var auth
-    @Environment(\.colorScheme) private var colorScheme
 
     /// New accounts agree before signing in. Returning users (the welcome
     /// "Sign in") skip it; if the account turns out to be new or the Terms
     /// changed, `ConsentGate` asks after sign-in instead.
     var requiresConsent = true
-    /// Apple's approved button label: "Continue with Apple" for new
+    /// One of Apple's approved titles: "Continue with Apple" for new
     /// runners, "Sign in with Apple" for returning ones.
-    var label: SignInWithAppleButton.Label = .continue
+    var title: LocalizedStringKey = "Continue with Apple"
     let onSignedIn: () -> Void
 
     @State private var agreed = false
@@ -49,35 +48,81 @@ struct SignInOptions: View {
         }
     }
 
+    /// Sign in with Apple as our standard `PrimaryButton` with the Apple logo
+    /// (a custom button, allowed by Apple's HIG: Apple logo, system font,
+    /// black/white, approved title). The stock button scales its text with
+    /// its height and renders larger than every other button.
     private var appleButton: some View {
-        SignInWithAppleButton(label) { request in
-            if requiresConsent { auth.noteConsent() }
-            auth.prepareAppleRequest(request)
-        } onCompletion: { result in
-            isWorking = true
-            Task {
-                defer { isWorking = false }
-                do {
-                    if try await auth.completeApple(result) {
-                        Haptics.success()
-                        onSignedIn()
-                    }
-                } catch {
-                    Haptics.error()
-                    Analytics.captureError(error, context: ["step": "sign_in"])
-                    self.error = (error as? LocalizedError)?.errorDescription ?? "Please try again."
+        PrimaryButton(title, systemImage: "apple.logo", isLoading: isWorking, action: signIn)
+            .alert("Couldn't sign in", isPresented: .constant(error != nil)) {
+                Button("OK") { error = nil }
+            } message: {
+                Text(error ?? "")
+            }
+    }
+
+    private func signIn() {
+        guard !isWorking else { return }
+        if requiresConsent { auth.noteConsent() }
+        isWorking = true
+        Task {
+            defer { isWorking = false }
+            let result = await AppleAuthorization().perform { auth.prepareAppleRequest($0) }
+            do {
+                if try await auth.completeApple(result) {
+                    Haptics.success()
+                    onSignedIn()
                 }
+            } catch {
+                Haptics.error()
+                Analytics.captureError(error, context: ["step": "sign_in"])
+                self.error = (error as? LocalizedError)?.errorDescription ?? "Please try again."
             }
         }
-        .signInWithAppleButtonStyle(colorScheme == .dark ? .white : .black)
-        .frame(height: 56)
-        .clipShape(.capsule)
-        .overlay { if isWorking { ProgressView() } }
-        .alert("Couldn't sign in", isPresented: .constant(error != nil)) {
-            Button("OK") { error = nil }
-        } message: {
-            Text(error ?? "")
+    }
+}
+
+/// Runs a Sign in with Apple request with `ASAuthorizationController` and
+/// returns its result, for custom buttons.
+@MainActor
+private final class AppleAuthorization: NSObject, ASAuthorizationControllerDelegate,
+    ASAuthorizationControllerPresentationContextProviding {
+    private var continuation: CheckedContinuation<Result<ASAuthorization, Error>, Never>?
+    private var controller: ASAuthorizationController?
+
+    func perform(_ configure: (ASAuthorizationAppleIDRequest) -> Void) async -> Result<ASAuthorization, Error> {
+        let request = ASAuthorizationAppleIDProvider().createRequest()
+        configure(request)
+        let controller = ASAuthorizationController(authorizationRequests: [request])
+        controller.delegate = self
+        controller.presentationContextProvider = self
+        self.controller = controller   // keep alive until it finishes
+        return await withCheckedContinuation { continuation in
+            self.continuation = continuation
+            controller.performRequests()
         }
+    }
+
+    nonisolated func authorizationController(controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
+        MainActor.assumeIsolated { finish(.success(authorization)) }
+    }
+
+    nonisolated func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {
+        MainActor.assumeIsolated { finish(.failure(error)) }
+    }
+
+    nonisolated func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
+        MainActor.assumeIsolated {
+            let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+            if let key = scenes.flatMap(\.windows).first(where: \.isKeyWindow) { return key }
+            return ASPresentationAnchor(windowScene: scenes[0])
+        }
+    }
+
+    private func finish(_ result: Result<ASAuthorization, Error>) {
+        continuation?.resume(returning: result)
+        continuation = nil
+        controller = nil
     }
 }
 
