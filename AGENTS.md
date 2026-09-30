@@ -36,6 +36,7 @@ Kiki: AI running coach iOS app. Quiz onboarding â†’ AI-generated training plan â
 - RevenueCat: project `proj49f9be7f`, iOS app `app7a71f33a94`, entitlement `premium` ("Kiki Pro"), offering `default` (`$rc_annual`, `$rc_monthly`). AppsFlyer and PostHog integrations are enabled (default event names, no sandbox).
 - PostHog: project 134644, US cloud. iOS app analytics + error tracking (session replay off) and server-side API error capture. Not used on the website.
 - AppsFlyer: app `id6817469393`.
+- Video generation: Seedance 2.5 on Replicate. See `replicate-seedance-instructions.md`.
 
 ## Env (`nextjs/.env.local`, Vercel)
 `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `AI_GATEWAY_API_KEY` (local only; Vercel uses OIDC), `REVENUECAT_SECRET_KEY`, `APPLE_PRIVATE_KEY`, `APPLE_KEY_ID`, `APPLE_TEAM_ID`, `POSTHOG_PROJECT_TOKEN`, `POSTHOG_HOST`, optional `NEXT_PUBLIC_APP_STORE_URL`. See `nextjs/.env.example`. Never commit `.env*`.
