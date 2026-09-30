@@ -9,7 +9,7 @@ curl -s -X POST \
   -H "Authorization: Bearer $REPLICATE_API_TOKEN" \
   -H "Content-Type: application/json" \
   -H "Prefer: wait" \
-  -d '{"input": {"prompt": "...", "duration": 8, "resolution": "1080p", "aspect_ratio": "9:16", "generate_audio": false, "watermark": false}}' \
+  -d '{"input": {"prompt": "...", "duration": 8, "resolution": "720p", "aspect_ratio": "9:16", "generate_audio": false, "watermark": false}}' \
   https://api.replicate.com/v1/models/bytedance/seedance-2.5/predictions
 ```
 
@@ -23,7 +23,7 @@ curl -s -X POST \
 |---|---|---|---|
 | `prompt` | string | | Works best as a detailed "production brief": subject, action, camera, lighting, mood, framing, what to avoid. Optional if media inputs are given. |
 | `duration` | int | `5` | Seconds, 1–30. `-1` lets the model choose (required for editing mode). |
-| `resolution` | string | `"720p"` | Use the highest available for app assets; we downscale when encoding. |
+| `resolution` | string | `"720p"` | `"480p"` or `"720p"` only (720p portrait = 720×1280). |
 | `aspect_ratio` | string | `"16:9"` | e.g. `"9:16"` for full-screen phone. `"adaptive"` = match inputs (required for first/last-frame, editing, extension). |
 | `generate_audio` | bool | `true` | Set `false` for app backgrounds. When true, dialogue goes in double quotes in the prompt. |
 | `watermark` | bool | | Always `false`. |
