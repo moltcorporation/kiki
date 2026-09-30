@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="23504" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="01J-lp-oVM">
+    <device id="retina6_12" orientation="portrait" appearance="light"/>
+    <dependencies>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="23506"/>
+        <capability name="Named colors" minToolsVersion="9.0"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <scenes>
+        <!--Launch screen: grain texture filling the screen, wordmark centered. LaunchView in RootView.swift mirrors this exactly.-->
+        <scene sceneID="EHf-IW-A2E">
+            <objects>
+                <viewController id="01J-lp-oVM" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="Ze5-6b-2t3">
+                        <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFill" image="LaunchTexture" translatesAutoresizingMaskIntoConstraints="NO" id="Tx1-bg-Img">
+                                <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                            </imageView>
+                            <imageView userInteractionEnabled="NO" contentMode="center" image="LaunchWordmark" translatesAutoresizingMaskIntoConstraints="NO" id="Wm1-lg-Img">
+                                <rect key="frame" x="135" y="393" width="123" height="66"/>
+                            </imageView>
+                        </subviews>
+                        <color key="backgroundColor" name="LaunchBackground"/>
+                        <constraints>
+                            <constraint firstItem="Tx1-bg-Img" firstAttribute="top" secondItem="Ze5-6b-2t3" secondAttribute="top" id="Cn1-tp-Tx1"/>
+                            <constraint firstItem="Tx1-bg-Img" firstAttribute="bottom" secondItem="Ze5-6b-2t3" secondAttribute="bottom" id="Cn2-bt-Tx1"/>
+                            <constraint firstItem="Tx1-bg-Img" firstAttribute="leading" secondItem="Ze5-6b-2t3" secondAttribute="leading" id="Cn3-ld-Tx1"/>
+                            <constraint firstItem="Tx1-bg-Img" firstAttribute="trailing" secondItem="Ze5-6b-2t3" secondAttribute="trailing" id="Cn4-tr-Tx1"/>
+                            <constraint firstItem="Wm1-lg-Img" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="Cn5-cx-Wm1"/>
+                            <constraint firstItem="Wm1-lg-Img" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" id="Cn6-cy-Wm1"/>
+                        </constraints>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="iYj-Kq-Ea1" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="53" y="375"/>
+        </scene>
+    </scenes>
+    <resources>
+        <image name="LaunchTexture" width="402" height="874"/>
+        <image name="LaunchWordmark" width="123" height="66"/>
+        <namedColor name="LaunchBackground">
+            <color red="0.082352941176470587" green="0.094117647058823528" blue="0.11372549019607843" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+        </namedColor>
+    </resources>
+</document>

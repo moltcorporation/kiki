@@ -77,15 +77,22 @@ struct RootView: View {
     }
 }
 
-/// Continues the system launch screen (same color and logo, centered on the
-/// full screen) while the session and subscription load, so opening the app
-/// reads as one seamless splash.
+/// Continues `LaunchScreen.storyboard` (same texture, aspect-filled, and the
+/// wordmark centered on the full screen) while the session and subscription
+/// load, so opening the app reads as one seamless splash.
 struct LaunchView: View {
     var body: some View {
-        Image(.launchLogo)
-            .accessibilityLabel("Kiki")
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Color.launchBackground)
-            .ignoresSafeArea()
+        GeometryReader { proxy in
+            Image(.launchTexture)
+                .resizable()
+                .scaledToFill()
+                .frame(width: proxy.size.width, height: proxy.size.height)
+                .clipped()
+                .overlay {
+                    Image(.launchWordmark).accessibilityLabel("Kiki")
+                }
+        }
+        .background(Color.launchBackground)
+        .ignoresSafeArea()
     }
 }
