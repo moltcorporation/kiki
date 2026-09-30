@@ -252,13 +252,12 @@ private struct GoalCard: View {
     let units: Units
 
     var body: some View {
-        // Mirrors the profile card: a 64pt dark circle, 16pt gap, 18pt padding.
+        // Mirrors the profile card: the icon fills the avatar's 64pt slot,
+        // so the text lines up; 16pt gap, 18pt padding.
         HStack(alignment: .center, spacing: 16) {
             Image(systemName: plan.goalKind.icon)
-                .font(.title2.weight(.semibold))
-                .foregroundStyle(.paper)
+                .font(.system(size: 30, weight: .semibold))
                 .frame(width: 64, height: 64)
-                .background(Color.ink, in: .circle)
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 4) {
                 Text(plan.displayName)
