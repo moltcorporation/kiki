@@ -14,7 +14,7 @@ struct WelcomeView: View {
         ZStack(alignment: .bottom) {
             LoopingVideo(video: "welcome", poster: "welcome-poster.jpg")
 
-            // A light fade under the status bar and brand mark.
+            // A light fade so the status bar reads over the bright sky.
             LinearGradient(colors: [.black.opacity(0.35), .black.opacity(0)], startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.18))
                 .ignoresSafeArea()
 
@@ -39,25 +39,28 @@ struct WelcomeView: View {
                 .ignoresSafeArea()
                 .allowsHitTesting(false)
 
-            // Brand mark, watermark-style, like a film title card.
-            Image(.launchLogo)
-                .resizable()
-                .scaledToFit()
-                .frame(height: 28)
-                .opacity(0.9)
-                .shadow(color: .black.opacity(0.3), radius: 8)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                .padding(.horizontal, 24)
-                .padding(.top, 8)
-                .opacity(appeared ? 1 : 0)
-                .accessibilityLabel("Kiki")
-
             VStack(spacing: 28) {
-                Text("Your AI\nrunning coach.")
-                    .font(.system(size: 44, weight: .black).italic())
-                    .multilineTextAlignment(.center)
-                    .minimumScaleFactor(0.7)
-                    .shadow(color: .black.opacity(0.25), radius: 12, y: 4)
+                VStack(spacing: 14) {
+                    // Brand lockup: the K mark and the name, above the pitch.
+                    HStack(spacing: 8) {
+                        Image(.launchLogo)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(height: 17)
+                        Text("KIKI")
+                            .font(.subheadline.weight(.heavy))
+                            .tracking(4)
+                    }
+                    .opacity(0.9)
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("Kiki")
+
+                    Text("Your AI\nrunning coach.")
+                        .font(.system(size: 44, weight: .black).italic())
+                        .multilineTextAlignment(.center)
+                        .minimumScaleFactor(0.7)
+                        .shadow(color: .black.opacity(0.25), radius: 12, y: 4)
+                }
 
                 VStack(spacing: 16) {
                     PrimaryButton("Get started", action: onGetStarted)
