@@ -26,6 +26,9 @@ extension Font {
 enum Metrics {
     /// Height of full-width primary and secondary buttons.
     static let buttonHeight: CGFloat = 56
+    /// Side margin for the main tabs (Today, Plan, You). Onboarding uses a
+    /// roomier 24pt.
+    static let screenMargin: CGFloat = 20
 }
 
 enum Haptics {

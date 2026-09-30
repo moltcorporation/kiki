@@ -42,22 +42,15 @@ struct YouView: View {
                     accountSection
                     footer
                 }
-                .padding(.horizontal, 24)
-                .padding(.top, 12)
+                .padding(.horizontal, Metrics.screenMargin)
+                .padding(.top, 8)
                 .padding(.bottom, 32)
             }
             .background(Color.paper)
-            // No nav bar here (the header is the title), so fade content out
-            // under the status bar as it scrolls.
-            .overlay(alignment: .top) {
-                GeometryReader { proxy in
-                    LinearGradient(colors: [.paper, .paper.opacity(0)], startPoint: .top, endPoint: .bottom)
-                        .frame(height: proxy.safeAreaInsets.top + 20)
-                        .ignoresSafeArea(edges: .top)
-                }
-                .allowsHitTesting(false)
-            }
-            .toolbarVisibility(.hidden, for: .navigationBar)
+            // Same top bar as the other tabs: standard safe-area spacing and
+            // the system's scroll-edge fade under the status bar.
+            .navigationTitle("You")
+            .navigationBarTitleDisplayMode(.inline)
             .navigationDestination(for: Route.self) { route in
                 switch route {
                 case .goal: GoalDetailView(onEdit: startGoalEdit)
@@ -104,7 +97,6 @@ struct YouView: View {
                 }
             }
         }
-        .padding(.top, 8)
     }
 
     // MARK: Goal

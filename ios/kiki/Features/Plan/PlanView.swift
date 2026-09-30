@@ -64,7 +64,7 @@ private struct WeekListView: View {
                         .id(week)
                     }
                 }
-                .padding(.horizontal, 16)
+                .padding(.horizontal, Metrics.screenMargin)
                 .padding(.bottom, 24)
             }
             .refreshable { await store.refresh() }

@@ -82,7 +82,7 @@ struct TodayView: View {
                     }
                     .buttonStyle(.haptic)
                 }
-                .padding(.horizontal, 20)
+                .padding(.horizontal, Metrics.screenMargin)
                 .padding(.bottom, 24)
             }
             .refreshable { await store.refresh() }
