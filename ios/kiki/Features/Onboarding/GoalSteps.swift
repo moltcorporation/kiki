@@ -20,31 +20,63 @@ struct GoalStep: View {
 
 struct DistanceStep: View {
     @Environment(OnboardingModel.self) private var model
+    @State private var showCustom = false
 
     var body: some View {
         @Bindable var model = model
+        let units = model.answers.units
+        // "Other" shows the chosen distance once one is picked.
+        let options = Questions.distances(units: units).map { option in
+            guard option.value == .other, model.answers.raceDistance == .other else { return option }
+            return ChoiceList<RaceDistance>.Option(
+                value: .other,
+                title: "Other",
+                subtitle: Format.distance(model.answers.customDistanceKm * 1000, units, decimals: 0)
+            )
+        }
         OnboardingScaffold(
             title: model.answers.goalKind == .faster ? "Which distance do you want to get faster at?" : "What distance is your race?",
             canContinue: model.answers.raceDistance != nil
         ) {
-            ChoiceList(
-                options: Questions.distances(units: model.answers.units),
-                selection: model.answers.raceDistance,
-                onSelect: { model.answers.raceDistance = $0 }
-            )
-            if model.answers.raceDistance == .other {
-                Card {
-                    Stepper(value: $model.answers.customDistanceKm, in: 2...100, step: 1) {
-                        VStack(alignment: .leading) {
-                            Text("Distance").font(.subheadline).foregroundStyle(.secondary)
-                            Text(Format.distance(model.answers.customDistanceKm * 1000, model.answers.units, decimals: 1))
-                                .font(.metric(.title2))
-                        }
-                    }
-                }
-                .padding(.top, 12)
+            ChoiceList(options: options, selection: model.answers.raceDistance) { distance in
+                model.answers.raceDistance = distance
+                if distance == .other { showCustom = true }
             }
         }
+        .sheet(isPresented: $showCustom) {
+            CustomDistanceSheet(km: $model.answers.customDistanceKm, units: units)
+        }
+    }
+}
+
+/// Picks a custom race distance on the same ruler as the body inputs.
+private struct CustomDistanceSheet: View {
+    @Binding var km: Double
+    let units: Units
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        VStack(spacing: 28) {
+            Text("Race distance")
+                .font(.title2.weight(.bold))
+                .frame(maxWidth: .infinity, alignment: .leading)
+            if units == .mi {
+                RulerPicker(
+                    value: Binding(get: { max(1, Int((km / 1.609344).rounded())) }, set: { km = Double($0) * 1.609344 }),
+                    range: 1...62,
+                    majorEvery: 5
+                ) { "\($0) mi" }
+            } else {
+                RulerPicker(
+                    value: Binding(get: { Int(km.rounded()) }, set: { km = Double($0) }),
+                    range: 2...100
+                ) { "\($0) km" }
+            }
+            PrimaryButton("Done") { dismiss() }
+        }
+        .padding(24)
+        .presentationDetents([.height(380)])
+        .presentationDragIndicator(.visible)
     }
 }
 
@@ -154,8 +186,75 @@ struct GoalTimeStep: View {
                     .frame(maxWidth: .infinity)
                     .contentTransition(.numericText())
                     .animation(.snappy, value: time.wrappedValue)
+                GoalTimeFeedback(seconds: time.wrappedValue, meters: meters)
+                    .padding(.top, 16)
             }
         }
+    }
+}
+
+/// A gentle read on how realistic a goal time is, measured against the
+/// world record for the distance. It informs; it never blocks.
+private struct GoalTimeFeedback: View {
+    let seconds: Int
+    let meters: Double
+
+    enum Level { case impossible, elite, ambitious, strong, great }
+
+    /// Fastest times on record (men's 5000m, 10,000m, half, marathon).
+    private static let records: [(meters: Double, seconds: Double)] = [
+        (5000, 12 * 60 + 35),
+        (10000, 26 * 60 + 11),
+        (21097, 56 * 60 + 42),
+        (42195, 2 * 3600 + 35),
+    ]
+
+    /// The record for a distance; custom distances scale from the nearest
+    /// record with Riegel's formula.
+    static func record(for meters: Double) -> Double {
+        let nearest = records.min { abs(log($0.meters / meters)) < abs(log($1.meters / meters)) }!
+        return nearest.seconds * pow(meters / nearest.meters, 1.06)
+    }
+
+    static func level(seconds: Int, meters: Double) -> Level {
+        switch Double(seconds) / record(for: meters) {
+        case ..<1: .impossible
+        case ..<1.2: .elite
+        case ..<1.5: .ambitious
+        case ..<1.9: .strong
+        default: .great
+        }
+    }
+
+    var body: some View {
+        let level = Self.level(seconds: seconds, meters: meters)
+        let (icon, message): (String, LocalizedStringKey) = switch level {
+        case .impossible: ("exclamationmark.triangle.fill", "Faster than the world record. Double-check your time?")
+        case .elite: ("trophy", "That's elite, world-class territory.")
+        case .ambitious: ("flame", "Very ambitious. That takes years of serious training.")
+        case .strong: ("bolt", "A strong, challenging goal. Let's go!")
+        case .great: ("checkmark.circle", "Great goal. You've got this!")
+        }
+        Label {
+            Text(message)
+        } icon: {
+            Image(systemName: icon)
+        }
+        .font(.subheadline.weight(level == .impossible ? .semibold : .medium))
+        .foregroundStyle(level == .impossible ? .primary : .secondary)
+        .multilineTextAlignment(.center)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(Color.wash, in: .rect(cornerRadius: 16))
+        .overlay {
+            if level == .impossible { RoundedRectangle(cornerRadius: 16).stroke(Color.ink, lineWidth: 1.5) }
+        }
+        .frame(maxWidth: .infinity)
+        .animation(.snappy, value: level)
+        .onChange(of: level == .impossible) { _, isImpossible in
+            if isImpossible { Haptics.warning() }
+        }
+        .accessibilityElement(children: .combine)
     }
 }
 

@@ -112,19 +112,19 @@ struct ProfileFieldEditor: View {
             .background(Color.wash, in: .rect(cornerRadius: 20))
         case .age:
             AgeInput(age: Binding(
-                get: { profile.wrappedValue.age ?? 30 },
+                get: { profile.wrappedValue.age ?? Defaults.age },
                 set: { profile.wrappedValue.birthYear = Profile.birthYear(forAge: $0) }
             ))
             .padding(.top, 24)
         case .height:
             HeightInput(heightCm: Binding(
-                get: { profile.wrappedValue.heightCm ?? 170 },
+                get: { profile.wrappedValue.heightCm ?? Defaults.heightCm },
                 set: { profile.wrappedValue.heightCm = $0 }
             ), units: units)
             .padding(.top, 24)
         case .weight:
             WeightInput(weightKg: Binding(
-                get: { profile.wrappedValue.weightKg ?? 72 },
+                get: { profile.wrappedValue.weightKg ?? Defaults.weightKg },
                 set: { profile.wrappedValue.weightKg = $0 }
             ), units: units)
             .padding(.top, 24)
@@ -159,11 +159,11 @@ struct ProfileFieldEditor: View {
         case .name:
             profile.firstName = profile.firstName?.trimmingCharacters(in: .whitespaces)
         case .age:
-            profile.birthYear = profile.birthYear ?? Profile.birthYear(forAge: 30)
+            profile.birthYear = profile.birthYear ?? Profile.birthYear(forAge: Defaults.age)
         case .height:
-            profile.heightCm = profile.heightCm ?? 170
+            profile.heightCm = profile.heightCm ?? Defaults.heightCm
         case .weight:
-            profile.weightKg = profile.weightKg ?? 72
+            profile.weightKg = profile.weightKg ?? Defaults.weightKg
         default:
             break
         }

@@ -119,7 +119,7 @@ struct AgeStep: View {
 
     var body: some View {
         @Bindable var model = model
-        let age = Binding(get: { model.answers.age ?? 30 }, set: { model.answers.age = $0 })
+        let age = Binding(get: { model.answers.age ?? Defaults.age }, set: { model.answers.age = $0 })
         OnboardingScaffold(
             title: model.firstName.map { "Nice to meet you, \($0)! How old are you?" } ?? "How old are you?",
             subtitle: "Age helps Kiki balance training and recovery.",
@@ -138,7 +138,7 @@ struct HeightStep: View {
 
     var body: some View {
         @Bindable var model = model
-        let height = Binding(get: { model.answers.heightCm ?? 170 }, set: { model.answers.heightCm = $0 })
+        let height = Binding(get: { model.answers.heightCm ?? Defaults.heightCm }, set: { model.answers.heightCm = $0 })
         OnboardingScaffold(
             title: "How tall are you?",
             subtitle: "Optional. It helps Kiki tailor your plan. You can change it later.",
@@ -162,7 +162,7 @@ struct WeightStep: View {
 
     var body: some View {
         @Bindable var model = model
-        let weight = Binding(get: { model.answers.weightKg ?? 72 }, set: { model.answers.weightKg = $0 })
+        let weight = Binding(get: { model.answers.weightKg ?? Defaults.weightKg }, set: { model.answers.weightKg = $0 })
         OnboardingScaffold(
             title: "What's your weight?",
             subtitle: "Optional. It helps Kiki set the right training load. You can change it later.",

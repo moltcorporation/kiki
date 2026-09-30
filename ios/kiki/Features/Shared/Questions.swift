@@ -119,7 +119,7 @@ enum Questions {
             .init(value: .tenK, title: "10K", subtitle: miles ? "6.2 miles" : "10 kilometers"),
             .init(value: .half, title: "Half Marathon", subtitle: miles ? "13.1 miles" : "21.1 kilometers"),
             .init(value: .marathon, title: "Marathon", subtitle: miles ? "26.2 miles" : "42.2 kilometers"),
-            .init(value: .other, title: "Another distance"),
+            .init(value: .other, title: "Other", subtitle: "Enter distance"),
         ]
     }
 
@@ -152,6 +152,31 @@ enum Questions {
         if days.contains(6) { return 6 }
         if days.contains(7) { return 7 }
         return days.max() ?? 6
+    }
+}
+
+// MARK: - Defaults
+
+/// Starting values for inputs: realistic for an average runner and rounded
+/// the way a person would pick them. Used by onboarding and the You tab.
+enum Defaults {
+    static let age = 35
+    static let heightCm = 170.0     // 5′7″
+    static let weightKg = 72.0      // 159 lb
+    static let customDistanceKm = 16.09344  // 10 mi / 16 km
+
+    /// A typical recreational goal for the distance, in seconds.
+    static func goalTime(meters: Double) -> Int {
+        switch Int(meters.rounded()) {
+        case 5000: return 30 * 60
+        case 10000: return 60 * 60
+        case 21097: return 2 * 3600 + 15 * 60
+        case 42195: return 4 * 3600 + 30 * 60
+        default:
+            // About 6:30/km, rounded to 5 minutes.
+            let raw = meters / 1000 * 390
+            return max(5, Int((raw / 300).rounded())) * 300
+        }
     }
 }
 

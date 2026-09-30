@@ -30,7 +30,7 @@ final class OnboardingModel {
         var goalKind: GoalKind? = .race
         var units: Units = .localeDefault
         var raceDistance: RaceDistance?
-        var customDistanceKm: Double = 15
+        var customDistanceKm: Double = Defaults.customDistanceKm
         var raceDate: Day?
         /// The runner chose "Not yet" for the race date; we suggest one.
         var noRaceDate = false
@@ -287,13 +287,10 @@ final class OnboardingModel {
 
     /// Starting value for the goal-time wheel.
     var defaultGoalTime: Int {
-        switch answers.raceDistance ?? .fiveK {
-        case .fiveK: 28 * 60
-        case .tenK: 58 * 60
-        case .half: 2 * 3600 + 5 * 60
-        case .marathon: 4 * 3600 + 30 * 60
-        case .other: Int(answers.customDistanceKm * 360)
-        }
+        let meters = answers.raceDistance == .other
+            ? answers.customDistanceKm * 1000
+            : Double(answers.raceDistance?.meters ?? 5000)
+        return Defaults.goalTime(meters: meters)
     }
 
     /// Typical training days for the runner's experience.
