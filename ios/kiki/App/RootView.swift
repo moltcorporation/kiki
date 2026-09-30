@@ -6,7 +6,7 @@ struct RootView: View {
     @Environment(TrainingStore.self) private var store
     @Environment(Subscriptions.self) private var subscriptions
     @Environment(OnboardingModel.self) private var onboarding
-    /// "I already have an account" was tapped on the welcome screen.
+    /// "Sign in" was tapped on the welcome screen.
     @State private var isSigningIn = false
 
     private enum Route: Equatable {
