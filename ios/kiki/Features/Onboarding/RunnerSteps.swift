@@ -19,7 +19,7 @@ struct ExperienceStep: View {
     var body: some View {
         OnboardingScaffold(
             title: "How would you rate your running ability?",
-            subtitle: "Pick the closest fit.",
+            subtitle: "Pick the closest fit. You can change this later.",
             canContinue: model.answers.experience != nil,
             onContinue: {
                 if model.answers.runDays.isEmpty { model.answers.runDays = model.suggestedRunDays }
