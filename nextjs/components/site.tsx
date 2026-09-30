@@ -13,7 +13,8 @@ export function Logo() {
   return (
     <Link href="/" className="flex items-center gap-2.5 text-lg" aria-label="Kiki home">
       <LogoMark className="size-9" />
-      <span className="text-xl font-black italic tracking-tight">Kiki</span>
+      {/* eslint-disable-next-line @next/next/no-img-element -- tiny static asset */}
+      <img src="/kiki-wordmark.png" alt="" aria-hidden className="h-[22px] w-auto" />
     </Link>
   );
 }
