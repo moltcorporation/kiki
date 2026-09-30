@@ -39,24 +39,38 @@ struct WelcomeView: View {
                 .ignoresSafeArea()
                 .allowsHitTesting(false)
 
+            // Soft vignette so the wordmark reads over the bright sky.
+            RadialGradient(
+                stops: [
+                    .init(color: .black.opacity(0.6), location: 0),
+                    .init(color: .black.opacity(0.3), location: 0.5),
+                    .init(color: .black.opacity(0), location: 1),
+                ],
+                center: .top,
+                startRadius: 0,
+                endRadius: 320
+            )
+            .ignoresSafeArea()
+
+            // Wordmark top-center, set like the logo (heavy italic): the
+            // standard layout for full-screen video welcome screens.
+            Text("Kiki")
+                .font(.system(size: 28, weight: .black).italic())
+                .shadow(color: .black.opacity(0.25), radius: 10)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                .padding(.top, 8)
+                .opacity(appeared ? 1 : 0)
+
             // Spacing matches the onboarding footer (OnboardingScaffold) so
             // the buttons stay put when onboarding starts: 24pt side margins,
             // 4pt between the primary and secondary action, 8pt above the
             // home indicator, 44pt minimum tap targets.
             VStack(spacing: 32) {
-                // The headline leads; the wordmark is a small label above it,
-                // so size (not weight) sets the hierarchy.
-                VStack(spacing: 10) {
-                    Text("Kiki")
-                        .font(.system(size: 20, weight: .black).italic())
-                        .opacity(0.8)
-
-                    Text("Your AI\nrunning coach.")
-                        .font(.system(size: 44, weight: .black).italic())
-                        .multilineTextAlignment(.center)
-                        .minimumScaleFactor(0.7)
-                }
-                .shadow(color: .black.opacity(0.25), radius: 12, y: 4)
+                Text("Your AI\nrunning coach.")
+                    .font(.system(size: 44, weight: .black).italic())
+                    .multilineTextAlignment(.center)
+                    .minimumScaleFactor(0.7)
+                    .shadow(color: .black.opacity(0.25), radius: 12, y: 4)
 
                 VStack(spacing: 4) {
                     PrimaryButton("Get started", action: onGetStarted)
