@@ -32,8 +32,8 @@ struct TabPage<Content: View>: View {
     }
 }
 
-/// A tab's title: 34pt (the iOS large-title size), aligned left. The
-/// wordmark uses the logo's black italic at the same size.
+/// A tab's title: 34pt (the iOS large-title size), aligned left. Home's
+/// wordmark uses the logo's black italic at the same size, centered.
 struct TabTitle: View {
     enum Kind {
         /// The Kiki wordmark (Home).
@@ -53,8 +53,13 @@ struct TabTitle: View {
                 Text(text).font(.system(size: 34, weight: .bold))
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        // The wordmark is centered as a brand mark; titles align left.
+        .frame(maxWidth: .infinity, alignment: isWordmark ? .center : .leading)
         .accessibilityAddTraits(.isHeader)
+    }
+
+    private var isWordmark: Bool {
+        if case .wordmark = kind { true } else { false }
     }
 }
 
