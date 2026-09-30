@@ -36,10 +36,3 @@ curl -s -X POST \
 | `reference_audios` | uri[] | `[]` | Up to 10, 30s total, for audio-driven/lip-sync. Needs a reference image or video. `[Audio1]`… |
 
 Modes: text-to-video (prompt only), image-to-video (`image`), first/last frame (`image` + `last_frame_image`), reference-guided (`reference_*`). First/last frame and `reference_*` are mutually exclusive.
-
-## Kiki conventions
-
-- Brand is black/white: generate muted, desaturated footage and grade to B&W when encoding.
-- No logos, brand marks, text or identifiable real people.
-- Full-screen app backgrounds: `9:16`, highest resolution, generate 8s and trim to the best ~6s loop, no audio.
-- Ship as HEVC (H.265), ~720×1280, no audio track, target 1–2 MB, plus a JPEG poster frame (shown instantly and when Reduce Motion is on). Encode with `ffmpeg -c:v libx265 -tag:v hvc1 -an`.
