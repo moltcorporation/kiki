@@ -319,7 +319,8 @@ extension View {
 }
 
 /// The one row pattern used in every list card (workouts, profile,
-/// settings): a circled icon, a semibold title with an optional gray
+/// settings): a circled icon, a title (semibold for content like workouts
+/// and goals, regular for settings labels) with an optional gray
 /// subtitle, an optional trailing value, and a chevron when tappable.
 enum RowMetrics {
     static let horizontalPadding: CGFloat = 16

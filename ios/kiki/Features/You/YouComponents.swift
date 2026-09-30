@@ -41,8 +41,9 @@ struct PreferenceRow: View {
             Button(role: role, action: action) {
                 HStack(spacing: RowMetrics.spacing) {
                     RowIcon(systemName: icon, isDestructive: role == .destructive)
+                    // Settings labels are regular; bold is for content titles.
                     Text(label)
-                        .font(.body.weight(.semibold))
+                        .font(.body)
                         .foregroundStyle(role == .destructive ? Color.red : Color.ink)
                     Spacer(minLength: 12)
                     if let value {
@@ -78,7 +79,7 @@ struct PreferenceToggleRow: View {
             Toggle(isOn: $isOn) {
                 HStack(spacing: RowMetrics.spacing) {
                     RowIcon(systemName: icon)
-                    Text(label).font(.body.weight(.semibold))
+                    Text(label).font(.body)
                 }
             }
             .tint(.ink)
