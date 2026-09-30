@@ -17,6 +17,9 @@ struct TodayView: View {
                 VStack(alignment: .leading, spacing: 20) {
                     header
 
+                    // Placeholder until the coach writes daily messages.
+                    CoachMessage(text: "Rest up today, Sam. Tomorrow's tempo run is your first real test, and you're ready for it.")
+
                     if let pending = store.pendingPlan, pending.status == .generating {
                         Card {
                             Label("Building your new plan…", systemImage: "sparkles")
@@ -84,6 +87,14 @@ struct TodayView: View {
             }
             .refreshable { await store.refresh() }
             .navigationTitle(greeting)
+            .toolbar {
+                // Wordmark centered in the bar, like a home tab logo.
+                ToolbarItem(placement: .principal) {
+                    Text("Kiki")
+                        .font(.system(size: 20, weight: .black).italic())
+                        .accessibilityAddTraits(.isHeader)
+                }
+            }
             .navigationDestination(for: Workout.self) { WorkoutDetailView(workoutID: $0.id) }
             .appSheets($sheet)
             .overlay(alignment: .bottom) { OfflineBanner() }
@@ -275,5 +286,30 @@ struct OfflineBanner: View {
                 .padding(.bottom, 8)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
         }
+    }
+}
+
+/// A short note from Kiki (one or two sentences): the coach's avatar and a
+/// chat bubble. Not a conversation, just the coach checking in.
+struct CoachMessage: View {
+    let text: String
+
+    var body: some View {
+        HStack(alignment: .bottom, spacing: 10) {
+            KikiLogo(size: 32)
+            Text(text)
+                .font(.subheadline)
+                .foregroundStyle(.ink)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .background(Color.wash, in: UnevenRoundedRectangle(
+                    topLeadingRadius: 20, bottomLeadingRadius: 6,
+                    bottomTrailingRadius: 20, topTrailingRadius: 20
+                ))
+            Spacer(minLength: 24)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Message from Kiki: \(text)")
     }
 }
