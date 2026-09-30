@@ -41,14 +41,12 @@ export default function TermsPage() {
       <h2>Subscriptions and free trials</h2>
       <ul>
         <li>
-          Kiki is offered as an auto-renewing subscription: {site.pricing.monthly} per month or{" "}
-          {site.pricing.yearly} per year (prices may vary by region and are shown in the app
-          before purchase).
+          Kiki is offered as an auto-renewing monthly or yearly subscription. Prices vary by
+          region and are shown in the app before purchase.
         </li>
         <li>
-          New subscribers may receive a {site.pricing.trialDays}-day free trial. Unless you cancel
-          at least 24 hours before the trial ends, your subscription starts and you&apos;ll be
-          charged.
+          New subscribers may be offered a free trial. Unless you cancel at least 24 hours before
+          the trial ends, your subscription starts and you&apos;ll be charged.
         </li>
         <li>
           Payment is charged to your Apple ID account at confirmation of purchase (or at the end

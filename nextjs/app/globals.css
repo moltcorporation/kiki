@@ -1,23 +1,32 @@
 @import "tailwindcss";
 
+/*
+ * Dark by default, like the brand. Token names follow the app: `ink` is the
+ * foreground (white here) and `paper` the background, so `bg-ink text-paper`
+ * is the white primary button, as on the app's welcome screen.
+ */
 :root {
-  --ink: #15181d;
-  --paper: #ffffff;
-  --muted: #5b616b;
-  --subtle: #8a9099;
-  --line: #e9eaec;
-  --wash: #f6f6f7;
+  color-scheme: dark;
+  --ink: #ffffff;
+  --paper: #0b0c0e;
+  --asphalt: #15181d;
+  --surface: #121418;
+  --muted: #a4a9b1;
+  --subtle: #6c727b;
+  --line: rgb(255 255 255 / 0.09);
+  --wash: #16191e;
 }
 
 @theme inline {
   --color-ink: var(--ink);
   --color-paper: var(--paper);
+  --color-asphalt: var(--asphalt);
+  --color-surface: var(--surface);
   --color-muted: var(--muted);
   --color-subtle: var(--subtle);
   --color-line: var(--line);
   --color-wash: var(--wash);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-inter);
 }
 
 html {
@@ -27,13 +36,38 @@ html {
 body {
   background: var(--paper);
   color: var(--ink);
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-family: var(--font-inter), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
 ::selection {
   background: var(--ink);
   color: var(--paper);
+}
+
+/*
+ * The brand texture: asphalt-like film grain over a soft center glow and
+ * vignette (same recipe as the app's splash and icon).
+ */
+.asphalt {
+  position: relative;
+  isolation: isolate;
+  background-color: var(--asphalt);
+  background-image:
+    radial-gradient(ellipse 65% 55% at 50% 40%, rgb(255 255 255 / 0.07), transparent 70%),
+    radial-gradient(ellipse 120% 95% at 50% 45%, transparent 50%, rgb(0 0 0 / 0.55));
+}
+
+.asphalt::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: url("/grain.jpg") repeat;
+  background-size: 200px 200px;
+  mix-blend-mode: overlay;
+  opacity: 0.16;
 }
 
 @media (prefers-reduced-motion: reduce) {

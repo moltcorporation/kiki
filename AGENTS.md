@@ -5,14 +5,15 @@ Kiki: AI running coach iOS app. Quiz onboarding → AI-generated training plan �
 ## Brand
 - Look: black/white UI, premium and minimal. Photography and video bring warmth (golden-hour running footage), never the UI chrome.
 - Texture: gritty, asphalt-like film grain with a soft vignette (darker edges, gentle center glow). Used on the splash (`LaunchTexture`) and over the welcome video (`Grain`). Keep it subtle.
-- Layout on marketing-style screens: left-aligned, wordmark top-left, generous margins (24pt), headline and actions at the bottom over a dark gradient.
+- Welcome screen: centered; wordmark top-center, headline and actions at the bottom over a dark gradient. Footer spacing matches `OnboardingScaffold` (24pt sides, 4pt between actions, 8pt above the home indicator, 44pt tap targets).
+- Website: dark by default (`--paper` #0B0C0E, `--ink` white), `.asphalt` texture on hero/feature bands, Inter (true black italic) for headlines. No pricing on the website.
 
 ### Logo specs
 - Wordmark: "Kiki" (one word, capital K, never all caps). SF Pro, Black (900) weight, italic; default tracking. SwiftUI: `.font(.system(size: …, weight: .black).italic())`.
 - Colors: Ink `#15181D` on light, white `#FFFFFF` on dark. No other logo colors.
 - App icon: white "K" in the same type on the asphalt texture (`#15181D` base). K width = 58% of the canvas, centered by its visible bounds (~21% clear each side). 1024×1024 RGB PNG, no alpha, square corners (iOS masks them).
 - Masters (repo root): `kiki-app-icon-1024.png`, `kiki-app-icon-4096.png`. Regenerate every copy from them: iOS `AppIcon`, `KikiIcon` (in-app `KikiLogo`), site `app/favicon.ico` (16/32/48, RGBA), `app/icon.png` (256), `app/apple-icon.png` (180), `public/kiki-icon.png`.
-- Outside the app, render the type (don't retype it in another font): iOS assets `LaunchWordmark`; site `public/kiki-wordmark.png` (the site font, Geist, has no italic).
+- Outside the app, render the type (don't retype it in another font): iOS assets `LaunchWordmark`; site `public/kiki-wordmark.png` (white).
 
 ## Layout
 - `nextjs/` Next.js 16 app: marketing site (`app/(site)`), REST API (`app/api`), durable AI workflows (`workflows/`). Deployed on Vercel (project `kiki`, team `moltcorporation`), domain kikirunning.com. Push to `main` = production deploy.
