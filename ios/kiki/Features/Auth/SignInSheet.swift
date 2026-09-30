@@ -7,9 +7,15 @@ struct SignInSheet: View {
     @State private var contentHeight: CGFloat = 240
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
+        VStack(spacing: 0) {
+            // Header: centered title clear of the grabber, then a hairline.
             Text("Welcome back!")
-                .font(.system(.title, weight: .bold))
+                .font(.system(.title3, weight: .bold))
+                .frame(maxWidth: .infinity)
+                .padding(.top, 28)
+                .padding(.bottom, 18)
+            Divider()
+
             VStack(spacing: 14) {
                 // Returning runners skip the checkbox; a brand-new account made
                 // here is asked once by `ConsentGate`.
@@ -20,8 +26,8 @@ struct SignInSheet: View {
                     .multilineTextAlignment(.center)
                     .frame(maxWidth: .infinity)
             }
+            .padding(24)
         }
-        .padding(24)
         // Fit the sheet to its content.
         .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { contentHeight = $0 }
         .environment(\.colorScheme, .light)
