@@ -41,7 +41,7 @@ struct PreferenceRow: View {
             Button(role: role, action: action) {
                 HStack(spacing: 14) {
                     Image(systemName: icon)
-                        .font(.body.weight(.semibold))
+                        .font(.body)
                         .frame(width: 28)
                         .accessibilityHidden(true)
                     Text(label)
@@ -83,7 +83,7 @@ struct PreferenceToggleRow: View {
             Toggle(isOn: $isOn) {
                 HStack(spacing: 14) {
                     Image(systemName: icon)
-                        .font(.body.weight(.semibold))
+                        .font(.body)
                         .frame(width: 28)
                         .accessibilityHidden(true)
                     Text(label)

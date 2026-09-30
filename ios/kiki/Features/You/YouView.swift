@@ -74,11 +74,11 @@ struct YouView: View {
 
     /// Photo, name and join date in a standard card.
     private var profileCard: some View {
-        HStack(spacing: 16) {
-            ProfileAvatar(userID: auth.userID, name: store.profile?.firstName, size: 64)
-            VStack(alignment: .leading, spacing: 4) {
+        HStack(spacing: 14) {
+            ProfileAvatar(userID: auth.userID, name: store.profile?.firstName, size: 56)
+            VStack(alignment: .leading, spacing: 2) {
                 Text(store.profile?.firstName ?? "Runner")
-                    .font(.title2.weight(.bold))
+                    .font(.title3.weight(.semibold))
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
                 if let since = store.memberSince {
@@ -89,7 +89,8 @@ struct YouView: View {
             }
             Spacer(minLength: 0)
         }
-        .padding(18)
+        .padding(.horizontal, 18)
+        .padding(.vertical, 16)
         .elevatedCard(cornerRadius: 24)
     }
 
@@ -157,7 +158,7 @@ struct YouView: View {
 
     private var appSection: some View {
         PreferenceGroup("App") {
-            PreferenceRow(icon: "ruler.fill", label: "Units", value: store.units.title) {
+            PreferenceRow(icon: "ruler", label: "Units", value: store.units.title) {
                 path.append(.edit(.units))
             }
             PreferenceToggleRow(icon: "bell", label: "Run day reminders", isOn: $remindersEnabled)
@@ -252,16 +253,16 @@ private struct GoalCard: View {
     let units: Units
 
     var body: some View {
-        // Mirrors the profile card: the icon fills the avatar's 64pt slot,
-        // so the text lines up; 16pt gap, 18pt padding.
-        HStack(alignment: .center, spacing: 16) {
+        // The same row anatomy as every settings row (icon column, 14pt
+        // gap, chevron), with a semibold title and gray detail lines.
+        HStack(alignment: .center, spacing: 14) {
             Image(systemName: plan.goalKind.icon)
-                .font(.system(size: 30, weight: .semibold))
-                .frame(width: 64, height: 64)
+                .font(.body)
+                .frame(width: 28)
                 .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text(plan.displayName)
-                    .font(.title2.weight(.bold))
+                    .font(.headline)
                     .multilineTextAlignment(.leading)
                 ForEach(plan.goalDetails(units: units), id: \.self) { line in
                     Text(line)
@@ -275,7 +276,8 @@ private struct GoalCard: View {
                 .foregroundStyle(.tertiary)
         }
         .foregroundStyle(.ink)
-        .padding(18)
+        .padding(.horizontal, 18)
+        .padding(.vertical, 16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .elevatedCard(cornerRadius: 24)
         .accessibilityElement(children: .combine)
