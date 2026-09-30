@@ -15,12 +15,6 @@ struct TodayView: View {
         NavigationStack(path: $path) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    // Wordmark centered at the top, as the page's brand mark.
-                    Text("Kiki")
-                        .font(.system(size: 26, weight: .black).italic())
-                        .frame(maxWidth: .infinity)
-                        .accessibilityAddTraits(.isHeader)
-
                     if let plan = store.plan {
                         // Top row: goal progress plus a short note from Kiki.
                         HStack(alignment: .top, spacing: 12) {
@@ -86,9 +80,15 @@ struct TodayView: View {
                 .padding(.bottom, 24)
             }
             .refreshable { await store.refresh() }
-            // No top bar: the wordmark is the page title.
-            .statusBarFade()
-            .toolbarVisibility(.hidden, for: .navigationBar)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                // Wordmark centered in the bar; it stays put while scrolling.
+                ToolbarItem(placement: .principal) {
+                    Text("Kiki")
+                        .font(.system(size: 24, weight: .black).italic())
+                        .accessibilityAddTraits(.isHeader)
+                }
+            }
             .navigationDestination(for: Workout.self) { WorkoutDetailView(workoutID: $0.id) }
             .appSheets($sheet)
             .overlay(alignment: .bottom) { OfflineBanner() }
