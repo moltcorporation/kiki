@@ -72,6 +72,8 @@ struct RootView: View {
             store.reset()
             onboarding.reset()
             onboarding.isSignedIn = false
+            // Per-person display preference; the next runner starts fresh.
+            UserDefaults.standard.removeObject(forKey: BodyUnits.storageKey)
             Notifications.cancelAll()
         }
     }
