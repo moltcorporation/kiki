@@ -1,5 +1,8 @@
 import SwiftUI
 
+/// First screen: a full-bleed running video with the pitch and sign-up
+/// actions over a dark, grainy gradient. Always dark, whatever the system
+/// appearance, so the brand colors invert to white on the footage.
 struct WelcomeView: View {
     let onGetStarted: () -> Void
     let onSignedIn: () -> Void
@@ -8,18 +11,53 @@ struct WelcomeView: View {
     @State private var appeared = false
 
     var body: some View {
-        VStack(spacing: 0) {
-            Spacer(minLength: 12)
-            HeroGraphic()
-                .scaleEffect(appeared ? 1 : 0.94)
+        ZStack(alignment: .bottom) {
+            LoopingVideo(video: "welcome", poster: "welcome-poster.jpg")
+
+            // A light fade under the status bar and brand mark.
+            LinearGradient(colors: [.black.opacity(0.35), .black.opacity(0)], startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.18))
+                .ignoresSafeArea()
+
+            // Darkens the lower half so the text reads cleanly on any frame.
+            LinearGradient(
+                stops: [
+                    .init(color: .black.opacity(0), location: 0.35),
+                    .init(color: .black.opacity(0.55), location: 0.62),
+                    .init(color: .black.opacity(0.9), location: 1),
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
+
+            // Fine film grain: a gritty, filmic finish that also hides
+            // banding in the gradient.
+            Image(decorative: "Grain")
+                .resizable(resizingMode: .tile)
+                .blendMode(.overlay)
+                .opacity(0.22)
+                .ignoresSafeArea()
+                .allowsHitTesting(false)
+
+            // Brand mark, watermark-style, like a film title card.
+            Image(.launchLogo)
+                .resizable()
+                .scaledToFit()
+                .frame(height: 28)
+                .opacity(0.9)
+                .shadow(color: .black.opacity(0.3), radius: 8)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .padding(.horizontal, 24)
+                .padding(.top, 8)
                 .opacity(appeared ? 1 : 0)
-            Spacer(minLength: 24)
+                .accessibilityLabel("Kiki")
 
             VStack(spacing: 28) {
                 Text("Your AI\nrunning coach.")
                     .font(.system(size: 44, weight: .black).italic())
                     .multilineTextAlignment(.center)
                     .minimumScaleFactor(0.7)
+                    .shadow(color: .black.opacity(0.25), radius: 12, y: 4)
 
                 VStack(spacing: 16) {
                     PrimaryButton("Get started", action: onGetStarted)
@@ -35,10 +73,13 @@ struct WelcomeView: View {
             }
             .padding(.horizontal, 24)
             .padding(.bottom, 8)
+            .opacity(appeared ? 1 : 0)
+            .offset(y: appeared ? 0 : 16)
         }
-        .background(Color.paper)
+        .background(Color.black)
+        .environment(\.colorScheme, .dark)
         .onAppear {
-            withAnimation(.smooth(duration: 0.8)) { appeared = true }
+            withAnimation(.smooth(duration: 0.9).delay(0.15)) { appeared = true }
             Analytics.screen("Welcome")
         }
         .sheet(isPresented: $showSignIn) {
@@ -52,69 +93,5 @@ struct WelcomeView: View {
             .padding(24)
             .presentationDetents([.height(200)])
         }
-    }
-}
-
-/// A stylized "Today" screen that shows what Kiki does at a glance.
-private struct HeroGraphic: View {
-    var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Week 6 of 12").font(.caption.weight(.medium)).foregroundStyle(.secondary)
-                    Text("Today").font(.title2.weight(.bold))
-                }
-                Spacer()
-                KikiLogo(size: 36)
-            }
-            HStack(spacing: 0) {
-                ForEach(Array(["M", "T", "W", "T", "F", "S", "S"].enumerated()), id: \.offset) { index, day in
-                    VStack(spacing: 6) {
-                        Text(day).font(.caption2.weight(.medium)).foregroundStyle(.secondary)
-                        Circle()
-                            .fill(index == 3 ? Color.ink : index < 3 ? Color.wash : .clear)
-                            .overlay(Circle().stroke(Color.secondary.opacity(index > 3 ? 0.25 : 0)))
-                            .overlay {
-                                if index < 3 && index != 2 {
-                                    Image(systemName: "checkmark").font(.caption2.weight(.bold))
-                                }
-                            }
-                            .frame(width: 30, height: 30)
-                    }
-                    .frame(maxWidth: .infinity)
-                }
-            }
-            VStack(alignment: .leading, spacing: 10) {
-                Text("TEMPO").font(.caption.weight(.bold)).foregroundStyle(.paper.opacity(0.6))
-                Text("Tempo Run").font(.title2.weight(.bold))
-                HStack(spacing: 28) {
-                    VStack(alignment: .leading) {
-                        Text("8.0").font(.metric(.title))
-                        Text("km").font(.caption).foregroundStyle(.paper.opacity(0.6))
-                    }
-                    VStack(alignment: .leading) {
-                        Text("4:55").font(.metric(.title))
-                        Text("tempo /km").font(.caption).foregroundStyle(.paper.opacity(0.6))
-                    }
-                }
-                Text("Mark as done")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.ink)
-                    .frame(maxWidth: .infinity, minHeight: 40)
-                    .background(Color.paper, in: .capsule)
-                    .padding(.top, 4)
-            }
-            .foregroundStyle(.paper)
-            .padding(18)
-            .background(Color.ink, in: .rect(cornerRadius: 24))
-        }
-        .padding(20)
-        .frame(maxWidth: 300)
-        .background(Color.paper, in: .rect(cornerRadius: 36))
-        .overlay(RoundedRectangle(cornerRadius: 36).stroke(Color.primary.opacity(0.08)))
-        .shadow(color: .black.opacity(0.12), radius: 30, y: 20)
-        .rotationEffect(.degrees(-2))
-        .accessibilityElement()
-        .accessibilityLabel("Kiki shows today's workout and your week at a glance")
     }
 }
