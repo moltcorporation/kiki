@@ -14,7 +14,7 @@ struct PreferenceGroup<Content: View>: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 12) {
             if let title {
                 Text(title)
                     .font(.sectionTitle)

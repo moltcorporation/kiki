@@ -10,7 +10,7 @@ struct MainTabView: View {
     var body: some View {
         @Bindable var tracker = tracker
         TabView(selection: $tab) {
-            Tab("Today", systemImage: "sun.max.fill", value: .today) {
+            Tab("Home", systemImage: "house.fill", value: .today) {
                 TodayView()
             }
             Tab("Plan", systemImage: "calendar", value: .plan) {

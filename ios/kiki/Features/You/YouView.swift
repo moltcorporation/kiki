@@ -30,26 +30,17 @@ struct YouView: View {
 
     var body: some View {
         NavigationStack(path: $path) {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 32) {
-                    header
-                    goalSection
-                    if let profile = store.profile {
-                        trainingSection(profile)
-                        aboutSection(profile)
-                    }
-                    appSection
-                    accountSection
-                    footer
+            TabPage(.text("You")) {
+                profileCard
+                goalSection
+                if let profile = store.profile {
+                    trainingSection(profile)
+                    aboutSection(profile)
                 }
-                .padding(.horizontal, Metrics.screenMargin)
-                .padding(.top, 8)
-                .padding(.bottom, 32)
+                appSection
+                accountSection
+                footer
             }
-            .background { PageBackground() }
-            // No top bar: the profile header is the title.
-            .statusBarFade(.canvas)
-            .toolbarVisibility(.hidden, for: .navigationBar)
             .navigationDestination(for: Route.self) { route in
                 switch route {
                 case .goal: GoalDetailView(onEdit: startGoalEdit)
@@ -81,12 +72,13 @@ struct YouView: View {
 
     // MARK: Header
 
-    private var header: some View {
+    /// Photo, name and member-since in a standard card.
+    private var profileCard: some View {
         HStack(spacing: 16) {
-            ProfileAvatar(userID: auth.userID, name: store.profile?.firstName, size: 76)
+            ProfileAvatar(userID: auth.userID, name: store.profile?.firstName, size: 64)
             VStack(alignment: .leading, spacing: 4) {
                 Text(store.profile?.firstName ?? "Runner")
-                    .font(.screenTitle)
+                    .font(.title2.weight(.bold))
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
                 if let since = store.memberSince {
@@ -95,17 +87,17 @@ struct YouView: View {
                         .foregroundStyle(.muted)
                 }
             }
+            Spacer(minLength: 0)
         }
+        .padding(18)
+        .elevatedCard(cornerRadius: 24)
     }
 
     // MARK: Goal
 
     @ViewBuilder
     private var goalSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Your goal")
-                .font(.sectionTitle)
-                .padding(.horizontal, 4)
+        TabSection("Your goal") {
             if let plan = store.plan {
                 Button { path.append(.goal) } label: {
                     GoalCard(plan: plan, units: store.units)
@@ -254,7 +246,7 @@ struct YouView: View {
     }
 }
 
-/// The current goal as a dark card, like the Today workout card.
+/// The current goal in a standard card.
 private struct GoalCard: View {
     let plan: Plan
     let units: Units
@@ -272,21 +264,19 @@ private struct GoalCard: View {
                 ForEach(plan.goalDetails(units: units), id: \.self) { line in
                     Text(line)
                         .font(.subheadline)
-                        .foregroundStyle(.paper.opacity(0.7))
+                        .foregroundStyle(.muted)
                 }
             }
             Spacer(minLength: 8)
             Image(systemName: "chevron.right")
                 .font(.footnote.weight(.semibold))
-                .foregroundStyle(.paper.opacity(0.5))
+                .foregroundStyle(.tertiary)
                 .padding(.top, 6)
         }
-        .foregroundStyle(.paper)
+        .foregroundStyle(.ink)
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background { AsphaltBackground() }
-        .clipShape(.rect(cornerRadius: 24))
-        .shadow(color: .black.opacity(0.2), radius: 18, y: 8)
+        .elevatedCard(cornerRadius: 24)
         .accessibilityElement(children: .combine)
         .accessibilityHint("Shows your goal details")
     }

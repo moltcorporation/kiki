@@ -29,6 +29,10 @@ enum Metrics {
     /// Side margin for every screen (tabs and onboarding). The first
     /// element sits 8pt below the safe area.
     static let screenMargin: CGFloat = 20
+    /// Space between a tab's title and its first section.
+    static let titleSpacing: CGFloat = 16
+    /// Space between sections on a tab.
+    static let sectionSpacing: CGFloat = 28
 }
 
 enum Haptics {

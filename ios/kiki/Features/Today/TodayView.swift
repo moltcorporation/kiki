@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// Today: the goal countdown and progress, today's workout, and the next
-/// few days. Each block is a title above its card, all titles one size.
+/// Home: the goal countdown and progress, today's workout, and the next few
+/// days, on the shared tab layout.
 struct TodayView: View {
     @Environment(TrainingStore.self) private var store
     @Environment(RunTracker.self) private var tracker
@@ -13,22 +13,19 @@ struct TodayView: View {
         let units = store.units
 
         NavigationStack(path: $path) {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 28) {
-                    if let plan = store.plan {
-                        Section(greeting) {
-                            GoalProgressCard(plan: plan, units: units)
-                        }
-                    }
+            TabPage(.wordmark) {
+                if let plan = store.plan {
+                    GoalProgressCard(plan: plan, units: units)
+                }
 
-                    if let pending = store.pendingPlan, pending.status == .generating {
-                        Card {
-                            Label("Building your new plan…", systemImage: "sparkles")
-                                .font(.subheadline.weight(.semibold))
-                        }
+                if let pending = store.pendingPlan, pending.status == .generating {
+                    Card {
+                        Label("Building your new plan…", systemImage: "sparkles")
+                            .font(.subheadline.weight(.semibold))
                     }
+                }
 
-                    Section("Today") {
+                TabSection("Today") {
                     if let workout = store.workouts.first(where: { $0.date == .today }) {
                         WorkoutHeroCard(
                             workout: workout,
@@ -44,61 +41,42 @@ struct TodayView: View {
                     } else {
                         OutsidePlanCard(day: .today, plan: store.plan)
                     }
-                    }
-
-                    if !upcoming.isEmpty {
-                        Section("Upcoming") {
-                            UpcomingCard(workouts: upcoming, units: units)
-                        }
-                    }
-
-                    Button {
-                        sheet = .adjust
-                    } label: {
-                        HStack(spacing: 14) {
-                            Image(systemName: "sparkles")
-                                .font(.body.weight(.semibold))
-                                .frame(width: 40, height: 40)
-                                .background(Color.wash, in: .circle)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Adjust my plan").font(.body.weight(.semibold))
-                                Text("Tired, busy or sore? Tell Kiki.").font(.subheadline).foregroundStyle(.muted)
-                            }
-                            Spacer()
-                            Image(systemName: "chevron.right").foregroundStyle(.tertiary)
-                        }
-                        .foregroundStyle(.ink)
-                        .padding(14)
-                        .overlay(RoundedRectangle(cornerRadius: 20).stroke(Color.primary.opacity(0.1)))
-                    }
-                    .buttonStyle(.haptic)
                 }
-                .padding(.horizontal, Metrics.screenMargin)
-                .padding(.top, 8)
-                .padding(.bottom, 24)
+
+                if !upcoming.isEmpty {
+                    TabSection("Upcoming") {
+                        WorkoutListCard(workouts: upcoming, units: units)
+                    }
+                }
+
+                Button {
+                    sheet = .adjust
+                } label: {
+                    HStack(spacing: 14) {
+                        Image(systemName: "sparkles")
+                            .font(.body.weight(.semibold))
+                            .frame(width: 40, height: 40)
+                            .background(Color.wash, in: .circle)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Adjust my plan").font(.body.weight(.semibold))
+                            Text("Tired, busy or sore? Tell Kiki.").font(.subheadline).foregroundStyle(.muted)
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.right").foregroundStyle(.tertiary)
+                    }
+                    .foregroundStyle(.ink)
+                    .padding(14)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .elevatedCard(cornerRadius: 24)
+                }
+                .buttonStyle(.haptic)
             }
-            .background { PageBackground() }
             .refreshable { await store.refresh() }
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                // Wordmark centered in the bar; it stays put while scrolling.
-                ToolbarItem(placement: .principal) {
-                    Text("Kiki")
-                        .font(.system(size: 24, weight: .black).italic())
-                        .accessibilityAddTraits(.isHeader)
-                }
-            }
             .navigationDestination(for: Workout.self) { WorkoutDetailView(workoutID: $0.id) }
             .appSheets($sheet)
             .overlay(alignment: .bottom) { OfflineBanner() }
         }
-        .onAppear { Analytics.screen("Today") }
-    }
-
-    private var greeting: String {
-        let hour = Calendar.current.component(.hour, from: .now)
-        let part = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening"
-        return store.profile?.firstName.map { "\(part), \($0)!" } ?? "\(part)!"
+        .onAppear { Analytics.screen("Home") }
     }
 
     /// The next several days after today (rest days included, so the
@@ -108,31 +86,9 @@ struct TodayView: View {
     }
 }
 
-/// A block on Today: a title above its card(s). All titles share one size.
-private struct Section<Content: View>: View {
-    let title: String
-    @ViewBuilder let content: Content
-
-    init(_ title: String, @ViewBuilder content: () -> Content) {
-        self.title = title
-        self.content = content()
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(title)
-                .font(.sectionTitle)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
-                .padding(.horizontal, 4)
-                .accessibilityAddTraits(.isHeader)
-            content
-        }
-    }
-}
-
-/// The next few days in one card. Rows open the workout.
-private struct UpcomingCard: View {
+/// A list of workouts in one card (Home's Upcoming, each week on Plan).
+/// Rows open the workout.
+struct WorkoutListCard: View {
     let workouts: [Workout]
     let units: Units
 
