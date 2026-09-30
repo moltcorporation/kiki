@@ -373,19 +373,16 @@ struct OfflineBanner: View {
     }
 }
 
-/// A short note from Kiki (a sentence or two) in a square card.
+/// A short note from Kiki (a sentence or two) in a square card, in italics
+/// as the app speaking directly to the runner.
 private struct KikiNoteCard: View {
     let text: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 6) {
-                KikiLogo(size: 22)
-                Text("Kiki")
-                    .font(.system(size: 15, weight: .black).italic())
-            }
+        // No logo: the italic voice reads as Kiki speaking to the runner.
+        VStack(alignment: .leading, spacing: 0) {
             Text(text)
-                .font(.subheadline.weight(.medium))
+                .font(.body.weight(.medium).italic())
                 .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
         }
