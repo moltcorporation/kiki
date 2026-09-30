@@ -77,6 +77,7 @@ struct TodayView: View {
                 .padding(.top, 8)
                 .padding(.bottom, 24)
             }
+            .background { PageBackground() }
             .refreshable { await store.refresh() }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -151,7 +152,7 @@ private struct UpcomingCard: View {
         }
         .padding(8)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.wash, in: .rect(cornerRadius: 28))
+        .elevatedCard()
     }
 }
 
@@ -197,6 +198,7 @@ private struct GoalProgressCard: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background { AsphaltBackground() }
         .clipShape(.rect(cornerRadius: 28))
+        .shadow(color: .black.opacity(0.22), radius: 22, y: 10)
         .accessibilityElement(children: .combine)
     }
 
@@ -306,7 +308,8 @@ struct WorkoutHeroCard: View {
         .foregroundStyle(inverted ? Color.paper : Color.ink)
         .padding(22)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(inverted ? Color.ink : Color.wash, in: .rect(cornerRadius: 28))
+        .background(inverted ? Color.ink : Color.surface, in: .rect(cornerRadius: 28))
+        .shadow(color: .black.opacity(inverted ? 0.18 : 0.06), radius: 18, y: 8)
     }
 }
 
@@ -415,5 +418,32 @@ struct AsphaltBackground: View {
             guard !reduceMotion else { phase = 0.7; return }
             withAnimation(.easeInOut(duration: 12).repeatForever(autoreverses: true)) { phase = 1 }
         }
+    }
+}
+
+/// Today's page: a warm off-white canvas with a faint golden glow at the
+/// top, echoing the sunset from the welcome film. Adds warmth and depth
+/// without leaving the black-and-white brand.
+private struct PageBackground: View {
+    var body: some View {
+        ZStack(alignment: .top) {
+            Color.canvas
+            RadialGradient(
+                colors: [Color(red: 1, green: 0.78, blue: 0.5).opacity(0.22), .clear],
+                center: UnitPoint(x: 0.5, y: 0),
+                startRadius: 0,
+                endRadius: 460
+            )
+            .frame(height: 560)
+        }
+        .ignoresSafeArea()
+    }
+}
+
+extension View {
+    /// A white card lifted off the canvas with a soft shadow.
+    func elevatedCard(cornerRadius: CGFloat = 28) -> some View {
+        background(Color.surface, in: .rect(cornerRadius: cornerRadius))
+            .shadow(color: .black.opacity(0.06), radius: 18, y: 8)
     }
 }
