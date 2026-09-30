@@ -39,29 +39,52 @@ struct WelcomeView: View {
                 .ignoresSafeArea()
                 .allowsHitTesting(false)
 
+            // Soft corner vignette so the wordmark reads over the bright sky.
+            RadialGradient(
+                stops: [
+                    .init(color: .black.opacity(0.6), location: 0),
+                    .init(color: .black.opacity(0.3), location: 0.5),
+                    .init(color: .black.opacity(0), location: 1),
+                ],
+                center: .topLeading,
+                startRadius: 0,
+                endRadius: 320
+            )
+            .ignoresSafeArea()
+
+            // Wordmark top-left, set like the logo (heavy italic).
+            Text("Kiki")
+                .font(.system(size: 28, weight: .black).italic())
+                .shadow(color: .black.opacity(0.25), radius: 10)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .padding(.horizontal, 24)
+                .padding(.top, 8)
+                .opacity(appeared ? 1 : 0)
+
             // Spacing matches the onboarding footer (OnboardingScaffold) so
             // the buttons stay put when onboarding starts: 24pt side margins,
             // 4pt between the primary and secondary action, 8pt above the
             // home indicator, 44pt minimum tap targets.
-            VStack(spacing: 32) {
+            VStack(alignment: .leading, spacing: 32) {
                 Text("Your AI\nrunning coach.")
                     .font(.system(size: 44, weight: .black).italic())
-                    .multilineTextAlignment(.center)
+                    .multilineTextAlignment(.leading)
                     .minimumScaleFactor(0.7)
                     .shadow(color: .black.opacity(0.25), radius: 12, y: 4)
 
-                VStack(spacing: 4) {
+                VStack(alignment: .leading, spacing: 4) {
                     PrimaryButton("Get started", action: onGetStarted)
                     Button {
                         showSignIn = true
                     } label: {
                         Text("Already have an account? **Sign in**")
                             .foregroundStyle(.ink)
-                            .frame(maxWidth: .infinity, minHeight: 44)
+                            .frame(minHeight: 44)
                     }
                     .buttonStyle(.haptic)
                 }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 24)
             .padding(.bottom, 8)
             .opacity(appeared ? 1 : 0)
