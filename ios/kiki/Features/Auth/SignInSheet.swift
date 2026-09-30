@@ -1,8 +1,11 @@
+import AuthenticationServices
 import SwiftUI
 
 /// "Sign in" from the welcome screen: a bottom sheet in Kiki's style (solid
 /// white, large corners, our type) rather than the stock system look.
 struct SignInSheet: View {
+    @State private var contentHeight: CGFloat = 240
+
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             Text("Welcome back!")
@@ -18,19 +21,18 @@ struct SignInSheet: View {
                     .frame(maxWidth: .infinity)
             }
         }
-        .padding(.horizontal, 24)
-        .padding(.top, 32)
-        .padding(.bottom, 8)
+        .padding(24)
+        // Fit the sheet to its content.
+        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { contentHeight = $0 }
         .environment(\.colorScheme, .light)
-        .presentationDetents([.height(250)])
+        .presentationDetents([.height(contentHeight)])
         .presentationCornerRadius(32)
         .presentationBackground(Color.white)
         .presentationDragIndicator(.hidden)
         .onAppear { Analytics.screen("Sign In") }
     }
 
-    /// Gray sentence with bold, underlined links (same style as the consent
-    /// checkbox).
+    /// Gray sentence with dark, underlined links.
     private var termsNotice: AttributedString {
         func plain(_ text: String) -> AttributedString {
             var run = AttributedString(text)
@@ -41,7 +43,6 @@ struct SignInSheet: View {
             var run = AttributedString(text)
             run.link = url
             run.foregroundColor = .ink
-            run.font = .footnote.weight(.semibold)
             run.underlineStyle = .single
             return run
         }
