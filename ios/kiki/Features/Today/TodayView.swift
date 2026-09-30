@@ -94,7 +94,7 @@ struct TodayView: View {
     private var greeting: String {
         let hour = Calendar.current.component(.hour, from: .now)
         let part = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening"
-        return store.profile?.firstName.map { "\(part), \($0)" } ?? part
+        return store.profile?.firstName.map { "\(part), \($0)!" } ?? "\(part)!"
     }
 
     /// Week progress plus a countdown to the plan's final workout (race, time
