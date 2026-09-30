@@ -252,14 +252,17 @@ private struct GoalCard: View {
     let units: Units
 
     var body: some View {
-        HStack(alignment: .top, spacing: 14) {
+        // Mirrors the profile card: a 64pt dark circle, 16pt gap, 18pt padding.
+        HStack(alignment: .center, spacing: 16) {
             Image(systemName: plan.goalKind.icon)
-                .font(.title3.weight(.semibold))
-                .frame(width: 28)
+                .font(.title2.weight(.semibold))
+                .foregroundStyle(.paper)
+                .frame(width: 64, height: 64)
+                .background(Color.ink, in: .circle)
                 .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text(plan.displayName)
-                    .font(.title3.weight(.bold))
+                    .font(.title2.weight(.bold))
                     .multilineTextAlignment(.leading)
                 ForEach(plan.goalDetails(units: units), id: \.self) { line in
                     Text(line)
@@ -271,10 +274,9 @@ private struct GoalCard: View {
             Image(systemName: "chevron.right")
                 .font(.footnote.weight(.semibold))
                 .foregroundStyle(.tertiary)
-                .padding(.top, 6)
         }
         .foregroundStyle(.ink)
-        .padding(20)
+        .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
         .elevatedCard(cornerRadius: 24)
         .accessibilityElement(children: .combine)
