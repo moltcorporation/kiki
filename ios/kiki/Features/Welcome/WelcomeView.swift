@@ -44,14 +44,15 @@ struct WelcomeView: View {
             // 4pt between the primary and secondary action, 8pt above the
             // home indicator, 44pt minimum tap targets.
             VStack(spacing: 32) {
-                // The wordmark leads; the headline supports it in a calmer
-                // weight so the two don't compete.
+                // The headline leads; the wordmark is a small label above it,
+                // so size (not weight) sets the hierarchy.
                 VStack(spacing: 10) {
                     Text("Kiki")
-                        .font(.system(size: 40, weight: .black).italic())
+                        .font(.system(size: 20, weight: .black).italic())
+                        .opacity(0.8)
 
                     Text("Your AI\nrunning coach.")
-                        .font(.system(size: 28, weight: .semibold))
+                        .font(.system(size: 44, weight: .black).italic())
                         .multilineTextAlignment(.center)
                         .minimumScaleFactor(0.7)
                 }

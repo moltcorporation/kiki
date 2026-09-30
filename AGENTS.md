@@ -5,7 +5,7 @@ Kiki: AI running coach iOS app. Quiz onboarding â†’ AI-generated training plan â
 ## Brand
 - Look: black/white UI, premium and minimal. Photography and video bring warmth (golden-hour running footage), never the UI chrome.
 - Texture: gritty, asphalt-like film grain with a soft vignette (darker edges, gentle center glow). Used on the splash (`LaunchTexture`) and over the welcome video (`Grain`). Keep it subtle.
-- Welcome screen: centered; the wordmark leads (40pt black italic) above a calmer headline (28pt semibold, not italic), with the actions at the bottom over a dark gradient; top of the frame is pure footage. Footer spacing matches `OnboardingScaffold` (24pt sides, 4pt between actions, 8pt above the home indicator, 44pt tap targets).
+- Welcome screen: centered; the headline leads (44pt black italic) with the wordmark as a small label above it (20pt black italic, 80% opacity), actions at the bottom over a dark gradient; top of the frame is pure footage. Footer spacing matches `OnboardingScaffold` (24pt sides, 4pt between actions, 8pt above the home indicator, 44pt tap targets).
 - Website: dark by default (`--paper` #0B0C0E, `--ink` white), `.asphalt` texture on hero/feature bands, Inter (true black italic) for headlines. No pricing on the website.
 
 ### Logo specs
