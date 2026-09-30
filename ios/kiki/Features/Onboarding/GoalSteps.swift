@@ -94,7 +94,8 @@ struct RaceDateStep: View {
     var body: some View {
         @Bindable var model = model
         let date = model.answers.raceDate ?? model.suggestedRaceDate
-        let weeksAway = max(1, Day.today.days(until: date) / 7)
+        // Same count the summary and plan use (includes this week).
+        let weeks = GoalSummary(answers: model.answers, raceDate: date).weeks
 
         OnboardingScaffold(
             title: "When's your race?",
@@ -116,7 +117,7 @@ struct RaceDateStep: View {
                     Text(date.date, format: .dateTime.weekday(.abbreviated).month(.abbreviated).day())
                         .font(.metric(.largeTitle))
                         .contentTransition(.numericText())
-                    Text(weeksAway == 1 ? "1 week away" : "\(weeksAway) weeks away")
+                    Text(weeks == 1 ? "1 week to train" : "\(weeks) weeks to train")
                         .font(.headline)
                         .foregroundStyle(.secondary)
                         .contentTransition(.numericText())
