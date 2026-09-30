@@ -11,28 +11,42 @@ struct PlanView: View {
 
     var body: some View {
         NavigationStack {
-            Group {
-                switch mode {
-                case .week: WeekListView()
-                case .month: MonthCalendarView()
-                }
-            }
-            .navigationTitle(store.plan?.displayName ?? "Plan")
-            .navigationDestination(for: Workout.self) { WorkoutDetailView(workoutID: $0.id) }
-            .toolbar {
-                ToolbarItem(placement: .principal) {
+            // No top bar: the view switch and Adjust sit in a slim row.
+            VStack(spacing: 0) {
+                HStack {
                     Picker("View", selection: $mode) {
                         ForEach(Mode.allCases, id: \.self) { Text($0.rawValue).tag($0) }
                     }
                     .pickerStyle(.segmented)
                     .frame(width: 180)
                     .onChange(of: mode) { Haptics.select() }
+                    Spacer()
+                    Button { sheet = .adjust } label: {
+                        Image(systemName: "sparkles")
+                            .font(.body.weight(.semibold))
+                            .frame(width: 40, height: 40)
+                            .background(Color.wash, in: .circle)
+                            .frame(width: 44, height: 44)
+                            .contentShape(.circle)
+                    }
+                    .buttonStyle(.haptic)
+                    .foregroundStyle(.ink)
+                    .accessibilityLabel("Adjust plan")
                 }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Adjust plan", systemImage: "sparkles") { sheet = .adjust }
+                .padding(.horizontal, Metrics.screenMargin)
+                .padding(.top, 8)
+                .padding(.bottom, 4)
+
+                Group {
+                    switch mode {
+                    case .week: WeekListView()
+                    case .month: MonthCalendarView()
+                    }
                 }
             }
-            .navigationBarTitleDisplayMode(.inline)
+            .background(Color.paper)
+            .toolbarVisibility(.hidden, for: .navigationBar)
+            .navigationDestination(for: Workout.self) { WorkoutDetailView(workoutID: $0.id) }
             .appSheets($sheet)
         }
         .onAppear { Analytics.screen("Plan", ["mode": mode.rawValue]) }

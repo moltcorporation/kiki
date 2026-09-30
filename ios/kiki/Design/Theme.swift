@@ -246,3 +246,22 @@ struct KikiLogo: View {
             .accessibilityLabel("Kiki")
     }
 }
+
+/// For screens without a top bar: fades content out under the status bar as
+/// it scrolls, so rows never collide with the clock.
+struct StatusBarFade: ViewModifier {
+    func body(content: Content) -> some View {
+        content.overlay(alignment: .top) {
+            GeometryReader { proxy in
+                LinearGradient(colors: [.paper, .paper.opacity(0)], startPoint: .top, endPoint: .bottom)
+                    .frame(height: proxy.safeAreaInsets.top + 16)
+                    .offset(y: -proxy.safeAreaInsets.top)
+            }
+            .allowsHitTesting(false)
+        }
+    }
+}
+
+extension View {
+    func statusBarFade() -> some View { modifier(StatusBarFade()) }
+}

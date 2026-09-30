@@ -43,14 +43,13 @@ struct YouView: View {
                     footer
                 }
                 .padding(.horizontal, Metrics.screenMargin)
-                .padding(.top, 8)
+                .padding(.top, 16)
                 .padding(.bottom, 32)
             }
             .background(Color.paper)
-            // Same top bar as the other tabs: standard safe-area spacing and
-            // the system's scroll-edge fade under the status bar.
-            .navigationTitle("You")
-            .navigationBarTitleDisplayMode(.inline)
+            // No top bar: the profile header is the title.
+            .statusBarFade()
+            .toolbarVisibility(.hidden, for: .navigationBar)
             .navigationDestination(for: Route.self) { route in
                 switch route {
                 case .goal: GoalDetailView(onEdit: startGoalEdit)
