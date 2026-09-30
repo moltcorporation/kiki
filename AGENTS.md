@@ -2,6 +2,12 @@
 
 Kiki: AI running coach iOS app. Quiz onboarding → AI-generated training plan → paywall → daily coaching. Black/white brand, premium minimal UI.
 
+## Brand
+- Look: black/white UI, premium and minimal. Photography and video bring warmth (golden-hour running footage), never the UI chrome.
+- Texture: gritty, asphalt-like film grain with a soft vignette (darker edges, gentle center glow). Used on the splash (`LaunchTexture`) and over the welcome video (`Grain`). Keep it subtle.
+- Logo: "Kiki" wordmark in SF heavy (black) italic, white on dark (`LaunchWordmark`; in SwiftUI `.system(weight: .black).italic()`). The app icon is a white italic K on `#15181D`.
+- Layout on marketing-style screens: left-aligned, wordmark top-left, generous margins (24pt), headline and actions at the bottom over a dark gradient.
+
 ## Layout
 - `nextjs/` Next.js 16 app: marketing site (`app/(site)`), REST API (`app/api`), durable AI workflows (`workflows/`). Deployed on Vercel (project `kiki`, team `moltcorporation`), domain kikirunning.com. Push to `main` = production deploy.
 - `ios/` SwiftUI app (iOS 26.5+, iPhone only, portrait). Targets: `kiki` (bundle `com.moltcorporation.kiki`), `KikiWidgets` (Live Activity). `ios/Shared/` is compiled into both. Folders are file-system synchronized: new files are picked up automatically.
