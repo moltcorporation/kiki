@@ -112,39 +112,44 @@ struct YouView: View {
     // MARK: Preferences
 
     private func trainingSection(_ profile: Profile) -> some View {
-        TileGroup("Your training") {
-            PreferenceTile(icon: "figure.run", label: "Experience", value: profile.experience.title) {
+        PreferenceGroup("Your training") {
+            PreferenceRow(icon: "figure.run", label: "Experience", value: profile.experience.title) {
                 path.append(.edit(.experience))
             }
             if profile.experience != .new {
-                PreferenceTile(icon: "chart.bar", label: "Weekly distance",
-                               value: Format.distance(Double(profile.weeklyDistanceM), store.units, decimals: 0)) {
+                PreferenceRow(icon: "chart.bar", label: "Weekly distance",
+                              value: Format.distance(Double(profile.weeklyDistanceM), store.units, decimals: 0)) {
                     path.append(.edit(.weeklyVolume))
                 }
             }
-            PreferenceTile(icon: "calendar", label: "Run days", value: RunDaysSelector.summary(profile.runDays)) {
+            PreferenceRow(icon: "calendar", label: "Run days", value: RunDaysSelector.summary(profile.runDays)) {
                 path.append(.edit(.runDays))
             }
-            PreferenceTile(icon: (profile.coachingStyle ?? .balanced).icon, label: "Coaching style",
-                           value: (profile.coachingStyle ?? .balanced).title) {
+            PreferenceRow(icon: (profile.coachingStyle ?? .balanced).icon, label: "Coaching style",
+                          value: (profile.coachingStyle ?? .balanced).title) {
                 path.append(.edit(.coachingStyle))
+            }
+            PreferenceRow(icon: "list.bullet", label: "Run history",
+                          value: store.runs.isEmpty ? "None yet" : "\(store.runs.count)", showsDivider: false) {
+                path.append(.runs)
             }
         }
     }
 
     private func aboutSection(_ profile: Profile) -> some View {
         let bodyUnits = BodyUnits.resolve(bodyUnitsStored, default: store.units)
-        return TileGroup("About you") {
-            PreferenceTile(icon: "person", label: "Name", value: profile.firstName ?? "Add") {
+        return PreferenceGroup("About you") {
+            PreferenceRow(icon: "person", label: "Name", value: profile.firstName ?? "Add") {
                 path.append(.edit(.name))
             }
-            PreferenceTile(icon: "birthday.cake", label: "Age", value: profile.age.map(String.init) ?? "Add") {
+            PreferenceRow(icon: "birthday.cake", label: "Age", value: profile.age.map(String.init) ?? "Add") {
                 path.append(.edit(.age))
             }
-            PreferenceTile(icon: "ruler", label: "Height", value: profile.heightCm.map { Format.height($0, bodyUnits) } ?? "Add") {
+            PreferenceRow(icon: "ruler", label: "Height", value: profile.heightCm.map { Format.height($0, bodyUnits) } ?? "Add") {
                 path.append(.edit(.height))
             }
-            PreferenceTile(icon: "scalemass", label: "Weight", value: profile.weightKg.map { Format.weight($0, bodyUnits) } ?? "Add") {
+            PreferenceRow(icon: "scalemass", label: "Weight", value: profile.weightKg.map { Format.weight($0, bodyUnits) } ?? "Add",
+                          showsDivider: false) {
                 path.append(.edit(.weight))
             }
         }
@@ -152,11 +157,7 @@ struct YouView: View {
 
     private var appSection: some View {
         PreferenceGroup("App") {
-            PreferenceRow(icon: "list.bullet", label: "Run history",
-                          value: store.runs.isEmpty ? "None yet" : "\(store.runs.count)") {
-                path.append(.runs)
-            }
-            PreferenceRow(icon: "ruler", label: "Units", value: store.units.title) {
+            PreferenceRow(icon: "ruler.fill", label: "Units", value: store.units.title) {
                 path.append(.edit(.units))
             }
             PreferenceToggleRow(icon: "bell", label: "Run day reminders", isOn: $remindersEnabled)
