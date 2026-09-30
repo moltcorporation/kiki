@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// "I already have an account": a full screen in the onboarding style,
+/// "Sign in" from the welcome screen: a full screen in the onboarding style,
 /// pushed from the welcome screen. Sign in with Apple sits where Continue
 /// does in onboarding.
 struct SignInScreen: View {
@@ -13,7 +13,7 @@ struct SignInScreen: View {
                 .padding(.top, 4)
 
             VStack(alignment: .leading, spacing: 12) {
-                Text("Sign in to Kiki")
+                Text("Welcome back!")
                     .font(.system(.largeTitle, weight: .bold))
                 Text("Pick up right where you left off.")
                     .foregroundStyle(.secondary)

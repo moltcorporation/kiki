@@ -82,7 +82,7 @@ struct WelcomeView: View {
                     Button {
                         onSignIn()
                     } label: {
-                        Text("I already have an account")
+                        Text("Sign in")
                             .font(.headline)
                             .foregroundStyle(.ink)
                             .frame(maxWidth: .infinity, minHeight: 56)
