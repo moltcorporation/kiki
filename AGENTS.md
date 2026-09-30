@@ -10,7 +10,7 @@ Kiki: AI running coach iOS app. Quiz onboarding → AI-generated training plan �
 
 - Voice: ask and speak like a coach would. Natural, concise, direct and simple: "Which race are you training for?", not "What distance is your race?". Short subtitles, no filler, no jargon. Keep it warm and positive (e.g. "Sign in", "Welcome back!").
 
-- App chrome: only Today has a top bar, with the Kiki wordmark centered (home-tab pattern). Plan and You have no top bar (their content is the header) and use `.statusBarFade()` so rows fade under the clock. Every screen (tabs, onboarding, welcome) uses a 20pt side margin (`Metrics.screenMargin`), and the first element sits 8pt below the safe area (Apple HIG: stay in the safe area, standard margins, 8pt grid). Screen titles are our own `Text` in `.screenTitle`, not system large titles, so they align to the margin.
+- App chrome: no tab has a top bar. Today starts with the Kiki wordmark top-left as its title (Apple Fitness pattern), then titled cards; Plan and You start with their own header. All use `.statusBarFade()` so rows fade under the clock. Every screen (tabs, onboarding, welcome) uses a 20pt side margin (`Metrics.screenMargin`), and the first element sits 8pt below the safe area (Apple HIG: stay in the safe area, standard margins, 8pt grid). Screen titles are our own `Text` in `.screenTitle`, not system large titles, so they align to the margin.
 
 ### Logo specs
 - Wordmark: "Kiki" (one word, capital K, never all caps). SF Pro, Black (900) weight, italic; default tracking. SwiftUI: `.font(.system(size: …, weight: .black).italic())`.
