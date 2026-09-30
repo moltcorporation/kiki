@@ -5,12 +5,12 @@ import SwiftUI
 /// appearance, so the brand colors invert to white on the footage.
 struct WelcomeView: View {
     let onGetStarted: () -> Void
-    let onSignIn: () -> Void
 
     /// The entrance plays once per launch; coming back from onboarding the
     /// screen slides in already settled.
     private static var didPlayEntrance = false
     @State private var appeared = WelcomeView.didPlayEntrance
+    @State private var showSignIn = false
     /// The headline follows the user's text size; the wordmark is a logo
     /// and stays fixed.
     @ScaledMetric(relativeTo: .largeTitle) private var headlineSize = 44
@@ -80,7 +80,7 @@ struct WelcomeView: View {
                     PrimaryButton("Get started", action: onGetStarted)
                     // Secondary: same size, translucent so "Get started" leads.
                     Button {
-                        onSignIn()
+                        showSignIn = true
                     } label: {
                         Text("Sign in")
                             .font(.headline)
@@ -100,6 +100,9 @@ struct WelcomeView: View {
         }
         .background(Color.black)
         .environment(\.colorScheme, .dark)
+        .sheet(isPresented: $showSignIn) {
+            SignInSheet()
+        }
         .onAppear {
             if !Self.didPlayEntrance {
                 Self.didPlayEntrance = true

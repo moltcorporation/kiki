@@ -6,16 +6,14 @@ struct RootView: View {
     @Environment(TrainingStore.self) private var store
     @Environment(Subscriptions.self) private var subscriptions
     @Environment(OnboardingModel.self) private var onboarding
-    /// "Sign in" was tapped on the welcome screen.
-    @State private var isSigningIn = false
 
     private enum Route: Equatable {
-        case welcome, signIn, onboarding, loading, consent, needsPlan, paywall, main
+        case welcome, onboarding, loading, consent, needsPlan, paywall, main
     }
 
     private var route: Route {
         if !onboarding.path.isEmpty { return .onboarding }
-        if !auth.isSignedIn { return isSigningIn ? .signIn : .welcome }
+        if !auth.isSignedIn { return .welcome }
         if !store.hasLoaded || !subscriptions.hasLoaded { return .loading }
         if store.needsConsent { return .consent }
         if store.plan == nil { return .needsPlan }
@@ -23,11 +21,11 @@ struct RootView: View {
         return .main
     }
 
-    /// Welcome ↔ onboarding (and ↔ sign in) uses the native iOS navigation
-    /// push: the next screen slides over from the right while welcome tucks underneath
+    /// Welcome ↔ onboarding uses the native iOS navigation push: onboarding
+    /// slides over from the right while the welcome screen tucks underneath
     /// (a little to the left, dimmed); back is the exact reverse.
     /// Other route changes fade.
-    private var isWelcomeHop: Bool { [.welcome, .onboarding, .signIn].contains(route) }
+    private var isWelcomeHop: Bool { route == .welcome || route == .onboarding }
 
     private var routeAnimation: Animation {
         isWelcomeHop ? .smooth(duration: 0.45) : .smooth
@@ -37,12 +35,8 @@ struct RootView: View {
         ZStack {
             switch route {
             case .welcome:
-                WelcomeView(onGetStarted: onboarding.start, onSignIn: { isSigningIn = true })
+                WelcomeView(onGetStarted: onboarding.start)
                     .transition(isWelcomeHop ? .underneath : .opacity)
-            case .signIn:
-                SignInScreen(onBack: { isSigningIn = false })
-                    .transition(isWelcomeHop ? .onTop : .opacity)
-                    .zIndex(1)
             case .onboarding:
                 OnboardingFlow()
                     .transition(isWelcomeHop ? .onTop : .opacity)
@@ -61,7 +55,6 @@ struct RootView: View {
         .animation(routeAnimation, value: route)
         .task(id: auth.isSignedIn) {
             guard let userID = auth.userID else { return }
-            isSigningIn = false
             Identity.ensureIdentified(userID: userID, email: auth.email)
             await auth.recordPendingConsent()
             onboarding.isSignedIn = true

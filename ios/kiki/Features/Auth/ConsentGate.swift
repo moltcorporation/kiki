@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Asks a signed-in runner to agree to the Terms and Privacy Policy when the
 /// server has no agreement on record: an account created from the welcome
-/// "Sign in" instead of onboarding.
+/// sign-in sheet instead of onboarding.
 struct ConsentGate: View {
     @Environment(AuthService.self) private var auth
     @Environment(TrainingStore.self) private var store

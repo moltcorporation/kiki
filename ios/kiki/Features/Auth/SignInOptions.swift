@@ -12,6 +12,9 @@ struct SignInOptions: View {
     /// "Sign in") skip it; if the account turns out to be new or the Terms
     /// changed, `ConsentGate` asks after sign-in instead.
     var requiresConsent = true
+    /// Apple's approved button label: "Continue with Apple" for new
+    /// runners, "Sign in with Apple" for returning ones.
+    var label: SignInWithAppleButton.Label = .continue
     let onSignedIn: () -> Void
 
     @State private var agreed = false
@@ -47,7 +50,7 @@ struct SignInOptions: View {
     }
 
     private var appleButton: some View {
-        SignInWithAppleButton(.continue) { request in
+        SignInWithAppleButton(label) { request in
             if requiresConsent { auth.noteConsent() }
             auth.prepareAppleRequest(request)
         } onCompletion: { result in
