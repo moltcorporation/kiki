@@ -1,29 +1,23 @@
 import SwiftUI
 
+/// Today: the goal countdown and progress, a note from Kiki, today's
+/// workout, and the next few days.
 struct TodayView: View {
     @Environment(TrainingStore.self) private var store
     @Environment(RunTracker.self) private var tracker
 
-    @State private var selected = Day.today
     @State private var sheet: AppSheet?
     @State private var path: [Workout] = []
 
     var body: some View {
         let units = store.units
-        let weekDays = (0..<7).map { selected.mondayOfWeek.adding(days: $0) }
 
         NavigationStack(path: $path) {
             ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(greeting)
-                            .font(.screenTitle)
-                            .accessibilityAddTraits(.isHeader)
-                        header
+                VStack(alignment: .leading, spacing: 28) {
+                    if let plan = store.plan {
+                        GoalProgressCard(plan: plan, units: units)
                     }
-
-                    // Placeholder until the coach writes daily messages.
-                    CoachMessage(text: "Rest up today, Sam. Tomorrow's tempo run is your first real test, and you're ready for it.")
 
                     if let pending = store.pendingPlan, pending.status == .generating {
                         Card {
@@ -32,37 +26,45 @@ struct TodayView: View {
                         }
                     }
 
-                    WeekStrip(days: weekDays, workouts: store.workouts, selected: $selected)
-                        .gesture(DragGesture(minimumDistance: 30).onEnded { value in
-                            let delta = value.translation.width < 0 ? 7 : -7
-                            withAnimation(.snappy) { selected = selected.adding(days: delta) }
-                            Haptics.select()
-                        })
-
-                    if let workout = store.workouts.first(where: { $0.date == selected }) {
-                        WorkoutHeroCard(
-                            workout: workout,
-                            run: store.run(for: workout),
-                            units: units,
-                            paces: store.plan?.paces,
-                            onDone: { sheet = .log(workout, store.run(for: workout)) },
-                            onStart: selected == .today && !workout.isRest ? { tracker.start(for: workout) } : nil
-                        )
-                        .contentShape(.rect(cornerRadius: 28))
-                        .onTapGesture { path.append(workout) }
-                        .accessibilityAction(named: "Show details") { path.append(workout) }
-                    } else {
-                        OutsidePlanCard(day: selected, plan: store.plan)
+                    VStack(alignment: .leading, spacing: 14) {
+                        Text(greeting)
+                            .font(.screenTitle)
+                            .accessibilityAddTraits(.isHeader)
+                        // Placeholder until the coach writes daily messages.
+                        CoachMessage(text: "Rest up today, Sam. Tomorrow's tempo run is your first real test, and you're ready for it.")
                     }
 
-                    if selected == .today, let next = store.nextRun {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Up next").font(.headline)
-                            NavigationLink(value: next) {
-                                WorkoutRow(workout: next, units: units)
-                                    .background(Color.wash, in: .rect(cornerRadius: 18))
+                    VStack(alignment: .leading, spacing: 12) {
+                        SectionTitle("Today")
+                        if let workout = store.workouts.first(where: { $0.date == .today }) {
+                            WorkoutHeroCard(
+                                workout: workout,
+                                run: store.run(for: workout),
+                                units: units,
+                                paces: store.plan?.paces,
+                                onDone: { sheet = .log(workout, store.run(for: workout)) },
+                                onStart: workout.isRest ? nil : { tracker.start(for: workout) }
+                            )
+                            .contentShape(.rect(cornerRadius: 28))
+                            .onTapGesture { path.append(workout) }
+                            .accessibilityAction(named: "Show details") { path.append(workout) }
+                        } else {
+                            OutsidePlanCard(day: .today, plan: store.plan)
+                        }
+                    }
+
+                    if !upcoming.isEmpty {
+                        VStack(alignment: .leading, spacing: 12) {
+                            SectionTitle("Upcoming")
+                            VStack(spacing: 8) {
+                                ForEach(upcoming) { workout in
+                                    NavigationLink(value: workout) {
+                                        WorkoutRow(workout: workout, units: units)
+                                            .background(Color.wash, in: .rect(cornerRadius: 18))
+                                    }
+                                    .buttonStyle(.plain)
+                                }
                             }
-                            .buttonStyle(.plain)
                         }
                     }
 
@@ -88,6 +90,7 @@ struct TodayView: View {
                     .buttonStyle(.haptic)
                 }
                 .padding(.horizontal, Metrics.screenMargin)
+                .padding(.top, 8)
                 .padding(.bottom, 24)
             }
             .refreshable { await store.refresh() }
@@ -113,27 +116,75 @@ struct TodayView: View {
         return store.profile?.firstName.map { "\(part), \($0)!" } ?? "\(part)!"
     }
 
-    /// Week progress plus a countdown to the plan's final workout (race, time
-    /// trial or goal run), whatever the goal.
-    @ViewBuilder
-    private var header: some View {
-        if store.plan != nil {
+    /// The next several days after today (rest days included, so the
+    /// runner sees the shape of the week).
+    private var upcoming: [Workout] {
+        Array(store.workouts.filter { $0.date > .today }.prefix(5))
+    }
+}
+
+/// A section heading on Today.
+private struct SectionTitle: View {
+    let text: LocalizedStringKey
+    init(_ text: LocalizedStringKey) { self.text = text }
+
+    var body: some View {
+        Text(text)
+            .font(.sectionTitle)
+            .accessibilityAddTraits(.isHeader)
+    }
+}
+
+/// The first thing on Today: a countdown to the goal and progress so far.
+private struct GoalProgressCard: View {
+    @Environment(TrainingStore.self) private var store
+    let plan: Plan
+    let units: Units
+
+    var body: some View {
+        let finale = store.workouts.last { $0.type == .race }
+        let endDate = finale?.date ?? plan.raceDate
+        let daysLeft = max(0, Day.today.days(until: endDate))
+        let planRuns = store.runs.filter { Day($0.startedAt) >= plan.startDate }
+        let distance = planRuns.reduce(0) { $0 + $1.distanceM }
+
+        VStack(alignment: .leading, spacing: 18) {
             VStack(alignment: .leading, spacing: 4) {
-                if let week = store.currentWeekNumber {
-                    Text("Week \(week) of \(store.totalWeeks)")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.secondary)
-                }
-                if let finale = store.workouts.last(where: { $0.type == .race }) {
-                    let daysLeft = Day.today.days(until: finale.date)
-                    if daysLeft >= 0 {
-                        Text(daysLeft == 0 ? "\(finale.title) is today 🏁" : "\(daysLeft) days to your \(finale.title)")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                Text(finale?.title ?? plan.displayName)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.paper.opacity(0.7))
+                    .lineLimit(1)
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Text(daysLeft == 0 ? "Today" : "\(daysLeft)")
+                        .font(.metric(.largeTitle))
+                        .contentTransition(.numericText())
+                    if daysLeft > 0 {
+                        Text(daysLeft == 1 ? "day to go" : "days to go")
+                            .font(.headline)
+                            .foregroundStyle(.paper.opacity(0.7))
                     }
                 }
             }
+
+            HStack(spacing: 0) {
+                stat(value: "\(planRuns.count)", label: planRuns.count == 1 ? "run" : "runs")
+                stat(value: Format.distanceNumber(distance, units, decimals: 1), label: units == .mi ? "miles" : "km")
+                stat(value: store.currentWeekNumber.map { "\($0)/\(store.totalWeeks)" } ?? "–", label: "week")
+            }
         }
+        .foregroundStyle(.paper)
+        .padding(20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.ink, in: .rect(cornerRadius: 28))
+        .accessibilityElement(children: .combine)
+    }
+
+    private func stat(value: String, label: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(value).font(.metric(.title3))
+            Text(label).font(.caption).foregroundStyle(.paper.opacity(0.6))
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
