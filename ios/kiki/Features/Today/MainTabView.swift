@@ -20,7 +20,6 @@ struct MainTabView: View {
                 YouView()
             }
         }
-        .tabBarMinimizeBehavior(.onScrollDown)
         .onChange(of: tab) { Haptics.select() }
         .fullScreenCover(isPresented: $tracker.isPresented) {
             RunTrackerView()
