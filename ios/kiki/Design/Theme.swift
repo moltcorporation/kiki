@@ -277,7 +277,7 @@ struct PageBackground: View {
         ZStack(alignment: .top) {
             Color.canvas
             RadialGradient(
-                colors: [Color(red: 1, green: 0.84, blue: 0.62).opacity(0.1), .clear],
+                colors: [Color(red: 1, green: 0.86, blue: 0.66).opacity(0.07), .clear],
                 center: UnitPoint(x: 0.5, y: 0),
                 startRadius: 0,
                 endRadius: 520
