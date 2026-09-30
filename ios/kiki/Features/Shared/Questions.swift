@@ -190,41 +190,82 @@ struct AgeInput: View {
     }
 }
 
-struct HeightInput: View {
-    @Binding var heightCm: Double
-    let units: Units
+/// Units for height and weight. They follow the runner's distance units
+/// (miles -> ft/lb, kilometers -> cm/kg) until switched, and one switch
+/// applies to both. Values are always stored metric; only display converts.
+enum BodyUnits {
+    static let storageKey = "bodyUnits"
+
+    static func resolve(_ stored: String, default distanceUnits: Units) -> Units {
+        Units(rawValue: stored) ?? distanceUnits
+    }
+}
+
+/// Small imperial/metric switch shown above a body input.
+private struct BodyUnitsPicker: View {
+    @Binding var stored: String
+    let current: Units
+    let imperial: String
+    let metric: String
 
     var body: some View {
-        if units == .mi {
-            RulerPicker(
-                value: Binding(get: { Int((heightCm / 2.54).rounded()) }, set: { heightCm = Double($0) * 2.54 }),
-                range: 48...90,
-                majorEvery: 12
-            ) { "\($0 / 12)′ \($0 % 12)″" }
-        } else {
-            RulerPicker(
-                value: Binding(get: { Int(heightCm.rounded()) }, set: { heightCm = Double($0) }),
-                range: 120...220
-            ) { "\($0) cm" }
+        Picker("Units", selection: Binding(get: { current }, set: { stored = $0.rawValue })) {
+            Text(imperial).tag(Units.mi)
+            Text(metric).tag(Units.km)
+        }
+        .pickerStyle(.segmented)
+        .frame(width: 180)
+        .onChange(of: current) { Haptics.select() }
+    }
+}
+
+struct HeightInput: View {
+    @Binding var heightCm: Double
+    /// The runner's distance units; height follows them unless switched.
+    let units: Units
+    @AppStorage(BodyUnits.storageKey) private var stored = ""
+
+    var body: some View {
+        let bodyUnits = BodyUnits.resolve(stored, default: units)
+        VStack(spacing: 32) {
+            BodyUnitsPicker(stored: $stored, current: bodyUnits, imperial: "ft / in", metric: "cm")
+            if bodyUnits == .mi {
+                RulerPicker(
+                    value: Binding(get: { Int((heightCm / 2.54).rounded()) }, set: { heightCm = Double($0) * 2.54 }),
+                    range: 48...90,
+                    majorEvery: 12
+                ) { "\($0 / 12)′ \($0 % 12)″" }
+            } else {
+                RulerPicker(
+                    value: Binding(get: { Int(heightCm.rounded()) }, set: { heightCm = Double($0) }),
+                    range: 120...220
+                ) { "\($0) cm" }
+            }
         }
     }
 }
 
 struct WeightInput: View {
     @Binding var weightKg: Double
+    /// The runner's distance units; weight follows them unless switched.
     let units: Units
+    @AppStorage(BodyUnits.storageKey) private var stored = ""
 
     var body: some View {
-        if units == .mi {
-            RulerPicker(
-                value: Binding(get: { Int((weightKg / 0.453592).rounded()) }, set: { weightKg = Double($0) * 0.453592 }),
-                range: 80...400
-            ) { "\($0) lb" }
-        } else {
-            RulerPicker(
-                value: Binding(get: { Int(weightKg.rounded()) }, set: { weightKg = Double($0) }),
-                range: 35...180
-            ) { "\($0) kg" }
+        let bodyUnits = BodyUnits.resolve(stored, default: units)
+        VStack(spacing: 32) {
+            BodyUnitsPicker(stored: $stored, current: bodyUnits, imperial: "lb", metric: "kg")
+            if bodyUnits == .mi {
+                RulerPicker(
+                    value: Binding(get: { Int((weightKg / 0.453592).rounded()) }, set: { weightKg = Double($0) * 0.453592 }),
+                    range: 80...400
+                ) { "\($0) lb" }
+            } else {
+                RulerPicker(
+                    value: Binding(get: { Int(weightKg.rounded()) }, set: { weightKg = Double($0) }),
+                    range: 35...180
+                ) { "\($0) kg" }
+            }
         }
     }
 }

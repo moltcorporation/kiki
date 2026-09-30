@@ -223,12 +223,20 @@ struct SummaryStep: View {
             subtitle: "You can change any of this later in the You tab.",
             continueTitle: "Looks good"
         ) {
+            // Each row is tappable: it reopens that question and comes back.
+            let timelineStep: OnboardingModel.Step? = switch summary.kind {
+            case .race: .raceDate
+            case .faster: .timeframe
+            case .start, .fit: nil   // fixed length
+            }
             VStack(spacing: 0) {
-                SummaryRow(symbol: "target", label: "Goal", value: summary.goalLine)
-                SummaryRow(symbol: "calendar", label: "Timeline", value: summary.timelineLine)
-                SummaryRow(symbol: "figure.run", label: "Experience", value: (answers.experience ?? .new).title)
-                SummaryRow(symbol: "clock", label: "Run days", value: RunDaysSelector.summary(answers.runDays))
-                SummaryRow(symbol: (answers.coachingStyle ?? .balanced).icon, label: "Coaching", value: (answers.coachingStyle ?? .balanced).title, isLast: true)
+                SummaryRow(symbol: "target", label: "Goal", value: summary.goalLine) { model.edit(.goal) }
+                SummaryRow(symbol: "calendar", label: "Timeline", value: summary.timelineLine,
+                           action: timelineStep.map { step in { model.edit(step) } })
+                SummaryRow(symbol: "figure.run", label: "Experience", value: (answers.experience ?? .new).title) { model.edit(.experience) }
+                SummaryRow(symbol: "clock", label: "Run days", value: RunDaysSelector.summary(answers.runDays)) { model.edit(.runDays) }
+                SummaryRow(symbol: (answers.coachingStyle ?? .balanced).icon, label: "Coaching",
+                           value: (answers.coachingStyle ?? .balanced).title, isLast: true) { model.edit(.coachingStyle) }
             }
             .background(Color.wash, in: .rect(cornerRadius: 24))
         }
@@ -239,23 +247,38 @@ struct SummaryStep: View {
         let label: String
         let value: String
         var isLast = false
+        var action: (() -> Void)?
 
         var body: some View {
             VStack(spacing: 0) {
-                HStack(spacing: 14) {
-                    Image(systemName: symbol)
-                        .font(.body.weight(.semibold))
-                        .frame(width: 28)
-                        .accessibilityHidden(true)
-                    Text(label).foregroundStyle(.secondary)
-                    Spacer()
-                    Text(value).font(.body.weight(.semibold)).multilineTextAlignment(.trailing)
+                Button {
+                    action?()
+                } label: {
+                    HStack(spacing: 14) {
+                        Image(systemName: symbol)
+                            .font(.body.weight(.semibold))
+                            .frame(width: 28)
+                            .accessibilityHidden(true)
+                        Text(label).foregroundStyle(.secondary)
+                        Spacer()
+                        Text(value).font(.body.weight(.semibold)).multilineTextAlignment(.trailing)
+                        if action != nil {
+                            Image(systemName: "chevron.right")
+                                .font(.footnote.weight(.semibold))
+                                .foregroundStyle(.tertiary)
+                                .accessibilityHidden(true)
+                        }
+                    }
+                    .padding(.horizontal, 18)
+                    .padding(.vertical, 16)
+                    .contentShape(.rect)
                 }
-                .padding(.horizontal, 18)
-                .padding(.vertical, 16)
+                .buttonStyle(.haptic)
+                .foregroundStyle(.ink)
+                .disabled(action == nil)
+                .accessibilityHint(action == nil ? "" : "Double-tap to change")
                 if !isLast { Divider().padding(.leading, 60) }
             }
-            .accessibilityElement(children: .combine)
         }
     }
 }

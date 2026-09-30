@@ -163,6 +163,20 @@ final class OnboardingModel {
         let steps = flow
         guard let index = steps.firstIndex(of: current), index + 1 < steps.count else { return }
         let from = current
+        // Revisiting from the summary: finish this question's group (e.g. a
+        // new goal's distance and date), then go straight back.
+        if isEditingFromSummary, let summaryIndex = path.lastIndex(of: .summary) {
+            let group = Self.groups.first { $0.contains(from) } ?? [from]
+            if let next = steps[(index + 1)...].first(where: { group.contains($0) }) {
+                navigate(.forward) { [self] in path.append(next) }
+            } else {
+                navigate(.backward) { [self] in
+                    path.removeSubrange((summaryIndex + 1)...)
+                    isEditingFromSummary = false
+                }
+            }
+            return
+        }
         navigate(.forward) { [self] in
             Analytics.track("onboarding_step_completed", ["step": from.rawValue, "mode": mode == .full ? "full" : "new_goal"])
             path.append(steps[index + 1])
@@ -183,11 +197,30 @@ final class OnboardingModel {
             while path.count > 1, let last = path.last, !flow.contains(last) {
                 path.removeLast()
             }
+            if current == .summary { isEditingFromSummary = false }
         }
     }
 
     func go(to step: Step) {
         navigate(.forward) { [self] in path.append(step) }
+    }
+
+    // MARK: Editing from the summary
+
+    /// Questions that belong together: editing one walks through the rest
+    /// of its group that still applies, then returns to the summary.
+    private static let groups: [Set<Step>] = [
+        [.goal, .distance, .raceDate, .raceGoal, .goalTime, .timeframe],
+        [.experience, .weeklyVolume],
+    ]
+
+    /// True while revisiting a question from the summary.
+    private(set) var isEditingFromSummary = false
+
+    func edit(_ step: Step) {
+        isEditingFromSummary = true
+        go(to: step)
+        Analytics.track("onboarding_summary_edit", ["step": step.rawValue])
     }
 
     /// Ends onboarding once the plan is ready.

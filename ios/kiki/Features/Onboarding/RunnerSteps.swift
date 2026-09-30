@@ -141,7 +141,7 @@ struct HeightStep: View {
         let height = Binding(get: { model.answers.heightCm ?? Defaults.heightCm }, set: { model.answers.heightCm = $0 })
         OnboardingScaffold(
             title: "How tall are you?",
-            subtitle: "Optional. It helps tailor your plan.",
+            subtitle: "Optional. Used to tailor your plan.",
             onContinue: {
                 model.answers.heightCm = height.wrappedValue
                 model.advance()
@@ -165,7 +165,7 @@ struct WeightStep: View {
         let weight = Binding(get: { model.answers.weightKg ?? Defaults.weightKg }, set: { model.answers.weightKg = $0 })
         OnboardingScaffold(
             title: "How much do you weigh?",
-            subtitle: "Optional. It helps tailor your plan.",
+            subtitle: "Optional. Used to tailor your plan.",
             onContinue: {
                 model.answers.weightKg = weight.wrappedValue
                 model.advance()

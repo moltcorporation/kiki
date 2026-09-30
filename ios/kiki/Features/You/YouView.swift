@@ -12,6 +12,7 @@ struct YouView: View {
     @Environment(\.requestReview) private var requestReview
 
     @AppStorage("reminders.enabled") private var remindersEnabled = true
+    @AppStorage(BodyUnits.storageKey) private var bodyUnitsStored = ""
     @State private var sheet: AppSheet?
     @State private var newGoal: OnboardingModel?
     @State private var showCustomerCenter = false
@@ -46,8 +47,9 @@ struct YouView: View {
                     Section("About you") {
                         editorLink(.name, "Name", profile.firstName ?? "Add")
                         editorLink(.age, "Age", profile.age.map(String.init) ?? "Add")
-                        editorLink(.height, "Height", profile.heightCm.map { Format.height($0, units) } ?? "Add")
-                        editorLink(.weight, "Weight", profile.weightKg.map { Format.weight($0, units) } ?? "Add")
+                        let bodyUnits = BodyUnits.resolve(bodyUnitsStored, default: units)
+                        editorLink(.height, "Height", profile.heightCm.map { Format.height($0, bodyUnits) } ?? "Add")
+                        editorLink(.weight, "Weight", profile.weightKg.map { Format.weight($0, bodyUnits) } ?? "Add")
                     }
                 }
 
