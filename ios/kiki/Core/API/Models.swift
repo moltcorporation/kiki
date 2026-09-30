@@ -399,4 +399,6 @@ nonisolated struct MeResponse: Decodable, Sendable {
     }
     let user: User
     let profile: Profile?
+    /// Latest Terms/Privacy version the user agreed to (nil if never).
+    let consentVersion: String?
 }

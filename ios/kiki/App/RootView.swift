@@ -8,13 +8,14 @@ struct RootView: View {
     @Environment(OnboardingModel.self) private var onboarding
 
     private enum Route: Equatable {
-        case welcome, onboarding, loading, needsPlan, paywall, main
+        case welcome, onboarding, loading, consent, needsPlan, paywall, main
     }
 
     private var route: Route {
         if !onboarding.path.isEmpty { return .onboarding }
         if !auth.isSignedIn { return .welcome }
         if !store.hasLoaded || !subscriptions.hasLoaded { return .loading }
+        if store.needsConsent { return .consent }
         if store.plan == nil { return .needsPlan }
         if !subscriptions.isPremium { return .paywall }
         return .main
@@ -27,6 +28,8 @@ struct RootView: View {
                 WelcomeView(onGetStarted: onboarding.start, onSignedIn: {})
             case .onboarding:
                 OnboardingFlow()
+            case .consent:
+                ConsentGate()
             case .loading, .needsPlan:
                 LaunchView()
                     .transition(.asymmetric(insertion: .identity, removal: .opacity.combined(with: .scale(scale: 1.08))))

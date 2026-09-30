@@ -81,9 +81,11 @@ final class AuthService {
 
     /// Sends a pending agreement to the server's append-only consent log.
     /// Safe to call repeatedly; keeps it pending until the server has it.
-    func recordPendingConsent() async {
+    /// Returns whether an agreement was recorded.
+    @discardableResult
+    func recordPendingConsent() async -> Bool {
         let agreedAt = UserDefaults.standard.double(forKey: Self.pendingConsentKey)
-        guard agreedAt > 0, isSignedIn else { return }
+        guard agreedAt > 0, isSignedIn else { return false }
         struct Body: Encodable { let version: String; let acceptedAt: String; let appVersion: String }
         let body = Body(
             version: Config.legalVersion,
@@ -93,8 +95,10 @@ final class AuthService {
         do {
             let _: Empty = try await api.post("api/me/consent", body)
             UserDefaults.standard.removeObject(forKey: Self.pendingConsentKey)
+            return true
         } catch {
             Analytics.captureError(error, context: ["step": "record_consent"])
+            return false
         }
     }
 

@@ -16,6 +16,21 @@ final class TrainingStore {
     private(set) var runs: [Run] = []
     private(set) var isRefreshing = false
     private(set) var hasLoaded = false
+    /// Whether the server has an agreement to the Terms and Privacy Policy
+    /// on record. Only trusted once `consentChecked` (never guessed from the
+    /// offline cache).
+    private(set) var consentVersion: String?
+    private(set) var consentChecked = false
+
+    /// True when the server confirms the user has never agreed (an account
+    /// created from the welcome "Sign in" rather than onboarding).
+    var needsConsent: Bool {
+        consentChecked && consentVersion == nil
+    }
+
+    func markConsented() {
+        consentVersion = Config.legalVersion
+    }
     private(set) var isOnline = true
     private(set) var lastError: APIError?
 
@@ -96,6 +111,8 @@ final class TrainingStore {
             let (meResult, currentResult, runsResult) = try await (me, current, recent)
 
             profile = meResult.profile
+            consentVersion = meResult.consentVersion
+            consentChecked = true
             apply(currentResult)
             runs = mergePending(runsResult.runs)
             hasLoaded = true
@@ -326,6 +343,8 @@ final class TrainingStore {
         runs = []
         outbox = []
         hasLoaded = false
+        consentVersion = nil
+        consentChecked = false
         cache.clear()
     }
 

@@ -1,15 +1,24 @@
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { profile, user } from "@/db/schema";
+import { consent, profile, user } from "@/db/schema";
 import { withUser } from "@/lib/api";
 import { revokeAppleTokens } from "@/lib/apple";
 import { captureServerError } from "@/lib/posthog-server";
 
 export const GET = withUser(async (_req, me) => {
-  const row = await db.query.profile.findFirst({ where: eq(profile.userId, me.id) });
+  const [row, agreed] = await Promise.all([
+    db.query.profile.findFirst({ where: eq(profile.userId, me.id) }),
+    db.query.consent.findFirst({
+      where: eq(consent.userId, me.id),
+      orderBy: desc(consent.acceptedAt),
+      columns: { version: true },
+    }),
+  ]);
   return Response.json({
     user: { id: me.id, email: me.email, name: me.name },
     profile: row ?? null,
+    /** Latest Terms/Privacy version the user agreed to, or null. */
+    consentVersion: agreed?.version ?? null,
   });
 });
 

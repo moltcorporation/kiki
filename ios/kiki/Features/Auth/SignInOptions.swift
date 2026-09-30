@@ -8,25 +8,47 @@ struct SignInOptions: View {
     @Environment(AuthService.self) private var auth
     @Environment(\.colorScheme) private var colorScheme
 
+    /// New accounts agree before signing in. Returning users (the welcome
+    /// "Sign in") skip it; if the account turns out to be new or the Terms
+    /// changed, `ConsentGate` asks after sign-in instead.
+    var requiresConsent = true
     let onSignedIn: () -> Void
 
     @State private var agreed = false
+    @State private var showAgreeAlert = false
     @State private var isWorking = false
     @State private var error: String?
 
     var body: some View {
         VStack(spacing: 16) {
-            ConsentCheckbox(isOn: $agreed)
+            if requiresConsent {
+                ConsentCheckbox(isOn: $agreed)
+            }
             appleButton
-                .disabled(!agreed || isWorking)
-                .opacity(agreed ? 1 : 0.35)
-                .animation(.snappy, value: agreed)
+                .disabled(isWorking)
+                // Until they agree, a tap explains why instead of doing nothing.
+                .overlay {
+                    if requiresConsent && !agreed {
+                        Color.clear
+                            .contentShape(.capsule)
+                            .onTapGesture {
+                                Haptics.warning()
+                                showAgreeAlert = true
+                            }
+                            .accessibilityHidden(true)
+                    }
+                }
+        }
+        .alert("Please agree to continue", isPresented: $showAgreeAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("To create your account, check the box to agree to Kiki's Terms of Service and Privacy Policy.")
         }
     }
 
     private var appleButton: some View {
         SignInWithAppleButton(.continue) { request in
-            auth.noteConsent()
+            if requiresConsent { auth.noteConsent() }
             auth.prepareAppleRequest(request)
         } onCompletion: { result in
             isWorking = true
@@ -56,31 +78,65 @@ struct SignInOptions: View {
     }
 }
 
-/// "I agree" checkbox with links to the Terms and Privacy Policy.
-private struct ConsentCheckbox: View {
+/// "I agree" checkbox. The whole row toggles it; the two links still open
+/// their pages. Every word of the sentence is a link, so each tap goes to
+/// exactly one place: the documents open, and plain words hit a private
+/// "toggle" link handled below.
+struct ConsentCheckbox: View {
     @Binding var isOn: Bool
+    private static let toggleURL = URL(string: "kiki-consent://toggle")!
 
     var body: some View {
         HStack(alignment: .center, spacing: 4) {
-            Button {
-                isOn.toggle()
-                Haptics.select()
-            } label: {
-                Image(systemName: isOn ? "checkmark.square.fill" : "square")
-                    .font(.title2)
-                    .foregroundStyle(isOn ? Color.ink : Color.secondary)
-                    .contentTransition(.symbolEffect(.replace))
-                    .frame(width: 44, height: 44)
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("I agree to the Terms and Privacy Policy, and understand Kiki isn't medical advice")
-            .accessibilityAddTraits(isOn ? .isSelected : [])
+            Image(systemName: isOn ? "checkmark.square.fill" : "square")
+                .font(.title2)
+                .foregroundStyle(isOn ? Color.ink : Color.secondary)
+                .contentTransition(.symbolEffect(.replace))
+                .frame(width: 44, height: 44)
+                .contentShape(.rect)
+                .onTapGesture(perform: toggle)
 
-            Text("I agree to the [Terms](\(Config.termsURL.absoluteString)) and [Privacy Policy](\(Config.privacyURL.absoluteString)), and understand Kiki isn't medical advice.")
+            Text(sentence)
                 .font(.footnote)
-                .foregroundStyle(.secondary)
-                .tint(.ink)
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .environment(\.openURL, OpenURLAction { url in
+                    if url == Self.toggleURL {
+                        toggle()
+                        return .handled
+                    }
+                    return .systemAction
+                })
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("I agree to Kiki's Terms of Service and Privacy Policy")
+        .accessibilityAddTraits(.isButton)
+        .accessibilityAddTraits(isOn ? .isSelected : [])
+        .accessibilityAction { toggle() }
+        .accessibilityAction(named: "Open Terms of Service") { UIApplication.shared.open(Config.termsURL) }
+        .accessibilityAction(named: "Open Privacy Policy") { UIApplication.shared.open(Config.privacyURL) }
+    }
+
+    private var sentence: AttributedString {
+        func plain(_ text: String) -> AttributedString {
+            var run = AttributedString(text)
+            run.link = Self.toggleURL
+            run.foregroundColor = .secondary
+            return run
+        }
+        func document(_ text: String, _ url: URL) -> AttributedString {
+            var run = AttributedString(text)
+            run.link = url
+            run.foregroundColor = .ink
+            run.font = .footnote.weight(.semibold)
+            run.underlineStyle = .single
+            return run
+        }
+        return plain("I agree to Kiki's ") + document("Terms of Service", Config.termsURL)
+            + plain(" and ") + document("Privacy Policy", Config.privacyURL) + plain(".")
+    }
+
+    private func toggle() {
+        isOn.toggle()
+        Haptics.select()
     }
 }

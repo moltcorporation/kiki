@@ -103,13 +103,13 @@ struct WelcomeView: View {
         .sheet(isPresented: $showSignIn) {
             VStack(alignment: .leading, spacing: 24) {
                 Text("Welcome back").font(.title.weight(.bold))
-                SignInOptions {
+                SignInOptions(requiresConsent: false) {
                     showSignIn = false
                     onSignedIn()
                 }
             }
             .padding(24)
-            .presentationDetents([.height(290)])
+            .presentationDetents([.height(200)])
         }
     }
 }
