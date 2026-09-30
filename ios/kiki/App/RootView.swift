@@ -29,6 +29,7 @@ struct RootView: View {
                 OnboardingFlow()
             case .loading, .needsPlan:
                 LaunchView()
+                    .transition(.asymmetric(insertion: .identity, removal: .opacity.combined(with: .scale(scale: 1.08))))
             case .paywall:
                 NavigationStack { PaywallView() }
             case .main:
@@ -76,10 +77,15 @@ struct RootView: View {
     }
 }
 
+/// Continues the system launch screen (same color and logo, centered on the
+/// full screen) while the session and subscription load, so opening the app
+/// reads as one seamless splash.
 struct LaunchView: View {
     var body: some View {
-        KikiLogo(size: 88)
+        Image(.launchLogo)
+            .accessibilityLabel("Kiki")
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Color.paper)
+            .background(Color.launchBackground)
+            .ignoresSafeArea()
     }
 }
