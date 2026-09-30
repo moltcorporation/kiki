@@ -62,14 +62,14 @@ struct WelcomeView: View {
                 .padding(.top, 12)
                 .opacity(appeared ? 1 : 0)
 
-            VStack(spacing: 28) {
+            VStack(alignment: .leading, spacing: 28) {
                 Text("Your AI\nrunning coach.")
                     .font(.system(size: 44, weight: .black).italic())
-                    .multilineTextAlignment(.center)
+                    .multilineTextAlignment(.leading)
                     .minimumScaleFactor(0.7)
                     .shadow(color: .black.opacity(0.25), radius: 12, y: 4)
 
-                VStack(spacing: 16) {
+                VStack(alignment: .leading, spacing: 16) {
                     PrimaryButton("Get started", action: onGetStarted)
                     Button {
                         showSignIn = true
@@ -81,6 +81,7 @@ struct WelcomeView: View {
                     .buttonStyle(.haptic)
                 }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 24)
             .padding(.bottom, 8)
             .opacity(appeared ? 1 : 0)
