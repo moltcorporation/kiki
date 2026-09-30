@@ -105,7 +105,7 @@ private struct WeekHeader: View {
             Spacer()
             Text("\(done)/\(runs) · \(Format.distance(Double(planned), units, decimals: 0))")
                 .font(.subheadline.weight(.medium))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.muted)
                 .monospacedDigit()
         }
         .padding(.vertical, 10)
@@ -130,9 +130,9 @@ struct PlanHeader: View {
                     }
                 }
                 .font(.subheadline.weight(.medium))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.muted)
                 if let summary = plan.summary {
-                    Text(summary).font(.subheadline).foregroundStyle(.secondary).lineLimit(3)
+                    Text(summary).font(.subheadline).foregroundStyle(.muted).lineLimit(3)
                 }
             }
         }
@@ -168,7 +168,7 @@ private struct MonthCalendarView: View {
                     ForEach(1...7, id: \.self) { d in
                         Text(Calendar.current.veryShortWeekdaySymbols[d % 7])
                             .font(.caption.weight(.semibold))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(.muted)
                     }
                     ForEach(0..<month.leadingBlankDays, id: \.self) { _ in Color.clear.frame(height: 52) }
                     ForEach(month.daysInMonth, id: \.self) { day in
@@ -197,7 +197,7 @@ private struct MonthCalendarView: View {
                     Label("Done", systemImage: "checkmark").labelStyle(.titleAndIcon)
                 }
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.muted)
             }
             .padding(16)
         }

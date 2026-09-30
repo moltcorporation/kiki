@@ -138,7 +138,7 @@ struct ConsentCheckbox: View {
         HStack(alignment: .center, spacing: 4) {
             Image(systemName: isOn ? "checkmark.square.fill" : "square")
                 .font(.title2)
-                .foregroundStyle(isOn ? Color.ink : Color.secondary)
+                .foregroundStyle(isOn ? Color.ink : Color.muted)
                 .contentTransition(.symbolEffect(.replace))
                 .frame(width: 44, height: 44)
                 .contentShape(.rect)
@@ -168,7 +168,7 @@ struct ConsentCheckbox: View {
         func plain(_ text: String) -> AttributedString {
             var run = AttributedString(text)
             run.link = Self.toggleURL
-            run.foregroundColor = .secondary
+            run.foregroundColor = .muted
             return run
         }
         func document(_ text: String, _ url: URL) -> AttributedString {

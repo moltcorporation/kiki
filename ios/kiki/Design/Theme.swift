@@ -86,7 +86,7 @@ struct PrimaryButton: View {
             .font(.headline)
             .frame(maxWidth: .infinity, minHeight: Metrics.buttonHeight)
             .foregroundStyle(.paper)
-            .background(isEnabled ? Color.ink : Color.secondary.opacity(0.35), in: .capsule)
+            .background(isEnabled ? Color.ink : Color.muted.opacity(0.35), in: .capsule)
             .contentShape(.capsule)
         }
         .buttonStyle(.haptic)
@@ -152,7 +152,7 @@ struct OptionCard: View {
                     if let subtitle {
                         Text(subtitle)
                             .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(.muted)
                     }
                 }
                 Spacer(minLength: 8)
@@ -185,13 +185,13 @@ private struct SelectionIndicator: View {
             switch style {
             case .radio:
                 ZStack {
-                    Circle().stroke(isSelected ? Color.ink : Color.secondary.opacity(0.35), lineWidth: isSelected ? 2 : 1.5)
+                    Circle().stroke(isSelected ? Color.ink : Color.muted.opacity(0.35), lineWidth: isSelected ? 2 : 1.5)
                     if isSelected { Circle().fill(Color.ink).padding(6) }
                 }
             case .checkbox:
                 RoundedRectangle(cornerRadius: 7)
                     .fill(isSelected ? Color.ink : .clear)
-                    .stroke(isSelected ? Color.ink : Color.secondary.opacity(0.35), lineWidth: 1.5)
+                    .stroke(isSelected ? Color.ink : Color.muted.opacity(0.35), lineWidth: 1.5)
                     .overlay {
                         if isSelected {
                             Image(systemName: "checkmark").font(.caption.weight(.bold)).foregroundStyle(.paper)

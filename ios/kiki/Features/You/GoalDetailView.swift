@@ -17,7 +17,7 @@ struct GoalDetailView: View {
                         Text(plan.displayName)
                             .font(.screenTitle)
                         Text(plan.goalDetails(units: store.units).joined(separator: " · "))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(.muted)
                     }
 
                     PreferenceGroup {
@@ -26,7 +26,7 @@ struct GoalDetailView: View {
 
                     Text("Changing your goal, distance, date or goal time builds a new plan from today. You'll see it before anything changes, and runs you've logged are kept.")
                         .font(.footnote)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.muted)
                         .padding(.horizontal, 4)
                 }
                 .padding(.horizontal, 24)

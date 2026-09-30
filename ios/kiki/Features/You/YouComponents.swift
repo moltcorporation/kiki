@@ -50,7 +50,7 @@ struct PreferenceRow: View {
                     Spacer(minLength: 12)
                     if let value {
                         Text(value)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(.muted)
                             .multilineTextAlignment(.trailing)
                             .lineLimit(2)
                     }

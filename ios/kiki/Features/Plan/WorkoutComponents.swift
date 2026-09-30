@@ -12,7 +12,7 @@ struct WorkoutRow: View {
                 VStack(spacing: 2) {
                     Text(Format.weekday(workout.date, style: .abbreviated).uppercased())
                         .font(.caption2.weight(.bold))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.muted)
                     Text("\(workout.date.day)")
                         .font(.title3.weight(.bold))
                 }
@@ -28,7 +28,7 @@ struct WorkoutRow: View {
                 if !workout.isRest {
                     Text(Format.workoutSummary(workout, units: units))
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.muted)
                 }
             }
             Spacer(minLength: 0)
@@ -69,7 +69,7 @@ struct StatusBadge: View {
                 .foregroundStyle(.ink)
                 .accessibilityLabel("Completed")
         case .skipped:
-            Text("Skipped").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+            Text("Skipped").font(.caption.weight(.semibold)).foregroundStyle(.muted)
         case .planned:
             if isToday {
                 Text("Today")
@@ -116,7 +116,7 @@ struct WeekStrip: View {
                     VStack(spacing: 8) {
                         Text(Format.weekday(day, style: .narrow))
                             .font(.caption.weight(.semibold))
-                            .foregroundStyle(day == .today ? Color.ink : .secondary)
+                            .foregroundStyle(day == .today ? Color.ink : .muted)
                         ZStack {
                             Circle()
                                 .fill(isSelected ? Color.ink : workout?.status == .completed ? Color.wash : .clear)

@@ -27,10 +27,10 @@ struct WorkoutDetailView: View {
                 HStack(spacing: 12) {
                     WorkoutIcon(workout: workout, size: 48)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(workout.type.label).font(.subheadline.weight(.semibold)).foregroundStyle(.secondary)
+                        Text(workout.type.label).font(.subheadline.weight(.semibold)).foregroundStyle(.muted)
                         Text(workout.date.date, format: .dateTime.weekday(.wide).month(.wide).day())
                             .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(.muted)
                     }
                     Spacer()
                     StatusBadge(status: workout.status, isToday: workout.date == .today)
@@ -51,7 +51,7 @@ struct WorkoutDetailView: View {
 
                 Text(workout.description)
                     .font(.body)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.muted)
 
                 if !workout.steps.isEmpty {
                     VStack(alignment: .leading, spacing: 0) {
@@ -68,7 +68,7 @@ struct WorkoutDetailView: View {
                         Text("Your run").font(.headline)
                         RunSummaryLine(run: run, units: units)
                         if let notes = run.notes, !notes.isEmpty {
-                            Text("“\(notes)”").font(.subheadline).foregroundStyle(.secondary)
+                            Text("“\(notes)”").font(.subheadline).foregroundStyle(.muted)
                         }
                     }
                 }
@@ -159,7 +159,7 @@ private struct StepRow: View {
                 .foregroundStyle(step.kind == .work ? Color.paper : Color.ink)
             VStack(alignment: .leading, spacing: 2) {
                 Text(title).font(.body.weight(.semibold))
-                if let detail { Text(detail).font(.subheadline).foregroundStyle(.secondary) }
+                if let detail { Text(detail).font(.subheadline).foregroundStyle(.muted) }
             }
             Spacer(minLength: 0)
         }
@@ -228,7 +228,7 @@ struct MoveWorkoutSheet: View {
                                 .font(.body.weight(.semibold))
                             Text(other.isRest ? "Rest day" : "Swap with \(other.title)")
                                 .font(.subheadline)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(.muted)
                         }
                         Spacer()
                     }

@@ -148,7 +148,7 @@ private struct GoalJourney: View {
             HStack {
                 Text("Today")
                 Spacer()
-                Text("\(weeks) weeks").foregroundStyle(.secondary)
+                Text("\(weeks) weeks").foregroundStyle(.muted)
                 Spacer()
                 Text(endLabel)
             }
@@ -265,7 +265,7 @@ struct SummaryStep: View {
                             .font(.body.weight(.semibold))
                             .frame(width: 28)
                             .accessibilityHidden(true)
-                        Text(label).foregroundStyle(.secondary)
+                        Text(label).foregroundStyle(.muted)
                         Spacer()
                         Text(value).font(.body.weight(.semibold)).multilineTextAlignment(.trailing)
                         if action != nil {

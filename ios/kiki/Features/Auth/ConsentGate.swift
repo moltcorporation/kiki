@@ -20,7 +20,7 @@ struct ConsentGate: View {
             Text("One last thing")
                 .font(.screenTitle)
             Text("Please agree to Kiki's Terms of Service and Privacy Policy to continue.")
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.muted)
             Spacer()
             ConsentCheckbox(isOn: $agreed)
             PrimaryButton("Continue", isLoading: isSaving) {
@@ -33,7 +33,7 @@ struct ConsentGate: View {
             }
             Button("Sign out") { Task { await auth.signOut() } }
                 .font(.body.weight(.semibold))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.muted)
                 .frame(maxWidth: .infinity, minHeight: 44)
                 .buttonStyle(.haptic)
         }

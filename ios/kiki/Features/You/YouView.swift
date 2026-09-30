@@ -92,7 +92,7 @@ struct YouView: View {
                 if let since = store.memberSince {
                     Text("Kiki member since \(since.formatted(.dateTime.month(.wide).year()))")
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.muted)
                 }
             }
         }
@@ -206,7 +206,7 @@ struct YouView: View {
                 .multilineTextAlignment(.center)
         }
         .font(.footnote)
-        .foregroundStyle(.secondary)
+        .foregroundStyle(.muted)
         .frame(maxWidth: .infinity)
     }
 

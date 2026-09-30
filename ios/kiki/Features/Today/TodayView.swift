@@ -62,7 +62,7 @@ struct TodayView: View {
                                 .background(Color.wash, in: .circle)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("Adjust my plan").font(.body.weight(.semibold))
-                                Text("Tired, busy or sore? Tell Kiki.").font(.subheadline).foregroundStyle(.secondary)
+                                Text("Tired, busy or sore? Tell Kiki.").font(.subheadline).foregroundStyle(.muted)
                             }
                             Spacer()
                             Image(systemName: "chevron.right").foregroundStyle(.tertiary)
@@ -358,10 +358,10 @@ private struct OutsidePlanCard: View {
             VStack(alignment: .leading, spacing: 6) {
                 if let plan, day < plan.startDate {
                     Text("Before your plan").font(.headline)
-                    Text("Your plan starts \(Format.shortDate(plan.startDate)).").foregroundStyle(.secondary)
+                    Text("Your plan starts \(Format.shortDate(plan.startDate)).").foregroundStyle(.muted)
                 } else {
                     Text("Nothing scheduled").font(.headline)
-                    Text("This day is outside your plan.").foregroundStyle(.secondary)
+                    Text("This day is outside your plan.").foregroundStyle(.muted)
                 }
             }
         }

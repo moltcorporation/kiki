@@ -23,7 +23,7 @@ struct PaywallView: View {
                 VStack(alignment: .leading, spacing: 10) {
                     Text(trialEligible ? "Start your free week" : "Unlock your plan")
                         .font(.display(.largeTitle))
-                    Text(headline).foregroundStyle(.secondary)
+                    Text(headline).foregroundStyle(.muted)
                 }
 
                 if trialEligible {
@@ -70,7 +70,7 @@ struct PaywallView: View {
                 )
                 Text(priceTerms)
                     .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.muted)
                     .multilineTextAlignment(.center)
                 HStack(spacing: 18) {
                     Link("Terms", destination: Config.termsURL)
@@ -79,7 +79,7 @@ struct PaywallView: View {
                         .disabled(isRestoring || isPurchasing)
                 }
                 .font(.footnote.weight(.medium))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.muted)
             }
             .padding(.horizontal, 24)
             .padding(.top, 12)
@@ -218,7 +218,7 @@ private struct TrialTimeline: View {
                     }
                     VStack(alignment: .leading, spacing: 2) {
                         Text(item.title).font(.headline)
-                        Text(item.detail).font(.subheadline).foregroundStyle(.secondary)
+                        Text(item.detail).font(.subheadline).foregroundStyle(.muted)
                     }
                     .padding(.top, 2)
                 }
@@ -244,7 +244,7 @@ private struct PackageOption: View {
             HStack(spacing: 14) {
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                     .font(.title2)
-                    .foregroundStyle(isSelected ? Color.ink : Color.secondary.opacity(0.5))
+                    .foregroundStyle(isSelected ? Color.ink : Color.muted.opacity(0.5))
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: 8) {
@@ -258,7 +258,7 @@ private struct PackageOption: View {
                                 .background(Color.ink, in: .capsule)
                         }
                     }
-                    Text(price).font(.subheadline).foregroundStyle(.secondary)
+                    Text(price).font(.subheadline).foregroundStyle(.muted)
                 }
                 Spacer()
                 if let detail {

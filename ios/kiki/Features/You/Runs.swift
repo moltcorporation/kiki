@@ -42,20 +42,20 @@ struct RunsView: View {
         return HStack(spacing: 12) {
             Card {
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("This week").font(.subheadline.weight(.semibold)).foregroundStyle(.secondary)
+                    Text("This week").font(.subheadline.weight(.semibold)).foregroundStyle(.muted)
                     HStack(alignment: .firstTextBaseline, spacing: 4) {
                         Text(Format.distanceNumber(done, units)).font(.metric(.title))
-                        Text("/ \(Format.distance(planned, units, decimals: 0))").font(.subheadline).foregroundStyle(.secondary)
+                        Text("/ \(Format.distance(planned, units, decimals: 0))").font(.subheadline).foregroundStyle(.muted)
                     }
                     ProgressView(value: min(done, planned), total: max(planned, 1)).tint(.ink)
                 }
             }
             Card {
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("Plan completion").font(.subheadline.weight(.semibold)).foregroundStyle(.secondary)
+                    Text("Plan completion").font(.subheadline.weight(.semibold)).foregroundStyle(.muted)
                     Text(past.isEmpty ? "–" : "\(Int(Double(completed) / Double(past.count) * 100))%")
                         .font(.metric(.title))
-                    Text("\(completed) of \(past.count) runs").font(.subheadline).foregroundStyle(.secondary)
+                    Text("\(completed) of \(past.count) runs").font(.subheadline).foregroundStyle(.muted)
                 }
             }
         }
@@ -67,7 +67,7 @@ struct RunsView: View {
             VStack(alignment: .leading, spacing: 12) {
                 Text("Weekly distance").font(.headline)
                 if data.isEmpty {
-                    Text("Your weekly distance will appear here.").foregroundStyle(.secondary)
+                    Text("Your weekly distance will appear here.").foregroundStyle(.muted)
                 } else {
                     Chart(data) { item in
                         BarMark(x: .value("Week", item.label), y: .value("Planned", item.planned), width: .ratio(0.6))
@@ -118,7 +118,7 @@ struct RunsView: View {
             Text("Runs").font(.headline)
             if store.runs.isEmpty {
                 Card {
-                    Text("Runs you log or track will show up here.").foregroundStyle(.secondary)
+                    Text("Runs you log or track will show up here.").foregroundStyle(.muted)
                 }
             } else {
                 ForEach(store.runs) { run in
@@ -146,13 +146,13 @@ struct RunRow: View {
                 Text(Format.distance(run.distanceM, units)).font(.body.weight(.semibold))
                 Text(run.startedAt, format: .dateTime.weekday(.abbreviated).month().day())
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.muted)
             }
             Spacer()
             VStack(alignment: .trailing, spacing: 2) {
                 Text(Format.duration(run.durationS)).font(.subheadline.weight(.semibold)).monospacedDigit()
                 if let pace = run.pace {
-                    Text(Format.pace(pace, units)).font(.subheadline).foregroundStyle(.secondary)
+                    Text(Format.pace(pace, units)).font(.subheadline).foregroundStyle(.muted)
                 }
             }
             if let feeling = run.feeling { Text(feeling.emoji) }
@@ -188,7 +188,7 @@ struct RunDetailView: View {
                 }
 
                 Text(current.startedAt, format: .dateTime.weekday(.wide).month().day().hour().minute())
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.muted)
 
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], alignment: .leading, spacing: 20) {
                     MetricView(value: Format.distanceNumber(current.distanceM, units, decimals: 2), label: units == .km ? "km" : "miles")
@@ -206,7 +206,7 @@ struct RunDetailView: View {
                         .font(.headline)
                 }
                 if let notes = current.notes, !notes.isEmpty {
-                    Text("“\(notes)”").foregroundStyle(.secondary)
+                    Text("“\(notes)”").foregroundStyle(.muted)
                 }
 
                 if let splits = (full ?? current).splits, !splits.isEmpty {
@@ -214,7 +214,7 @@ struct RunDetailView: View {
                         Text("Splits").font(.headline)
                         ForEach(Array(splits.enumerated()), id: \.offset) { index, split in
                             HStack {
-                                Text("\(index + 1)").frame(width: 28, alignment: .leading).foregroundStyle(.secondary)
+                                Text("\(index + 1)").frame(width: 28, alignment: .leading).foregroundStyle(.muted)
                                 Text(Format.pace(split.durationS / (split.distanceM / 1000), units))
                                 Spacer()
                             }

@@ -93,7 +93,7 @@ struct AdjustPlanView: View {
                     if reason == .injured {
                         Text("If pain is sharp, getting worse, or lasts more than a few days, please see a medical professional.")
                             .font(.footnote)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(.muted)
                     }
                 }
             }
@@ -124,7 +124,7 @@ struct AdjustPlanView: View {
             Spacer()
             ProgressView().controlSize(.large)
             Text("Kiki is rethinking your plan…").font(.title3.weight(.semibold))
-            Text("This takes a few seconds.").foregroundStyle(.secondary)
+            Text("This takes a few seconds.").foregroundStyle(.muted)
             Spacer()
         }
         .frame(maxWidth: .infinity)

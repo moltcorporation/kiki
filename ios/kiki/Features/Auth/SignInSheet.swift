@@ -42,7 +42,7 @@ struct SignInSheet: View {
     private var termsNotice: AttributedString {
         func plain(_ text: String) -> AttributedString {
             var run = AttributedString(text)
-            run.foregroundColor = .secondary
+            run.foregroundColor = .muted
             return run
         }
         func link(_ text: String, _ url: URL) -> AttributedString {

@@ -228,11 +228,11 @@ private struct NotificationPreview: View {
                 HStack {
                     Text("Today: Easy Run").font(.subheadline.weight(.semibold))
                     Spacer()
-                    Text("7:00 AM").font(.caption).foregroundStyle(.secondary)
+                    Text("7:00 AM").font(.caption).foregroundStyle(.muted)
                 }
                 Text("Easy Run · \(units == .km ? "5.0 km" : "3.0 mi"). Relaxed and conversational.")
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.muted)
             }
         }
         .padding(16)

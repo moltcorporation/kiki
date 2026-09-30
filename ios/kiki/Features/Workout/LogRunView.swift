@@ -67,7 +67,7 @@ struct LogRunView: View {
                             .focused($distanceFocused)
                             .disabled(isTracked)
                             .frame(maxWidth: 100)
-                        Text(units.rawValue).foregroundStyle(.secondary)
+                        Text(units.rawValue).foregroundStyle(.muted)
                     }
                     Button {
                         distanceFocused = false
@@ -76,7 +76,7 @@ struct LogRunView: View {
                         HStack {
                             Text("Time").foregroundStyle(.ink)
                             Spacer()
-                            Text(Format.duration(durationS)).foregroundStyle(.secondary).monospacedDigit()
+                            Text(Format.duration(durationS)).foregroundStyle(.muted).monospacedDigit()
                         }
                     }
                     .disabled(isTracked)
@@ -88,7 +88,7 @@ struct LogRunView: View {
                             Text("Pace")
                             Spacer()
                             Text(Format.pace(Double(durationS) / (distanceMeters / 1000), units))
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(.muted)
                         }
                     }
                     DatePicker("Started", selection: $startedAt, in: ...Date.now)
@@ -99,7 +99,7 @@ struct LogRunView: View {
                         HStack {
                             Text("Effort")
                             Spacer()
-                            Text("\(Int(effort))/10 · \(effortLabel)").foregroundStyle(.secondary)
+                            Text("\(Int(effort))/10 · \(effortLabel)").foregroundStyle(.muted)
                         }
                         Slider(value: $effort, in: 1...10, step: 1)
                             .onChange(of: effort) { Haptics.select() }

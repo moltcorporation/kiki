@@ -129,7 +129,7 @@ struct RaceDateStep: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Race name (optional)")
                         .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.muted)
                     TextField("e.g. Chicago Marathon", text: $model.answers.raceName)
                         .font(.title3.weight(.semibold))
                         .textInputAutocapitalization(.words)
@@ -189,7 +189,7 @@ struct GoalTimeStep: View {
             if time.wrappedValue > 0 {
                 Text("That's about \(Format.pace(Double(time.wrappedValue) / (meters / 1000), model.answers.units)) pace")
                     .font(.headline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.muted)
                     .frame(maxWidth: .infinity)
                     .contentTransition(.numericText())
                     .animation(.snappy, value: time.wrappedValue)

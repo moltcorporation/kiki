@@ -27,7 +27,7 @@ struct OnboardingScaffold<Content: View>: View {
                     if let subtitle {
                         Text(subtitle)
                             .font(.body)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(.muted)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     content
@@ -49,7 +49,7 @@ struct OnboardingScaffold<Content: View>: View {
                     if let secondaryTitle {
                         Button(secondaryTitle) { (onSecondary ?? model.advance)() }
                             .font(.body.weight(.semibold))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(.muted)
                             .frame(maxWidth: .infinity, minHeight: 44)
                             .buttonStyle(.haptic)
                     }
@@ -108,7 +108,7 @@ struct BackButton: View {
         Button(action: action) {
             Image(systemName: "arrow.left")
                 .font(.callout.weight(.regular))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.muted)
                 .frame(width: 36, height: 36)
                 .background(Color.wash.opacity(0.8), in: .circle)
                 .frame(width: 44, height: 44)

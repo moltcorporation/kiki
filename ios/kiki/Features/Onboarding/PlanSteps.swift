@@ -22,7 +22,7 @@ struct AccountStep: View {
                     // RootView continues once the account loads (plan → app, else build one).
                     HStack(spacing: 10) {
                         ProgressView()
-                        Text("Loading your account…").foregroundStyle(.secondary)
+                        Text("Loading your account…").foregroundStyle(.muted)
                     }
                     .frame(maxWidth: .infinity, minHeight: 56)
                 } else {
@@ -75,7 +75,7 @@ struct GeneratingStep: View {
                     .font(.screenTitle)
                     .multilineTextAlignment(.center)
                 Text(error ?? "Kiki is designing every run around you. This usually takes under a minute.")
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.muted)
                     .multilineTextAlignment(.center)
             }
             .padding(.horizontal, 32)
@@ -86,10 +86,10 @@ struct GeneratingStep: View {
                         let done = displayed >= Double(threshold + 12)
                         HStack(spacing: 12) {
                             Image(systemName: done ? "checkmark.circle.fill" : "circle")
-                                .foregroundStyle(done ? Color.ink : Color.secondary.opacity(0.4))
+                                .foregroundStyle(done ? Color.ink : Color.muted.opacity(0.4))
                                 .contentTransition(.symbolEffect(.replace))
                             Text(label)
-                                .foregroundStyle(displayed >= Double(threshold) ? Color.ink : Color.secondary)
+                                .foregroundStyle(displayed >= Double(threshold) ? Color.ink : Color.muted)
                         }
                     }
                 }
@@ -162,12 +162,12 @@ struct PlanPreviewStep: View {
                 VStack(alignment: .leading, spacing: 10) {
                     Text(model.firstName.map { "\($0), your plan is ready" } ?? "Your plan is ready")
                         .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.muted)
                     Text(store.plan?.title ?? "Your plan")
                         .font(.display(.largeTitle))
                         .fixedSize(horizontal: false, vertical: true)
                     if let summary = store.plan?.summary {
-                        Text(summary).foregroundStyle(.secondary)
+                        Text(summary).foregroundStyle(.muted)
                     }
                 }
 
@@ -208,7 +208,7 @@ struct PlanPreviewStep: View {
         var body: some View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(value).font(.metric(.title2)).minimumScaleFactor(0.6).lineLimit(1)
-                Text(label).font(.footnote).foregroundStyle(.secondary).lineLimit(1)
+                Text(label).font(.footnote).foregroundStyle(.muted).lineLimit(1)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(16)

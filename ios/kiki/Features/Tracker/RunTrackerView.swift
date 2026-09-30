@@ -35,7 +35,7 @@ struct RunTrackerView: View {
 
             VStack(spacing: 24) {
                 if let title = tracker.workout?.title {
-                    Text(title).font(.headline).foregroundStyle(.secondary)
+                    Text(title).font(.headline).foregroundStyle(.muted)
                 }
 
                 TimelineView(.periodic(from: .now, by: 1)) { context in

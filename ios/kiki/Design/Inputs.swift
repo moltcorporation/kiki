@@ -60,7 +60,7 @@ struct RulerPicker: View {
                                 let major = tick % majorEvery == 0
                                 VStack(spacing: 0) {
                                     Rectangle()
-                                        .fill(major ? Color.ink : Color.secondary.opacity(0.35))
+                                        .fill(major ? Color.ink : Color.muted.opacity(0.35))
                                         .frame(width: major ? 2.5 : 1.5, height: major ? 40 : 22)
                                     Spacer(minLength: 0)
                                 }
@@ -224,7 +224,7 @@ struct InputHint: View {
             Image(systemName: icon)
         }
         .font(.subheadline.weight(emphasized ? .semibold : .medium))
-        .foregroundStyle(emphasized ? .primary : .secondary)
+        .foregroundStyle(emphasized ? Color.ink : Color.muted)
         .multilineTextAlignment(.center)
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
