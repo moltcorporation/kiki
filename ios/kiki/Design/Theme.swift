@@ -268,21 +268,29 @@ extension View {
     func statusBarFade(_ color: Color = .paper) -> some View { modifier(StatusBarFade(color: color)) }
 }
 
-/// The app's page background: a warm off-white canvas with a faint golden
-/// glow at the top (one light source everywhere), echoing the sunset from
-/// the welcome film. Adds warmth and depth
-/// without leaving the black-and-white brand.
+/// The app's page background: a near-white canvas with a very faint dark
+/// asphalt glow (and a hint of grain) rising from the bottom. Grayscale,
+/// one light source everywhere.
 struct PageBackground: View {
     var body: some View {
-        ZStack(alignment: .top) {
+        ZStack(alignment: .bottom) {
             Color.canvas
-            RadialGradient(
-                colors: [Color(red: 1, green: 0.86, blue: 0.66).opacity(0.07), .clear],
-                center: UnitPoint(x: 0.5, y: 0),
-                startRadius: 0,
-                endRadius: 520
-            )
-            .frame(height: 560)
+            GeometryReader { proxy in
+                let glow = RadialGradient(
+                    colors: [Color.ink.opacity(0.07), Color.ink.opacity(0.02), .clear],
+                    center: .bottom,
+                    startRadius: 0,
+                    endRadius: proxy.size.height * 0.7
+                )
+                ZStack {
+                    glow
+                    // Asphalt grain, only where the glow is.
+                    Image(decorative: "Grain")
+                        .resizable(resizingMode: .tile)
+                        .opacity(0.05)
+                        .mask(glow.opacity(12))
+                }
+            }
         }
         .ignoresSafeArea()
     }
