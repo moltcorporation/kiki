@@ -1,8 +1,8 @@
 import SwiftUI
 
 /// "Sign in" from the welcome screen: a full screen in the onboarding style,
-/// pushed from the welcome screen. Sign in with Apple sits where Continue
-/// does in onboarding.
+/// pushed from the welcome screen, with Sign in with Apple right under the
+/// title.
 struct SignInScreen: View {
     let onBack: () -> Void
 
@@ -13,10 +13,16 @@ struct SignInScreen: View {
                 .padding(.top, 4)
 
             VStack(alignment: .leading, spacing: 12) {
+                KikiLogo(size: 56)
+                    .padding(.bottom, 8)
                 Text("Welcome back!")
                     .font(.system(.largeTitle, weight: .bold))
-                Text("Pick up right where you left off.")
+                Text("Sign in to continue.")
                     .foregroundStyle(.secondary)
+                // Returning runners skip the checkbox; a brand-new account made
+                // here is asked once by `ConsentGate`.
+                SignInOptions(requiresConsent: false) {}
+                    .padding(.top, 20)
             }
             .padding(.horizontal, 24)
             .padding(.top, 20)
@@ -24,13 +30,6 @@ struct SignInScreen: View {
             Spacer()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .safeAreaInset(edge: .bottom) {
-            // Returning runners skip the checkbox; a brand-new account made
-            // here is asked once by `ConsentGate`.
-            SignInOptions(requiresConsent: false) {}
-                .padding(.horizontal, 24)
-                .padding(.bottom, 8)
-        }
         .background(Color.paper)
         .onAppear { Analytics.screen("Sign In") }
     }
