@@ -16,7 +16,14 @@ struct TodayView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     if let plan = store.plan {
-                        GoalProgressCard(title: greeting, plan: plan, units: units)
+                        // Top row: goal progress plus a short note from Kiki.
+                        HStack(alignment: .top, spacing: 12) {
+                            GoalProgressCard(title: greeting, plan: plan, units: units)
+                            // Placeholder until the coach writes daily notes.
+                            KikiNoteCard(text: "Rest day. Tomorrow's tempo is your first real test.")
+                                .frame(width: 140)
+                        }
+                        .fixedSize(horizontal: false, vertical: true)
                     }
 
                     if let pending = store.pendingPlan, pending.status == .generating {
@@ -152,6 +159,8 @@ private struct GoalProgressCard: View {
         VStack(alignment: .leading, spacing: 18) {
             Text(title)
                 .font(.sectionTitle)
+                .lineLimit(2)
+                .minimumScaleFactor(0.85)
                 .accessibilityAddTraits(.isHeader)
             VStack(alignment: .leading, spacing: 4) {
                 Text(finale?.title ?? plan.displayName)
@@ -177,8 +186,8 @@ private struct GoalProgressCard: View {
             }
         }
         .foregroundStyle(.paper)
-        .padding(20)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(18)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background { AsphaltBackground() }
         .clipShape(.rect(cornerRadius: 28))
         .accessibilityElement(children: .combine)
@@ -362,6 +371,31 @@ struct OfflineBanner: View {
                 .padding(.bottom, 8)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
         }
+    }
+}
+
+/// A short note from Kiki (a sentence or two) in a square card.
+private struct KikiNoteCard: View {
+    let text: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 6) {
+                KikiLogo(size: 22)
+                Text("Kiki")
+                    .font(.system(size: 15, weight: .black).italic())
+            }
+            Text(text)
+                .font(.subheadline.weight(.medium))
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 0)
+        }
+        .foregroundStyle(.ink)
+        .padding(16)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .background(Color.wash, in: .rect(cornerRadius: 28))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Kiki says: \(text)")
     }
 }
 
