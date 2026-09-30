@@ -6,7 +6,7 @@ struct GoalSummary {
     let answers: OnboardingModel.Answers
     let raceDate: Day
 
-    var kind: GoalKind { answers.goalKind ?? .start }
+    var kind: GoalKind { answers.goalKind ?? .race }
 
     var distanceLabel: String {
         guard let distance = answers.raceDistance else { return "run" }

@@ -26,7 +26,8 @@ final class OnboardingModel {
     }
 
     struct Answers: Codable {
-        var goalKind: GoalKind?
+        /// Preselected so the most common goal is one tap away.
+        var goalKind: GoalKind? = .race
         var units: Units = .localeDefault
         var raceDistance: RaceDistance?
         var customDistanceKm: Double = 15
@@ -239,7 +240,7 @@ final class OnboardingModel {
     }
 
     var planRequest: PlanRequest {
-        let kind = answers.goalKind ?? .start
+        let kind = answers.goalKind ?? .race
         let distance = answers.raceDistance
         let customM = distance == .other ? Int(answers.customDistanceKm * 1000) : nil
         switch kind {

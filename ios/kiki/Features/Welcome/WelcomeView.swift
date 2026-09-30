@@ -9,6 +9,9 @@ struct WelcomeView: View {
 
     @State private var showSignIn = false
     @State private var appeared = false
+    /// The headline follows the user's text size; the wordmark is a logo
+    /// and stays fixed.
+    @ScaledMetric(relativeTo: .largeTitle) private var headlineSize = 44
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -39,11 +42,12 @@ struct WelcomeView: View {
                 .ignoresSafeArea()
                 .allowsHitTesting(false)
 
-            // Soft corner vignette so the wordmark reads over the bright sky.
+            // Soft corner vignette so the wordmark reads over the bright sky
+            // (worst frame of the film is 5:1 contrast behind it).
             RadialGradient(
                 stops: [
-                    .init(color: .black.opacity(0.6), location: 0),
-                    .init(color: .black.opacity(0.3), location: 0.5),
+                    .init(color: .black.opacity(0.7), location: 0),
+                    .init(color: .black.opacity(0.4), location: 0.5),
                     .init(color: .black.opacity(0), location: 1),
                 ],
                 center: .topLeading,
@@ -67,7 +71,7 @@ struct WelcomeView: View {
             // home indicator, 44pt minimum tap targets.
             VStack(alignment: .leading, spacing: 32) {
                 Text("Your AI\nrunning coach.")
-                    .font(.system(size: 44, weight: .black).italic())
+                    .font(.system(size: headlineSize, weight: .black).italic())
                     .multilineTextAlignment(.leading)
                     .minimumScaleFactor(0.7)
                     .shadow(color: .black.opacity(0.25), radius: 12, y: 4)

@@ -108,8 +108,9 @@ nonisolated enum RaceDistance: String, Codable, CaseIterable, Sendable {
 
 /// What the runner wants from Kiki. Only used as input to plan generation;
 /// the app itself never branches on it beyond labels.
+/// Order is the order shown in onboarding; `race` is the default.
 nonisolated enum GoalKind: String, Codable, CaseIterable, Sendable {
-    case start, race, faster, fit
+    case race, faster, start, fit
 }
 
 nonisolated enum CoachingStyle: String, Codable, CaseIterable, Sendable {
