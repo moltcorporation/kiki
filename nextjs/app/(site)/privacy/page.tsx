@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <LegalPage title="Privacy Policy" updated="September 29, 2026">
+    <LegalPage title="Privacy Policy" updated="September 30, 2026">
       <p>
         This Privacy Policy explains how {site.company} (&quot;we&quot;, &quot;us&quot;) collects,
         uses and shares information when you use the Kiki mobile app and the website at{" "}
@@ -26,10 +26,11 @@ export default function PrivacyPage() {
 
       <h3>Training profile</h3>
       <p>
-        To build your plan we ask about your running experience, current weekly distance, longest
-        recent run, available training days, race and goal, and recent race results. You may
-        optionally share your first name, age, height, weight and any current injury or pain.
-        Height, weight and injury information are optional and used only to tailor your training.
+        To build your plan we ask about your goal (such as a race, its distance, date and goal
+        time), your running experience, current weekly distance, the days you can train and how
+        you like to be coached. You may optionally share your first name, age, height and weight,
+        which are used only to tailor your training. If you tell Kiki about pain or an injury
+        when adjusting your plan, we use that to adapt your training.
       </p>
 
       <h3>Runs and feedback</h3>
@@ -67,6 +68,12 @@ export default function PrivacyPage() {
         status (such as plan, trial and renewal dates) but never your payment card details.
       </p>
 
+      <h3>Agreement records</h3>
+      <p>
+        When you agree to our Terms and Privacy Policy, we record the date, the version you agreed
+        to and your app version.
+      </p>
+
       <h2>How we use information</h2>
       <ul>
         <li>To create, personalize and adapt your training plan.</li>
@@ -80,7 +87,7 @@ export default function PrivacyPage() {
       <h2>AI processing</h2>
       <p>
         Your training profile, plan and recent run feedback are sent to AI model providers
-        (currently Anthropic and OpenAI, through Vercel&apos;s AI Gateway) to generate and adjust
+        (currently Google and Anthropic, through Vercel&apos;s AI Gateway) to generate and adjust
         your plan. We share only what&apos;s needed to coach you, and these providers process it
         on our behalf. Under their API terms, they do not use this data to train their models.
       </p>
@@ -89,7 +96,7 @@ export default function PrivacyPage() {
       <p>We share information only with service providers that help us run Kiki:</p>
       <ul>
         <li><strong>Vercel</strong> and <strong>Neon</strong>: hosting and database.</li>
-        <li><strong>Anthropic</strong> and <strong>OpenAI</strong>: AI plan generation.</li>
+        <li><strong>Google</strong> and <strong>Anthropic</strong>: AI plan generation.</li>
         <li><strong>RevenueCat</strong>: subscription management.</li>
         <li><strong>PostHog</strong>: product analytics and error tracking.</li>
         <li><strong>AppsFlyer</strong>: install and campaign attribution.</li>
@@ -104,7 +111,7 @@ export default function PrivacyPage() {
       <h2>Retention and deletion</h2>
       <p>
         We keep your information while your account is active. You can delete your account at
-        any time in the app under Settings › Delete account, which permanently deletes your
+        any time in the app under You › Delete account, which permanently deletes your
         profile, plans and runs from our systems. Some information may remain in backups for a
         limited time or where we&apos;re legally required to keep it. To cancel a subscription,
         use your Apple ID subscription settings; deleting your account does not cancel it.

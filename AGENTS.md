@@ -30,6 +30,7 @@ Kiki: AI running coach iOS app. Quiz onboarding â†’ AI-generated training plan â
 - AI: AI SDK + AI Gateway, model `google/gemini-3.8-flash` with `anthropic/claude-sonnet-5.5` fallback, structured output (`Output.object` + Zod). A plan is ONE AI call; adjustments use a separate prompt. Prompts, coaching rules, concise-writing rules and safety normalization (weekly growth cap, run days only, goal finale) are in `lib/training/coach.ts`.
 - Goals: `goalKind` is `start` (run 30 min non-stop), `race`, `faster` (time trial finale) or `fit` (no finale). `plan.raceDate` is the plan's end date for every goal. No phases/peak/taper in UI or output; keep wording beginner-friendly and jargon-free.
 - Workflows (Vercel Workflow): `generatePlanWorkflow` (load context, one AI step, save) and `adjustPlanWorkflow`. The AI work runs inside `"use step"` functions. `app/.well-known/workflow/` is generated (gitignored).
+- Consent: sign-in requires ticking "I agree to the Terms and Privacy Policy" (clickwrap). Each agreement is logged in the append-only `consent` table (`POST /api/me/consent`) with the version = the legal pages' "last updated" date. Bump `Config.legalVersion` (iOS) and both pages' `updated` date together.
 - Subscription gate: `lib/subscription.ts` checks the RevenueCat v1 API (entitlement `premium`). Coach adjustments require it; plan creation allows 3 free.
 
 ## iOS

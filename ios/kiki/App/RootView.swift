@@ -40,6 +40,7 @@ struct RootView: View {
         .task(id: auth.isSignedIn) {
             guard let userID = auth.userID else { return }
             Identity.ensureIdentified(userID: userID, email: auth.email)
+            await auth.recordPendingConsent()
             onboarding.isSignedIn = true
             var loaded = await store.refresh()
             // Signed in from onboarding's account step (or resumed there): a

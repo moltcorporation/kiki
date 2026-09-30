@@ -29,22 +29,8 @@ struct AccountStep: View {
                     SignInOptions {}
                 }
 
-                LegalFootnote(prefix: "By continuing, you agree to our")
             }
         }
-    }
-}
-
-struct LegalFootnote: View {
-    var prefix: String
-
-    var body: some View {
-        Text("\(prefix) [Terms](\(Config.termsURL.absoluteString)) and [Privacy Policy](\(Config.privacyURL.absoluteString)).")
-            .font(.footnote)
-            .foregroundStyle(.secondary)
-            .tint(.ink)
-            .multilineTextAlignment(.center)
-            .frame(maxWidth: .infinity)
     }
 }
 

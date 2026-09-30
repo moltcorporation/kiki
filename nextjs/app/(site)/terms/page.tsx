@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function TermsPage() {
   return (
-    <LegalPage title="Terms of Service" updated="September 29, 2026">
+    <LegalPage title="Terms of Service" updated="September 30, 2026">
       <p>
         These Terms of Service (&quot;Terms&quot;) govern your use of the Kiki app and website
         (the &quot;Service&quot;) provided by {site.company} (&quot;we&quot;, &quot;us&quot;). By
@@ -31,11 +31,23 @@ export default function TermsPage() {
         risk. Always follow traffic laws and stay aware of your surroundings when running.
       </p>
 
+      <h2>Assumption of risk and release</h2>
+      <p>
+        Running and other physical activity carry inherent risks, including injury, illness,
+        overexertion, falls, traffic, weather and, in rare cases, death. By using Kiki you
+        voluntarily assume all of these risks. To the fullest extent permitted by law, you release{" "}
+        {site.company} and its officers, directors, employees and agents from any claims arising
+        from your training or physical activity, whether or not you followed a plan or suggestion
+        from the Service.
+      </p>
+
       <h2>Your account</h2>
       <p>
-        You must be at least 13 years old (or the minimum age in your country) to use Kiki. You
-        are responsible for activity on your account and for keeping your sign-in methods secure.
-        You can delete your account at any time in the app.
+        You must be at least 13 years old (or the minimum age in your country) to use Kiki. If
+        you are under 18, you may use Kiki only with the permission and supervision of a parent or
+        legal guardian, who agrees to these Terms on your behalf. You are responsible for activity
+        on your account and for keeping your sign-in methods secure. You can delete your account
+        at any time in the app. We keep a record of when you agree to these Terms.
       </p>
 
       <h2>Subscriptions and free trials</h2>
@@ -107,6 +119,14 @@ export default function TermsPage() {
         amount you paid us in the 12 months before the claim.
       </p>
 
+      <h2>Indemnification</h2>
+      <p>
+        You agree to indemnify and hold harmless {site.company} and its officers, directors,
+        employees and agents from any claims, damages, losses and expenses (including reasonable
+        legal fees) arising from your use of the Service, your physical activity, or your violation
+        of these Terms or any law.
+      </p>
+
       <h2>Termination</h2>
       <p>
         You can stop using Kiki at any time. We may suspend or end access if you violate these
@@ -119,11 +139,45 @@ export default function TermsPage() {
         conflict-of-law rules, except where the law of your country requires otherwise.
       </p>
 
+      <h2>Dispute resolution and arbitration</h2>
+      <p>
+        <strong>
+          Please read this section carefully. It affects how disputes are resolved and waives your
+          right to a jury trial and to bring a class action.
+        </strong>
+      </p>
+      <p>
+        If you have a concern, please email us first so we can try to resolve it informally. If we
+        can&apos;t resolve it within 60 days, you and {site.company} agree that any dispute
+        arising from these Terms or the Service will be resolved by final, binding individual
+        arbitration administered by the American Arbitration Association under its Consumer
+        Arbitration Rules, rather than in court. Either of us may instead bring an individual
+        claim in small claims court if it qualifies.
+      </p>
+      <p>
+        You and {site.company} agree to bring claims only in an individual capacity and not as a
+        plaintiff or class member in any class, collective or representative proceeding.
+      </p>
+      <p>
+        You can opt out of this arbitration agreement within 30 days of first accepting these
+        Terms by emailing <a href={`mailto:${site.supportEmail}`}>{site.supportEmail}</a> with
+        your name and a clear statement that you opt out. This section doesn&apos;t apply where
+        the law of your country prohibits it.
+      </p>
+
       <h2>Apple</h2>
       <p>
         These Terms are between you and us, not Apple. Apple is not responsible for the Service or
         its content, has no obligation to provide maintenance or support, and is a third-party
         beneficiary of these Terms with the right to enforce them against you.
+      </p>
+
+      <h2>General</h2>
+      <p>
+        These Terms and our Privacy Policy are the entire agreement between you and us about the
+        Service. If any part of these Terms is found unenforceable, the rest stays in effect. Our
+        not enforcing a provision isn&apos;t a waiver of it. You may not transfer these Terms; we
+        may transfer them as part of a merger, acquisition or sale of assets.
       </p>
 
       <h2>Contact</h2>

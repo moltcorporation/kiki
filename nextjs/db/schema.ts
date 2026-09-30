@@ -272,6 +272,28 @@ export const planAdjustment = pgTable(
   (t) => [index("plan_adjustment_plan_idx").on(t.planId, t.createdAt)],
 );
 
+/**
+ * Append-only record of each time a user agreed to the Terms and Privacy
+ * Policy, as evidence of acceptance. `version` is the documents' "last
+ * updated" date.
+ */
+export const consent = pgTable(
+  "consent",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    version: text("version").notNull(),
+    /** When the server recorded it (authoritative). */
+    acceptedAt: timestamp("accepted_at", { withTimezone: true }).defaultNow().notNull(),
+    /** When the user ticked the box on their device. */
+    clientAcceptedAt: timestamp("client_accepted_at", { withTimezone: true }),
+    appVersion: text("app_version"),
+  },
+  (t) => [index("consent_user_idx").on(t.userId, t.acceptedAt)],
+);
+
 // ---------------------------------------------------------------------------
 // Relations
 // ---------------------------------------------------------------------------

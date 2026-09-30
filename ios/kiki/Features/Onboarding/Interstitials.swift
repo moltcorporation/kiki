@@ -220,7 +220,7 @@ struct SummaryStep: View {
         let summary = GoalSummary(answers: answers, raceDate: answers.raceDate ?? model.suggestedRaceDate)
         OnboardingScaffold(
             title: model.firstName.map { "\($0), does this look right?" } ?? "Does this look right?",
-            subtitle: "You can change any of this later in the You tab.",
+            subtitle: "Tap anything to change it.",
             continueTitle: "Looks good"
         ) {
             // Each row is tappable: it reopens that question and comes back.

@@ -12,6 +12,9 @@ enum Config {
     static let termsURL = URL(string: "https://kikirunning.com/terms")!
     static let supportURL = URL(string: "https://kikirunning.com/support")!
     static let supportEmail = "hello@moltcorporation.com"
+    /// The Terms and Privacy Policy version users agree to: their "last
+    /// updated" date on the website. Bump both together.
+    static let legalVersion = "2026-09-30"
 
     static let revenueCatAPIKey = "appl_ppXlhrDnEMVOHybBpkcLCDGqREX"
     static let revenueCatTestStoreAPIKey = "test_NRcIEOCQlCzcXRJSErelwABhisd"

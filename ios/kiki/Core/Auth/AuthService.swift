@@ -49,6 +49,7 @@ final class AuthService {
                 throw APIError.unexpected
             }
             try await signInWithIDToken(token: token, nonce: appleNonce)
+            await recordPendingConsent()
             if let codeData = credential.authorizationCode,
                let code = String(data: codeData, encoding: .utf8) {
                 await registerAppleAuthorization(code)
@@ -65,6 +66,35 @@ final class AuthService {
             let _: Empty = try await api.post("api/me/apple-token", Body(authorizationCode: code))
         } catch {
             Analytics.captureError(error, context: ["step": "apple_token_exchange"])
+        }
+    }
+
+    // MARK: Consent
+
+    private static let pendingConsentKey = "consent.pendingAt"
+
+    /// Remembers that the user agreed to the Terms and Privacy Policy, so it
+    /// can be recorded once they're signed in (and retried if that fails).
+    func noteConsent() {
+        UserDefaults.standard.set(Date.now.timeIntervalSince1970, forKey: Self.pendingConsentKey)
+    }
+
+    /// Sends a pending agreement to the server's append-only consent log.
+    /// Safe to call repeatedly; keeps it pending until the server has it.
+    func recordPendingConsent() async {
+        let agreedAt = UserDefaults.standard.double(forKey: Self.pendingConsentKey)
+        guard agreedAt > 0, isSignedIn else { return }
+        struct Body: Encodable { let version: String; let acceptedAt: String; let appVersion: String }
+        let body = Body(
+            version: Config.legalVersion,
+            acceptedAt: ISO8601DateFormatter().string(from: Date(timeIntervalSince1970: agreedAt)),
+            appVersion: Bundle.main.appVersion
+        )
+        do {
+            let _: Empty = try await api.post("api/me/consent", body)
+            UserDefaults.standard.removeObject(forKey: Self.pendingConsentKey)
+        } catch {
+            Analytics.captureError(error, context: ["step": "record_consent"])
         }
     }
 

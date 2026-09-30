@@ -109,7 +109,7 @@ struct WelcomeView: View {
                 }
             }
             .padding(24)
-            .presentationDetents([.height(200)])
+            .presentationDetents([.height(290)])
         }
     }
 }
