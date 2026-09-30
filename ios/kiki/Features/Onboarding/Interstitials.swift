@@ -98,7 +98,7 @@ struct GoalCheckStep: View {
             }
             VStack(alignment: .leading, spacing: 16) {
                 InfoRow(symbol: "target", text: LocalizedStringKey(summary.goalLine))
-                InfoRow(symbol: "calendar", text: "\(model.answers.runDays.count) runs a week on \(RunDaysSelector.summary(model.answers.runDays))")
+                InfoRow(symbol: "calendar", text: "\(model.answers.runDays.count) \(model.answers.runDays.count == 1 ? "run" : "runs") a week on \(RunDaysSelector.summary(model.answers.runDays))")
                 InfoRow(symbol: "figure.run", text: "Starting from where you are today")
                 if isRebuild {
                     InfoRow(symbol: "arrow.triangle.2.circlepath", text: "This replaces your current plan. Runs you've logged are kept.")

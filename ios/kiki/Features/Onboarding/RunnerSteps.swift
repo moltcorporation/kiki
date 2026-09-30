@@ -56,18 +56,12 @@ struct RunDaysStep: View {
 
     var body: some View {
         @Bindable var model = model
-        let hint: LocalizedStringKey = switch model.answers.experience ?? .new {
-        case .new: "3 days a week is a great start."
-        case .beginner: "3–4 days a week works well at your level."
-        case .intermediate: "4–5 days a week is ideal for your level."
-        case .advanced: "5–6 days a week suits experienced runners."
-        }
         OnboardingScaffold(
             title: "Which days can you run?",
-            subtitle: hint,
-            canContinue: model.answers.runDays.count >= 2
+            subtitle: "Pick the days that fit your week.",
+            canContinue: !model.answers.runDays.isEmpty
         ) {
-            RunDaysSelector(days: $model.answers.runDays)
+            RunDaysSelector(days: $model.answers.runDays, experience: model.answers.experience)
         }
     }
 }

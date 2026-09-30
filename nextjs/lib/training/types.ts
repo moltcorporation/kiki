@@ -97,7 +97,7 @@ export const profileInputSchema = z.object({
   coachingStyle: z.enum(COACHING_STYLES).default("balanced"),
   weeklyDistanceM: z.number().int().min(0).max(300_000),
   longestRunM: z.number().int().min(0).max(100_000),
-  runDays: z.array(weekday).min(2).max(7),
+  runDays: z.array(weekday).min(1).max(7),
   longRunDay: weekday,
   extras: z.record(z.string(), z.unknown()).nullish(),
 }).refine((p) => p.runDays.includes(p.longRunDay), {

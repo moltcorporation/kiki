@@ -116,41 +116,54 @@ struct RulerPicker: View {
     }
 }
 
-/// Seven big day toggles (Mon–Sun).
+/// The seven days as checkbox cards (like the other questions), with a
+/// live hint on how the count fits the runner's level. Never a hard gate
+/// beyond one day.
 struct RunDaysSelector: View {
     @Binding var days: Set<Int>
+    /// Sets the recommended range for the hint.
+    var experience: Experience?
 
     var body: some View {
         VStack(spacing: 16) {
-            HStack(spacing: 8) {
+            VStack(spacing: 10) {
                 ForEach(1...7, id: \.self) { day in
                     let selected = days.contains(day)
-                    Button {
-                        Haptics.select()
+                    OptionCard(title: Self.fullName(day), indicator: .checkbox, isSelected: selected) {
                         if selected { days.remove(day) } else { days.insert(day) }
-                    } label: {
-                        Circle()
-                            .fill(selected ? Color.ink : Color.wash)
-                            .aspectRatio(1, contentMode: .fit)
-                            .overlay {
-                                Text(Self.shortName(day))
-                                    .font(.headline)
-                                    .foregroundStyle(selected ? Color.paper : Color.ink)
-                            }
-                            .frame(maxWidth: .infinity)
-                            .contentShape(.circle)
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(Self.fullName(day))
-                    .accessibilityAddTraits(selected ? .isSelected : [])
                 }
             }
-            Text(days.count == 1 ? "1 day a week" : "\(days.count) days a week")
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.secondary)
-                .contentTransition(.numericText())
-                .animation(.snappy, value: days.count)
+            hint
         }
+    }
+
+    /// Days a week coaches recommend at each level.
+    static func recommended(for experience: Experience?) -> ClosedRange<Int> {
+        switch experience ?? .new {
+        case .new: 3...3
+        case .beginner: 3...4
+        case .intermediate: 4...5
+        case .advanced: 5...6
+        }
+    }
+
+    private var hint: some View {
+        let count = days.count
+        let range = Self.recommended(for: experience)
+        let (icon, message, emphasized): (String, String, Bool) = switch count {
+        case 0:
+            ("hand.tap", "Pick at least one day to run.", false)
+        case ..<range.lowerBound:
+            ("info.circle", "\(count == 1 ? "1 day works" : "\(count) days work"), but \(range.lowerBound) a week is recommended for steady progress.", false)
+        case range:
+            ("checkmark.circle", "Great balance of running and rest for your level.", false)
+        case 7:
+            ("exclamationmark.triangle.fill", "Running every day leaves no time to recover. Try at least one rest day.", true)
+        default:
+            ("exclamationmark.circle", "That's a lot for your level. Rest days are when you get stronger.", false)
+        }
+        return InputHint(icon: icon, message: message, emphasized: emphasized)
     }
 
     static func fullName(_ isoDay: Int) -> String {
@@ -193,5 +206,37 @@ struct DurationWheel: View {
         .pickerStyle(.wheel)
         .frame(maxWidth: .infinity)
         .clipped()
+    }
+}
+
+/// A short note under an input that reacts to the answer (e.g. how
+/// realistic a goal time is). Informs, never blocks. `emphasized` adds an
+/// outline and a warning haptic for answers worth a second look.
+struct InputHint: View {
+    let icon: String
+    let message: String
+    var emphasized = false
+
+    var body: some View {
+        Label {
+            Text(message)
+        } icon: {
+            Image(systemName: icon)
+        }
+        .font(.subheadline.weight(emphasized ? .semibold : .medium))
+        .foregroundStyle(emphasized ? .primary : .secondary)
+        .multilineTextAlignment(.center)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(Color.wash, in: .rect(cornerRadius: 16))
+        .overlay {
+            if emphasized { RoundedRectangle(cornerRadius: 16).stroke(Color.ink, lineWidth: 1.5) }
+        }
+        .frame(maxWidth: .infinity)
+        .animation(.snappy, value: message)
+        .onChange(of: emphasized) { _, isEmphasized in
+            if isEmphasized { Haptics.warning() }
+        }
+        .accessibilityElement(children: .combine)
     }
 }

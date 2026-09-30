@@ -235,33 +235,14 @@ private struct GoalTimeFeedback: View {
 
     var body: some View {
         let level = Self.level(seconds: seconds, meters: meters)
-        let (icon, message): (String, LocalizedStringKey) = switch level {
+        let (icon, message): (String, String) = switch level {
         case .impossible: ("exclamationmark.triangle.fill", "Faster than the world record. Double-check your time?")
         case .elite: ("trophy", "That's elite, world-class territory.")
         case .ambitious: ("flame", "Very ambitious. That takes years of serious training.")
         case .strong: ("bolt", "A strong, challenging goal. Let's go!")
         case .great: ("checkmark.circle", "Great goal. You've got this!")
         }
-        Label {
-            Text(message)
-        } icon: {
-            Image(systemName: icon)
-        }
-        .font(.subheadline.weight(level == .impossible ? .semibold : .medium))
-        .foregroundStyle(level == .impossible ? .primary : .secondary)
-        .multilineTextAlignment(.center)
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(Color.wash, in: .rect(cornerRadius: 16))
-        .overlay {
-            if level == .impossible { RoundedRectangle(cornerRadius: 16).stroke(Color.ink, lineWidth: 1.5) }
-        }
-        .frame(maxWidth: .infinity)
-        .animation(.snappy, value: level)
-        .onChange(of: level == .impossible) { _, isImpossible in
-            if isImpossible { Haptics.warning() }
-        }
-        .accessibilityElement(children: .combine)
+        InputHint(icon: icon, message: message, emphasized: level == .impossible)
     }
 }
 

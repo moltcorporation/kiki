@@ -88,8 +88,7 @@ struct ProfileFieldEditor: View {
             RunDaysSelector(days: Binding(
                 get: { Set(profile.wrappedValue.runDays) },
                 set: { profile.wrappedValue.runDays = $0.sorted() }
-            ))
-            Text("Pick at least 2 days.").font(.subheadline).foregroundStyle(.secondary)
+            ), experience: profile.wrappedValue.experience)
         case .coachingStyle:
             ChoiceList(options: Questions.coachingStyles, selection: profile.wrappedValue.coachingStyle ?? .balanced) {
                 profile.wrappedValue.coachingStyle = $0
@@ -134,7 +133,7 @@ struct ProfileFieldEditor: View {
     private var canSave: Bool {
         guard let draft else { return false }
         switch field {
-        case .runDays: return draft.runDays.count >= 2
+        case .runDays: return !draft.runDays.isEmpty
         case .name: return draft.firstName?.trimmingCharacters(in: .whitespaces).isEmpty == false
         // Inputs with a default value save that value even if untouched.
         case .age, .height, .weight: return true
