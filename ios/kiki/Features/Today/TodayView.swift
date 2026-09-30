@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Today: the goal countdown and progress, today's workout, and the next
-/// few days, as cards that carry their own titles (Apple's card pattern).
+/// few days. Each block is a title above its card, all titles one size.
 struct TodayView: View {
     @Environment(TrainingStore.self) private var store
     @Environment(RunTracker.self) private var tracker
@@ -14,9 +14,11 @@ struct TodayView: View {
 
         NavigationStack(path: $path) {
             ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: 28) {
                     if let plan = store.plan {
-                        GoalProgressCard(title: greeting, plan: plan, units: units)
+                        Section(greeting) {
+                            GoalProgressCard(plan: plan, units: units)
+                        }
                     }
 
                     if let pending = store.pendingPlan, pending.status == .generating {
@@ -26,9 +28,9 @@ struct TodayView: View {
                         }
                     }
 
+                    Section("Today") {
                     if let workout = store.workouts.first(where: { $0.date == .today }) {
                         WorkoutHeroCard(
-                            heading: "Today",
                             workout: workout,
                             run: store.run(for: workout),
                             units: units,
@@ -42,9 +44,12 @@ struct TodayView: View {
                     } else {
                         OutsidePlanCard(day: .today, plan: store.plan)
                     }
+                    }
 
                     if !upcoming.isEmpty {
-                        UpcomingCard(workouts: upcoming, units: units)
+                        Section("Upcoming") {
+                            UpcomingCard(workouts: upcoming, units: units)
+                        }
                     }
 
                     Button {
@@ -102,19 +107,36 @@ struct TodayView: View {
     }
 }
 
-/// The next few days in one card, with its title inside (Apple's card
-/// pattern). Rows open the workout.
+/// A block on Today: a title above its card(s). All titles share one size.
+private struct Section<Content: View>: View {
+    let title: String
+    @ViewBuilder let content: Content
+
+    init(_ title: String, @ViewBuilder content: () -> Content) {
+        self.title = title
+        self.content = content()
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(title)
+                .font(.sectionTitle)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .padding(.horizontal, 4)
+                .accessibilityAddTraits(.isHeader)
+            content
+        }
+    }
+}
+
+/// The next few days in one card. Rows open the workout.
 private struct UpcomingCard: View {
     let workouts: [Workout]
     let units: Units
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Upcoming")
-                .font(.sectionTitle)
-                .accessibilityAddTraits(.isHeader)
-                .padding(.horizontal, 6)
-                .padding(.bottom, 4)
+        VStack(alignment: .leading, spacing: 0) {
             VStack(spacing: 0) {
                 ForEach(Array(workouts.enumerated()), id: \.element.id) { index, workout in
                     NavigationLink(value: workout) {
@@ -127,8 +149,7 @@ private struct UpcomingCard: View {
                 }
             }
         }
-        .padding(14)
-        .padding(.top, 6)
+        .padding(8)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color.wash, in: .rect(cornerRadius: 28))
     }
@@ -137,8 +158,6 @@ private struct UpcomingCard: View {
 /// The first thing on Today: a countdown to the goal and progress so far.
 private struct GoalProgressCard: View {
     @Environment(TrainingStore.self) private var store
-    /// The card's title (the greeting).
-    let title: String
     let plan: Plan
     let units: Units
 
@@ -150,12 +169,6 @@ private struct GoalProgressCard: View {
         let distance = planRuns.reduce(0) { $0 + $1.distanceM }
 
         VStack(alignment: .leading, spacing: 18) {
-            // The page's greeting: as large as the countdown number.
-            Text(title)
-                .font(.screenTitle)
-                .lineLimit(2)
-                .minimumScaleFactor(0.8)
-                .accessibilityAddTraits(.isHeader)
             VStack(alignment: .leading, spacing: 4) {
                 Text(finale?.title ?? plan.displayName)
                     .font(.subheadline.weight(.semibold))
