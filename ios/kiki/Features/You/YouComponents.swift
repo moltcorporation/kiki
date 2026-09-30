@@ -23,7 +23,7 @@ struct PreferenceGroup<Content: View>: View {
             VStack(spacing: 0) {
                 content
             }
-            .background(Color.wash, in: .rect(cornerRadius: 24))
+            .elevatedCard(cornerRadius: 24)
         }
     }
 }

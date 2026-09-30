@@ -420,30 +420,3 @@ struct AsphaltBackground: View {
         }
     }
 }
-
-/// Today's page: a warm off-white canvas with a faint golden glow at the
-/// top, echoing the sunset from the welcome film. Adds warmth and depth
-/// without leaving the black-and-white brand.
-private struct PageBackground: View {
-    var body: some View {
-        ZStack(alignment: .top) {
-            Color.canvas
-            RadialGradient(
-                colors: [Color(red: 1, green: 0.84, blue: 0.62).opacity(0.1), .clear],
-                center: UnitPoint(x: 0.5, y: 0),
-                startRadius: 0,
-                endRadius: 520
-            )
-            .frame(height: 560)
-        }
-        .ignoresSafeArea()
-    }
-}
-
-extension View {
-    /// A white card lifted off the canvas with a soft shadow.
-    func elevatedCard(cornerRadius: CGFloat = 28) -> some View {
-        background(Color.surface, in: .rect(cornerRadius: cornerRadius))
-            .shadow(color: .black.opacity(0.06), radius: 18, y: 8)
-    }
-}

@@ -250,10 +250,12 @@ struct KikiLogo: View {
 /// For screens without a top bar: fades content out under the status bar as
 /// it scrolls, so rows never collide with the clock.
 struct StatusBarFade: ViewModifier {
+    var color: Color = .paper
+
     func body(content: Content) -> some View {
         content.overlay(alignment: .top) {
             GeometryReader { proxy in
-                LinearGradient(colors: [.paper, .paper.opacity(0)], startPoint: .top, endPoint: .bottom)
+                LinearGradient(colors: [color, color.opacity(0)], startPoint: .top, endPoint: .bottom)
                     .frame(height: proxy.safeAreaInsets.top + 16)
                     .offset(y: -proxy.safeAreaInsets.top)
             }
@@ -263,5 +265,33 @@ struct StatusBarFade: ViewModifier {
 }
 
 extension View {
-    func statusBarFade() -> some View { modifier(StatusBarFade()) }
+    func statusBarFade(_ color: Color = .paper) -> some View { modifier(StatusBarFade(color: color)) }
+}
+
+/// The app's page background: a warm off-white canvas with a faint golden
+/// glow at the top (one light source everywhere), echoing the sunset from
+/// the welcome film. Adds warmth and depth
+/// without leaving the black-and-white brand.
+struct PageBackground: View {
+    var body: some View {
+        ZStack(alignment: .top) {
+            Color.canvas
+            RadialGradient(
+                colors: [Color(red: 1, green: 0.84, blue: 0.62).opacity(0.1), .clear],
+                center: UnitPoint(x: 0.5, y: 0),
+                startRadius: 0,
+                endRadius: 520
+            )
+            .frame(height: 560)
+        }
+        .ignoresSafeArea()
+    }
+}
+
+extension View {
+    /// A white card lifted off the canvas with a soft shadow.
+    func elevatedCard(cornerRadius: CGFloat = 28) -> some View {
+        background(Color.surface, in: .rect(cornerRadius: cornerRadius))
+            .shadow(color: .black.opacity(0.06), radius: 18, y: 8)
+    }
 }

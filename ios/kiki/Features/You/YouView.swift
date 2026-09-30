@@ -46,9 +46,9 @@ struct YouView: View {
                 .padding(.top, 8)
                 .padding(.bottom, 32)
             }
-            .background(Color.paper)
+            .background { PageBackground() }
             // No top bar: the profile header is the title.
-            .statusBarFade()
+            .statusBarFade(.canvas)
             .toolbarVisibility(.hidden, for: .navigationBar)
             .navigationDestination(for: Route.self) { route in
                 switch route {
@@ -284,7 +284,9 @@ private struct GoalCard: View {
         .foregroundStyle(.paper)
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.ink, in: .rect(cornerRadius: 24))
+        .background { AsphaltBackground() }
+        .clipShape(.rect(cornerRadius: 24))
+        .shadow(color: .black.opacity(0.2), radius: 18, y: 8)
         .accessibilityElement(children: .combine)
         .accessibilityHint("Shows your goal details")
     }
