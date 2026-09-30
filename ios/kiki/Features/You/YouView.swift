@@ -72,7 +72,7 @@ struct YouView: View {
 
     // MARK: Header
 
-    /// Photo, name and member-since in a standard card.
+    /// Photo, name and join date in a standard card.
     private var profileCard: some View {
         HStack(spacing: 16) {
             ProfileAvatar(userID: auth.userID, name: store.profile?.firstName, size: 64)
@@ -82,7 +82,7 @@ struct YouView: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
                 if let since = store.memberSince {
-                    Text("Kiki member since \(since.formatted(.dateTime.month(.wide).year()))")
+                    Text("Joined \(since.formatted(.dateTime.month(.wide).year()))")
                         .font(.subheadline)
                         .foregroundStyle(.muted)
                 }
