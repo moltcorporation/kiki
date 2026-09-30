@@ -41,19 +41,10 @@ struct WelcomeView: View {
 
             VStack(spacing: 28) {
                 VStack(spacing: 14) {
-                    // Brand lockup: the K mark and the name, above the pitch.
-                    HStack(spacing: 8) {
-                        Image(.launchLogo)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(height: 17)
-                        Text("KIKI")
-                            .font(.subheadline.weight(.heavy))
-                            .tracking(4)
-                    }
-                    .opacity(0.9)
-                    .accessibilityElement(children: .ignore)
-                    .accessibilityLabel("Kiki")
+                    // Wordmark, set like the K logo (heavy italic).
+                    Text("Kiki")
+                        .font(.system(size: 22, weight: .black).italic())
+                        .opacity(0.9)
 
                     Text("Your AI\nrunning coach.")
                         .font(.system(size: 44, weight: .black).italic())
