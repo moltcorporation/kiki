@@ -36,6 +36,7 @@ struct DistanceStep: View {
         }
         OnboardingScaffold(
             title: model.answers.goalKind == .faster ? "Which distance do you want to run faster?" : "Which race are you training for?",
+            subtitle: model.answers.goalKind == .faster ? "Your training will focus on it." : "Your plan is built around it.",
             canContinue: model.answers.raceDistance != nil
         ) {
             ChoiceList(options: options, selection: model.answers.raceDistance) { distance in
@@ -80,12 +81,11 @@ private struct CustomDistanceSheet: View {
     }
 }
 
-/// Race date as a big readout over a compact date wheel (stable height, same
-/// feel as the goal-time wheel), plus an optional race name for a more
-/// personal plan. "I don't have a date yet" picks a suggested date instead.
+/// Race date on a calendar where only realistic dates are selectable (at
+/// least a week out, at most 24 weeks), plus an optional race name for a
+/// more personal plan. "I don't have a date yet" uses a suggested date.
 struct RaceDateStep: View {
     @Environment(OnboardingModel.self) private var model
-    @FocusState private var nameFocused: Bool
 
     private var range: ClosedRange<Date> {
         Day.today.adding(days: 7).date...Day.today.adding(days: 24 * 7 - 1).date
@@ -94,8 +94,6 @@ struct RaceDateStep: View {
     var body: some View {
         @Bindable var model = model
         let date = model.answers.raceDate ?? model.suggestedRaceDate
-        // Same count the summary and plan use (includes this week).
-        let weeks = GoalSummary(answers: model.answers, raceDate: date).weeks
 
         OnboardingScaffold(
             title: "When's your race?",
@@ -112,30 +110,19 @@ struct RaceDateStep: View {
                 model.advance()
             }
         ) {
-            VStack(spacing: 28) {
-                VStack(spacing: 6) {
-                    Text(date.date, format: .dateTime.weekday(.abbreviated).month(.abbreviated).day())
-                        .font(.metric(.largeTitle))
-                        .contentTransition(.numericText())
-                    Text(weeks == 1 ? "1 week to train" : "\(weeks) weeks to train")
-                        .font(.headline)
-                        .foregroundStyle(.secondary)
-                        .contentTransition(.numericText())
-                }
-                .frame(maxWidth: .infinity)
-                .animation(.snappy, value: date)
-                .accessibilityElement(children: .combine)
-
+            VStack(alignment: .leading, spacing: 24) {
                 DatePicker(
                     "Race date",
                     selection: Binding(get: { date.date }, set: { model.answers.raceDate = Day($0) }),
                     in: range,
                     displayedComponents: .date
                 )
-                .datePickerStyle(.wheel)
+                .datePickerStyle(.graphical)
                 .labelsHidden()
-                .frame(height: 180)
-                .clipped()
+                .tint(.ink)
+                // Months need 5 or 6 week rows; reserving 6 keeps everything
+                // below the calendar from jumping when the month changes.
+                .frame(height: 340, alignment: .top)
                 .onChange(of: model.answers.raceDate) { Haptics.select() }
 
                 VStack(alignment: .leading, spacing: 8) {
@@ -147,7 +134,6 @@ struct RaceDateStep: View {
                         .textInputAutocapitalization(.words)
                         .autocorrectionDisabled()
                         .submitLabel(.done)
-                        .focused($nameFocused)
                         .padding(.horizontal, 20)
                         .padding(.vertical, 16)
                         .background(Color.wash, in: .rect(cornerRadius: 20))
