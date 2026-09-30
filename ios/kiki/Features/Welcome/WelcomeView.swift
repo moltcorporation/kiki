@@ -39,19 +39,21 @@ struct WelcomeView: View {
                 .ignoresSafeArea()
                 .allowsHitTesting(false)
 
-            VStack(spacing: 28) {
-                VStack(spacing: 14) {
-                    // Wordmark, set like the K logo (heavy italic).
-                    Text("Kiki")
-                        .font(.system(size: 22, weight: .black).italic())
-                        .opacity(0.9)
+            // Wordmark top-left, set like the K logo (heavy italic).
+            Text("Kiki")
+                .font(.system(size: 30, weight: .black).italic())
+                .shadow(color: .black.opacity(0.25), radius: 10)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .padding(.horizontal, 24)
+                .padding(.top, 12)
+                .opacity(appeared ? 1 : 0)
 
-                    Text("Your AI\nrunning coach.")
-                        .font(.system(size: 44, weight: .black).italic())
-                        .multilineTextAlignment(.center)
-                        .minimumScaleFactor(0.7)
-                        .shadow(color: .black.opacity(0.25), radius: 12, y: 4)
-                }
+            VStack(spacing: 28) {
+                Text("Your AI\nrunning coach.")
+                    .font(.system(size: 44, weight: .black).italic())
+                    .multilineTextAlignment(.center)
+                    .minimumScaleFactor(0.7)
+                    .shadow(color: .black.opacity(0.25), radius: 12, y: 4)
 
                 VStack(spacing: 16) {
                     PrimaryButton("Get started", action: onGetStarted)
