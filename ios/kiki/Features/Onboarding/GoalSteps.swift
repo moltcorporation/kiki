@@ -80,9 +80,12 @@ private struct CustomDistanceSheet: View {
     }
 }
 
+/// Race date as a big readout over a compact date wheel (stable height, same
+/// feel as the goal-time wheel), plus an optional race name for a more
+/// personal plan. "I don't have a date yet" picks a suggested date instead.
 struct RaceDateStep: View {
     @Environment(OnboardingModel.self) private var model
-    @State private var hasDate = true
+    @FocusState private var nameFocused: Bool
 
     private var range: ClosedRange<Date> {
         Day.today.adding(days: 7).date...Day.today.adding(days: 24 * 7 - 1).date
@@ -90,50 +93,66 @@ struct RaceDateStep: View {
 
     var body: some View {
         @Bindable var model = model
-        let dateBinding = Binding<Date>(
-            get: { (model.answers.raceDate ?? model.suggestedRaceDate).date },
-            set: { model.answers.raceDate = Day($0) }
-        )
+        let date = model.answers.raceDate ?? model.suggestedRaceDate
+        let weeksAway = max(1, Day.today.days(until: date) / 7)
 
         OnboardingScaffold(
             title: "When's your race?",
-            subtitle: "No date yet? We'll pick one that gives you time to train.",
+            subtitle: "Your plan counts down to race day.",
             onContinue: {
-                model.answers.noRaceDate = !hasDate
-                if !hasDate { model.answers.raceDate = nil }
+                model.answers.raceDate = date
+                model.answers.noRaceDate = false
+                model.advance()
+            },
+            secondaryTitle: "I don't have a date yet",
+            onSecondary: {
+                model.answers.raceDate = nil
+                model.answers.noRaceDate = true
                 model.advance()
             }
         ) {
-            VStack(spacing: 16) {
-                Picker("Race date", selection: $hasDate) {
-                    Text("I have a date").tag(true)
-                    Text("Not yet").tag(false)
+            VStack(spacing: 28) {
+                VStack(spacing: 6) {
+                    Text(date.date, format: .dateTime.weekday(.abbreviated).month(.abbreviated).day())
+                        .font(.metric(.largeTitle))
+                        .contentTransition(.numericText())
+                    Text(weeksAway == 1 ? "1 week away" : "\(weeksAway) weeks away")
+                        .font(.headline)
+                        .foregroundStyle(.secondary)
+                        .contentTransition(.numericText())
                 }
-                .pickerStyle(.segmented)
-                .onChange(of: hasDate) { Haptics.select() }
+                .frame(maxWidth: .infinity)
+                .animation(.snappy, value: date)
+                .accessibilityElement(children: .combine)
 
-                if hasDate {
-                    DatePicker("Race date", selection: dateBinding, in: range, displayedComponents: .date)
-                        .datePickerStyle(.graphical)
-                        .tint(.ink)
-                    TextField("Race name (optional)", text: $model.answers.raceName)
+                DatePicker(
+                    "Race date",
+                    selection: Binding(get: { date.date }, set: { model.answers.raceDate = Day($0) }),
+                    in: range,
+                    displayedComponents: .date
+                )
+                .datePickerStyle(.wheel)
+                .labelsHidden()
+                .frame(height: 180)
+                .clipped()
+                .onChange(of: model.answers.raceDate) { Haptics.select() }
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Race name (optional)")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                    TextField("e.g. Chicago Marathon", text: $model.answers.raceName)
+                        .font(.title3.weight(.semibold))
                         .textInputAutocapitalization(.words)
-                        .padding(18)
-                        .background(Color.wash, in: .rect(cornerRadius: 16))
-                } else {
-                    Card {
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text("We'll plan for").foregroundStyle(.secondary)
-                            Text(model.suggestedRaceDate.date, format: .dateTime.weekday(.wide).month(.wide).day())
-                                .font(.title2.weight(.bold))
-                            Text("\(Day.today.days(until: model.suggestedRaceDate) / 7) weeks to get you ready")
-                                .foregroundStyle(.secondary)
-                        }
-                    }
+                        .autocorrectionDisabled()
+                        .submitLabel(.done)
+                        .focused($nameFocused)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 16)
+                        .background(Color.wash, in: .rect(cornerRadius: 20))
                 }
             }
         }
-        .onAppear { hasDate = !model.answers.noRaceDate }
     }
 }
 
