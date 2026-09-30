@@ -429,10 +429,10 @@ private struct PageBackground: View {
         ZStack(alignment: .top) {
             Color.canvas
             RadialGradient(
-                colors: [Color(red: 1, green: 0.78, blue: 0.5).opacity(0.22), .clear],
+                colors: [Color(red: 1, green: 0.84, blue: 0.62).opacity(0.1), .clear],
                 center: UnitPoint(x: 0.5, y: 0),
                 startRadius: 0,
-                endRadius: 460
+                endRadius: 520
             )
             .frame(height: 560)
         }
