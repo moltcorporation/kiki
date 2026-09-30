@@ -5,8 +5,8 @@ struct UnitsStep: View {
 
     var body: some View {
         OnboardingScaffold(
-            title: "What units of measure do you prefer?",
-            subtitle: "This sets your default training metrics."
+            title: "Miles or kilometers?",
+            subtitle: "For your distances and paces."
         ) {
             ChoiceList(options: Questions.units, selection: model.answers.units) { model.answers.units = $0 }
         }

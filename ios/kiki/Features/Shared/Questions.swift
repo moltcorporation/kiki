@@ -15,7 +15,7 @@ extension GoalKind {
 
     var subtitle: String {
         switch self {
-        case .start: "Run 30 minutes non-stop"
+        case .start: "New to running? Start here"
         case .race: "Get ready for race day"
         case .faster: "Improve your time"
         case .fit: "Run regularly and enjoy it"
