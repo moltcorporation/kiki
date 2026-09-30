@@ -21,11 +21,28 @@ final class TrainingStore {
     /// offline cache).
     private(set) var consentVersion: String?
     private(set) var consentChecked = false
+    /// When the account was created, for "Kiki member since".
+    private(set) var memberSince: Date?
 
     /// True when the server confirms the user has never agreed (an account
     /// created from the welcome "Sign in" rather than onboarding).
     var needsConsent: Bool {
         consentChecked && consentVersion == nil
+    }
+
+    /// Renames the race on the current plan. A label only: the workouts
+    /// don't change, so no plan rebuild.
+    func renameRace(_ name: String) async throws {
+        guard let plan else { return }
+        struct Body: Encodable { let raceName: String? }
+        struct Response: Decodable { let plan: Plan }
+        let trimmed = name.trimmingCharacters(in: .whitespaces)
+        let response: Response = try await api.patch(
+            "api/plans/\(plan.id.uuidString.lowercased())",
+            Body(raceName: trimmed.isEmpty ? nil : trimmed)
+        )
+        self.plan = response.plan
+        persist()
     }
 
     func markConsented() {
@@ -111,6 +128,7 @@ final class TrainingStore {
             let (meResult, currentResult, runsResult) = try await (me, current, recent)
 
             profile = meResult.profile
+            memberSince = meResult.user.createdAt
             consentVersion = meResult.consentVersion
             consentChecked = true
             apply(currentResult)
@@ -345,6 +363,7 @@ final class TrainingStore {
         hasLoaded = false
         consentVersion = nil
         consentChecked = false
+        memberSince = nil
         cache.clear()
     }
 

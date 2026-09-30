@@ -2,111 +2,72 @@ import RevenueCatUI
 import StoreKit
 import SwiftUI
 
-/// Everything about the runner: goal, runs, training preferences, profile,
-/// reminders, subscription and account. Every onboarding answer is editable
-/// here using the same question components.
+/// The runner's profile: who they are, their goal, and the preferences that
+/// shape their plan. Every onboarding answer is editable here, using the same
+/// inputs as onboarding.
 struct YouView: View {
     @Environment(AuthService.self) private var auth
     @Environment(TrainingStore.self) private var store
     @Environment(Subscriptions.self) private var subscriptions
     @Environment(\.requestReview) private var requestReview
+    @Environment(\.openURL) private var openURL
 
     @AppStorage("reminders.enabled") private var remindersEnabled = true
     @AppStorage(BodyUnits.storageKey) private var bodyUnitsStored = ""
-    @State private var sheet: AppSheet?
-    @State private var newGoal: OnboardingModel?
+    @State private var path: [Route] = []
+    @State private var goalFlow: OnboardingModel?
     @State private var showCustomerCenter = false
     @State private var confirmSignOut = false
     @State private var confirmDelete = false
     @State private var isDeleting = false
     @State private var message: String?
 
+    enum Route: Hashable {
+        case goal
+        case runs
+        case edit(ProfileField)
+    }
+
     var body: some View {
-        let units = store.units
-        NavigationStack {
-            Form {
-                goalSection
-
-                Section {
-                    NavigationLink(value: Route.runs) {
-                        LabeledContent("Runs", value: store.runs.isEmpty ? "None yet" : "\(store.runs.count)")
+        NavigationStack(path: $path) {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 32) {
+                    header
+                    goalSection
+                    if let profile = store.profile {
+                        trainingSection(profile)
+                        aboutSection(profile)
                     }
+                    appSection
+                    accountSection
+                    footer
                 }
-
-                if let profile = store.profile {
-                    Section("Training") {
-                        editorLink(.experience, "Experience", profile.experience.title)
-                        if profile.experience != .new {
-                            editorLink(.weeklyVolume, "Weekly distance", Format.distance(Double(profile.weeklyDistanceM), units, decimals: 0))
-                        }
-                        editorLink(.runDays, "Run days", RunDaysSelector.summary(profile.runDays))
-                        editorLink(.coachingStyle, "Coaching style", (profile.coachingStyle ?? .balanced).title)
-                        editorLink(.units, "Units", profile.units.title)
-                    }
-
-                    Section("About you") {
-                        editorLink(.name, "Name", profile.firstName ?? "Add")
-                        editorLink(.age, "Age", profile.age.map(String.init) ?? "Add")
-                        let bodyUnits = BodyUnits.resolve(bodyUnitsStored, default: units)
-                        editorLink(.height, "Height", profile.heightCm.map { Format.height($0, bodyUnits) } ?? "Add")
-                        editorLink(.weight, "Weight", profile.weightKg.map { Format.weight($0, bodyUnits) } ?? "Add")
-                    }
-                }
-
-                Section {
-                    Toggle("Workout reminders", isOn: $remindersEnabled)
-                        .onChange(of: remindersEnabled) { _, enabled in
-                            Task { await updateReminders(enabled) }
-                        }
-                } footer: {
-                    Text("A morning heads-up on days you have a run.")
-                }
-
-                Section("Subscription") {
-                    Button("Manage subscription") { showCustomerCenter = true }
-                    Button("Restore purchases") {
-                        Task {
-                            let found = (try? await subscriptions.restore()) ?? false
-                            message = found ? "Your subscription is active." : "No active subscription found for this Apple ID."
-                        }
-                    }
-                }
-
-                Section("Help") {
-                    Link(destination: URL(string: "mailto:\(Config.supportEmail)")!) {
-                        Label("Contact support", systemImage: "envelope")
-                    }
-                    Button { requestReview() } label: {
-                        Label("Rate Kiki", systemImage: "star")
-                    }
-                    Link(destination: Config.privacyURL) { Label("Privacy Policy", systemImage: "hand.raised") }
-                    Link(destination: Config.termsURL) { Label("Terms of Service", systemImage: "doc.text") }
-                }
-
-                Section {
-                    Button("Sign out") { confirmSignOut = true }
-                    Button("Delete account", role: .destructive) { confirmDelete = true }
-                        .disabled(isDeleting)
-                } footer: {
-                    VStack(alignment: .leading, spacing: 4) {
-                        if let email = auth.email { Text(email) }
-                        Text("Kiki \(Bundle.main.appVersion) · Not medical advice. Check with a professional before starting a new training program.")
-                    }
-                    .padding(.top, 8)
-                }
+                .padding(.horizontal, 24)
+                .padding(.top, 12)
+                .padding(.bottom, 32)
             }
-            .tint(.ink)
-            .navigationTitle(store.profile?.firstName ?? "You")
+            .background(Color.paper)
+            // No nav bar here (the header is the title), so fade content out
+            // under the status bar as it scrolls.
+            .overlay(alignment: .top) {
+                GeometryReader { proxy in
+                    LinearGradient(colors: [.paper, .paper.opacity(0)], startPoint: .top, endPoint: .bottom)
+                        .frame(height: proxy.safeAreaInsets.top + 20)
+                        .ignoresSafeArea(edges: .top)
+                }
+                .allowsHitTesting(false)
+            }
+            .toolbarVisibility(.hidden, for: .navigationBar)
             .navigationDestination(for: Route.self) { route in
                 switch route {
+                case .goal: GoalDetailView(onEdit: startGoalEdit)
                 case .runs: RunsView()
                 case .edit(let field): ProfileFieldEditor(field: field)
                 }
             }
             .navigationDestination(for: Run.self) { RunDetailView(run: $0) }
-            .appSheets($sheet)
             .sheet(isPresented: $showCustomerCenter) { CustomerCenterView() }
-            .fullScreenCover(item: $newGoal) { model in
+            .fullScreenCover(item: $goalFlow) { model in
                 OnboardingFlow().environment(model)
             }
             .confirmationDialog("Sign out of Kiki?", isPresented: $confirmSignOut, titleVisibility: .visible) {
@@ -126,47 +87,151 @@ struct YouView: View {
         .onAppear { Analytics.screen("You") }
     }
 
-    enum Route: Hashable {
-        case runs
-        case edit(ProfileField)
-    }
+    // MARK: Header
 
-    @ViewBuilder
-    private var goalSection: some View {
-        Section("Goal") {
-            if let plan = store.plan {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(plan.displayName).font(.headline)
-                    Text("\(store.totalWeeks) weeks · ends \(Format.shortDate(plan.raceDate))")
+    private var header: some View {
+        HStack(spacing: 16) {
+            ProfileAvatar(userID: auth.userID, name: store.profile?.firstName, size: 76)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(store.profile?.firstName ?? "Runner")
+                    .font(.screenTitle)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                if let since = store.memberSince {
+                    Text("Kiki member since \(since.formatted(.dateTime.month(.wide).year()))")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
-                .padding(.vertical, 4)
             }
-            Button {
-                sheet = .adjust
-            } label: {
-                Label("Adjust my plan", systemImage: "sparkles")
-            }
-            Button(action: changeGoal) {
-                Label("Change goal", systemImage: "flag.checkered")
+        }
+        .padding(.top, 8)
+    }
+
+    // MARK: Goal
+
+    @ViewBuilder
+    private var goalSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Your goal")
+                .font(.sectionTitle)
+                .padding(.horizontal, 4)
+            if let plan = store.plan {
+                Button { path.append(.goal) } label: {
+                    GoalCard(plan: plan, units: store.units)
+                }
+                .buttonStyle(.haptic)
+            } else {
+                PrimaryButton("Set your goal", systemImage: "flag.checkered") { startGoalEdit(.goal) }
             }
         }
     }
 
-    private func editorLink(_ field: ProfileField, _ title: String, _ value: String) -> some View {
-        NavigationLink(value: Route.edit(field)) {
-            LabeledContent(title, value: value)
+    // MARK: Preferences
+
+    private func trainingSection(_ profile: Profile) -> some View {
+        PreferenceGroup("Your training") {
+            PreferenceRow(icon: "figure.run", label: "Experience", value: profile.experience.title) {
+                path.append(.edit(.experience))
+            }
+            if profile.experience != .new {
+                PreferenceRow(icon: "chart.bar", label: "Weekly distance",
+                              value: Format.distance(Double(profile.weeklyDistanceM), store.units, decimals: 0)) {
+                    path.append(.edit(.weeklyVolume))
+                }
+            }
+            PreferenceRow(icon: "calendar", label: "Run days", value: RunDaysSelector.summary(profile.runDays)) {
+                path.append(.edit(.runDays))
+            }
+            PreferenceRow(icon: (profile.coachingStyle ?? .balanced).icon, label: "Coaching style",
+                          value: (profile.coachingStyle ?? .balanced).title) {
+                path.append(.edit(.coachingStyle))
+            }
+            PreferenceRow(icon: "list.bullet", label: "Run history",
+                          value: store.runs.isEmpty ? "None yet" : "\(store.runs.count)", showsDivider: false) {
+                path.append(.runs)
+            }
         }
     }
 
-    private func changeGoal() {
-        let model = OnboardingModel(mode: .newGoal, profile: store.profile)
+    private func aboutSection(_ profile: Profile) -> some View {
+        let bodyUnits = BodyUnits.resolve(bodyUnitsStored, default: store.units)
+        return PreferenceGroup("About you") {
+            PreferenceRow(icon: "person", label: "Name", value: profile.firstName ?? "Add") {
+                path.append(.edit(.name))
+            }
+            PreferenceRow(icon: "birthday.cake", label: "Age", value: profile.age.map(String.init) ?? "Add") {
+                path.append(.edit(.age))
+            }
+            PreferenceRow(icon: "ruler", label: "Height", value: profile.heightCm.map { Format.height($0, bodyUnits) } ?? "Add") {
+                path.append(.edit(.height))
+            }
+            PreferenceRow(icon: "scalemass", label: "Weight", value: profile.weightKg.map { Format.weight($0, bodyUnits) } ?? "Add",
+                          showsDivider: false) {
+                path.append(.edit(.weight))
+            }
+        }
+    }
+
+    private var appSection: some View {
+        PreferenceGroup("App") {
+            PreferenceRow(icon: "ruler.fill", label: "Units", value: store.units.title) {
+                path.append(.edit(.units))
+            }
+            PreferenceToggleRow(icon: "bell", label: "Run day reminders", isOn: $remindersEnabled)
+                .onChange(of: remindersEnabled) { _, enabled in
+                    Task { await updateReminders(enabled) }
+                }
+            PreferenceRow(icon: "creditcard", label: "Subscription") { showCustomerCenter = true }
+            PreferenceRow(icon: "arrow.clockwise", label: "Restore purchases") {
+                Task {
+                    let found = (try? await subscriptions.restore()) ?? false
+                    message = found ? "Your subscription is active." : "No active subscription found for this Apple ID."
+                }
+            }
+            PreferenceRow(icon: "star", label: "Rate Kiki") { requestReview() }
+            PreferenceRow(icon: "envelope", label: "Contact support") {
+                openURL(URL(string: "mailto:\(Config.supportEmail)")!)
+            }
+            PreferenceRow(icon: "hand.raised", label: "Privacy Policy") { openURL(Config.privacyURL) }
+            PreferenceRow(icon: "doc.text", label: "Terms of Service", showsDivider: false) { openURL(Config.termsURL) }
+        }
+    }
+
+    private var accountSection: some View {
+        PreferenceGroup("Account") {
+            PreferenceRow(icon: "rectangle.portrait.and.arrow.right", label: "Sign out") { confirmSignOut = true }
+            PreferenceRow(icon: "trash", label: "Delete account", role: .destructive, showsDivider: false) {
+                confirmDelete = true
+            }
+            .disabled(isDeleting)
+        }
+    }
+
+    private var footer: some View {
+        VStack(spacing: 4) {
+            if let email = auth.email { Text(email) }
+            Text("Kiki \(Bundle.main.appVersion)")
+            Text("Not medical advice. Check with a professional before starting a new training program.")
+                .multilineTextAlignment(.center)
+        }
+        .font(.footnote)
+        .foregroundStyle(.secondary)
+        .frame(maxWidth: .infinity)
+    }
+
+    // MARK: Actions
+
+    /// Opens the goal questions from onboarding, prefilled with the current
+    /// goal. `.goal` changes the whole goal; any other step edits just that
+    /// detail. Either way the flow ends with a confirmation before rebuilding.
+    private func startGoalEdit(_ step: OnboardingModel.Step) {
+        let mode: OnboardingModel.Mode = step == .goal ? .newGoal : .editGoal(step)
+        let model = OnboardingModel(mode: mode, profile: store.profile, plan: store.plan)
         model.onFinish = { [weak model] in
-            if newGoal === model { newGoal = nil }
+            if goalFlow === model { goalFlow = nil }
         }
-        newGoal = model
-        Analytics.track("change_goal_started")
+        goalFlow = model
+        Analytics.track("goal_edit_started", ["step": step.rawValue])
     }
 
     private func updateReminders(_ enabled: Bool) async {
@@ -184,15 +249,53 @@ struct YouView: View {
 
     private func deleteAccount() {
         isDeleting = true
+        let userID = auth.userID
         Task {
             defer { isDeleting = false }
             do {
                 try await auth.deleteAccount()
+                if let userID { AvatarStore.remove(userID: userID) }
             } catch {
                 Haptics.error()
                 message = (error as? LocalizedError)?.errorDescription ?? "Couldn't delete your account. Please try again."
             }
         }
+    }
+}
+
+/// The current goal as a dark card, like the Today workout card.
+private struct GoalCard: View {
+    let plan: Plan
+    let units: Units
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 14) {
+            Image(systemName: plan.goalKind.icon)
+                .font(.title3.weight(.semibold))
+                .frame(width: 28)
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 6) {
+                Text(plan.displayName)
+                    .font(.title3.weight(.bold))
+                    .multilineTextAlignment(.leading)
+                ForEach(plan.goalDetails(units: units), id: \.self) { line in
+                    Text(line)
+                        .font(.subheadline)
+                        .foregroundStyle(.paper.opacity(0.7))
+                }
+            }
+            Spacer(minLength: 8)
+            Image(systemName: "chevron.right")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(.paper.opacity(0.5))
+                .padding(.top, 6)
+        }
+        .foregroundStyle(.paper)
+        .padding(20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.ink, in: .rect(cornerRadius: 24))
+        .accessibilityElement(children: .combine)
+        .accessibilityHint("Shows your goal details")
     }
 }
 

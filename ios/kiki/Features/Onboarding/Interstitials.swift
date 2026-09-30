@@ -86,9 +86,12 @@ struct GoalCheckStep: View {
 
     var body: some View {
         let summary = GoalSummary(answers: model.answers, raceDate: model.answers.raceDate ?? model.suggestedRaceDate)
+        // From the You tab this screen is the confirmation before a rebuild.
+        let isRebuild = model.mode != .full
         OnboardingScaffold(
             title: LocalizedStringKey(summary.checkTitle),
-            subtitle: LocalizedStringKey(summary.checkMessage)
+            subtitle: LocalizedStringKey(summary.checkMessage),
+            continueTitle: isRebuild ? "Build my new plan" : "Continue"
         ) {
             Card(padding: 24) {
                 GoalJourney(weeks: summary.weeks, endLabel: summary.endLabel)
@@ -97,6 +100,9 @@ struct GoalCheckStep: View {
                 InfoRow(symbol: "target", text: LocalizedStringKey(summary.goalLine))
                 InfoRow(symbol: "calendar", text: "\(model.answers.runDays.count) runs a week on \(RunDaysSelector.summary(model.answers.runDays))")
                 InfoRow(symbol: "figure.run", text: "Starting from where you are today")
+                if isRebuild {
+                    InfoRow(symbol: "arrow.triangle.2.circlepath", text: "This replaces your current plan. Runs you've logged are kept.")
+                }
             }
             .padding(.top, 24)
         }

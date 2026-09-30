@@ -6,12 +6,14 @@ import Foundation
 /// request. The main app never depends on how a question was answered.
 @Observable
 final class OnboardingModel {
-    enum Mode {
+    enum Mode: Equatable {
         /// First-run onboarding, persisted so it can resume.
         case full
-        /// "Change goal" from the You tab: goal questions only, prefilled
-        /// from the saved profile.
+        /// "Change goal" from the You tab: all goal questions, prefilled.
         case newGoal
+        /// Changing one goal detail from the You tab (e.g. the race date):
+        /// that question plus any follow-up it needs, then the rebuild.
+        case editGoal(Step)
     }
 
     enum Step: String, Codable {
@@ -61,7 +63,7 @@ final class OnboardingModel {
 
     private static let storageKey = "onboarding.v3"
 
-    init(mode: Mode = .full, profile: Profile? = nil) {
+    init(mode: Mode = .full, profile: Profile? = nil, plan: Plan? = nil) {
         self.mode = mode
         if mode == .full,
            let data = UserDefaults.standard.data(forKey: Self.storageKey),
@@ -72,9 +74,45 @@ final class OnboardingModel {
             answers = Answers()
         }
         if let profile { seed(from: profile) }
-        if mode == .newGoal {
+        if let plan, mode != .full { seed(fromPlan: plan) }
+        switch mode {
+        case .full: break
+        case .newGoal:
             isSignedIn = true
             path = [.goal]
+        case .editGoal(let step):
+            isSignedIn = true
+            path = [step]
+        }
+    }
+
+    /// Prefills the goal answers from the current plan, so editing starts
+    /// from what the runner already chose.
+    private func seed(fromPlan plan: Plan) {
+        answers.goalKind = plan.goalKind
+        answers.raceDistance = plan.raceDistance
+        if plan.raceDistance == .other, let meters = plan.raceDistanceM {
+            answers.customDistanceKm = Double(meters) / 1000
+        }
+        answers.raceName = plan.raceName ?? ""
+        if plan.goalKind == .race {
+            answers.raceDate = plan.raceDate
+            answers.noRaceDate = false
+        }
+        answers.goalType = plan.goalType
+        answers.goalTimeS = plan.goalTimeS
+        let planWeeks = plan.startDate.days(until: plan.raceDate) / 7 + 1
+        answers.weeks = planWeeks > 10 ? 12 : 8
+    }
+
+    /// Questions shown when editing one goal detail: the question, plus a
+    /// follow-up only when the answer makes it necessary (a new distance or a
+    /// switch to a time goal needs a goal time).
+    private func editSteps(from step: Step) -> [Step] {
+        let needsTime = answers.goalKind == .faster || answers.goalType == .time
+        switch step {
+        case .distance, .raceGoal: return needsTime ? [step, .goalTime] : [step]
+        default: return [step]
         }
     }
 
@@ -97,6 +135,10 @@ final class OnboardingModel {
 
     /// The ordered screens for the current answers.
     var flow: [Step] {
+        if case .editGoal(let step) = mode {
+            // The goal check doubles as the "this rebuilds your plan" warning.
+            return editSteps(from: step) + [.goalCheck, .generating, .preview]
+        }
         var steps: [Step] = [.goal]
         if mode == .full { steps.append(.units) }
 
@@ -146,7 +188,7 @@ final class OnboardingModel {
         switch current {
         case .generating, .preview: false
         case .account: !isSignedIn
-        default: path.count > 1 || mode == .newGoal || !isSignedIn
+        default: path.count > 1 || mode != .full || !isSignedIn
         }
     }
 
@@ -178,7 +220,7 @@ final class OnboardingModel {
             return
         }
         navigate(.forward) { [self] in
-            Analytics.track("onboarding_step_completed", ["step": from.rawValue, "mode": mode == .full ? "full" : "new_goal"])
+            Analytics.track("onboarding_step_completed", ["step": from.rawValue, "mode": mode == .full ? "full" : "edit_goal"])
             path.append(steps[index + 1])
         }
     }
@@ -190,7 +232,7 @@ final class OnboardingModel {
         guard canGoBack else { return }
         navigate(.backward) { [self] in
             guard path.count > 1 else {
-                if mode == .newGoal { onFinish?() } else { path = [] }
+                if mode != .full { onFinish?() } else { path = [] }
                 return
             }
             path.removeLast()
@@ -225,7 +267,7 @@ final class OnboardingModel {
 
     /// Ends onboarding once the plan is ready.
     func finish() {
-        if mode == .newGoal {
+        if mode != .full {
             onFinish?()
         } else {
             reset()

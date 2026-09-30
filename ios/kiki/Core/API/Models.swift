@@ -396,6 +396,8 @@ nonisolated struct MeResponse: Decodable, Sendable {
         let id: String
         let email: String
         let name: String
+        /// When the account was created ("Kiki member since").
+        let createdAt: Date?
     }
     let user: User
     let profile: Profile?
