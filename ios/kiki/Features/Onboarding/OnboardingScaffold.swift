@@ -63,8 +63,8 @@ struct OnboardingScaffold<Content: View>: View {
     }
 }
 
-/// Back arrow above a segmented bar: one segment per question, filled up to
-/// the current one, so runners can see how far along they are.
+/// A round back button beside a segmented bar: one segment per question,
+/// filled up to the current one, so runners can see how far along they are.
 struct OnboardingHeader: View {
     let step: Int
     let total: Int
@@ -72,15 +72,18 @@ struct OnboardingHeader: View {
     let onBack: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        HStack(spacing: 14) {
             Button(action: onBack) {
                 Image(systemName: "arrow.left")
-                    .font(.title3.weight(.medium))
-                    .frame(width: 44, height: 44, alignment: .leading)
-                    .contentShape(.rect)
+                    .font(.body.weight(.semibold))
+                    .frame(width: 40, height: 40)
+                    .background(Color.wash, in: .circle)
+                    .frame(width: 44, height: 44)
+                    .contentShape(.circle)
             }
             .buttonStyle(.haptic)
             .foregroundStyle(.ink)
+            // Keeps its space when hidden so the bar never shifts.
             .opacity(canGoBack ? 1 : 0)
             .disabled(!canGoBack)
             .accessibilityLabel("Back")
@@ -97,7 +100,10 @@ struct OnboardingHeader: View {
             .accessibilityLabel("Progress")
             .accessibilityValue("Step \(step) of \(total)")
         }
-        .padding(.horizontal, 24)
+        // The 44pt tap area overhangs the circle by 2pt; this keeps the
+        // circle itself on the 24pt margin.
+        .padding(.leading, 22)
+        .padding(.trailing, 24)
         .padding(.top, 4)
     }
 }
