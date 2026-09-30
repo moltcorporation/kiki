@@ -100,9 +100,11 @@ struct PrimaryButton: View {
     }
 }
 
-/// Full-width translucent pill for the secondary action next to a
-/// `PrimaryButton` (same size, quieter).
+/// Full-width pill for the secondary action next to a `PrimaryButton`
+/// (same size, quieter): white with a hairline on light screens, like our
+/// cards; translucent over dark screens (the welcome film).
 struct SecondaryButton: View {
+    @Environment(\.colorScheme) private var colorScheme
     let title: LocalizedStringKey
     let action: () -> Void
 
@@ -117,7 +119,14 @@ struct SecondaryButton: View {
                 .font(.headline)
                 .foregroundStyle(.ink)
                 .frame(maxWidth: .infinity, minHeight: Metrics.buttonHeight)
-                .background(Color.ink.opacity(0.14), in: .capsule)
+                .background {
+                    if colorScheme == .dark {
+                        Capsule().fill(Color.ink.opacity(0.14))
+                    } else {
+                        Capsule().fill(Color.surface)
+                            .overlay(Capsule().stroke(Color.ink.opacity(0.12), lineWidth: 1))
+                    }
+                }
                 .contentShape(.capsule)
         }
         .buttonStyle(.haptic)

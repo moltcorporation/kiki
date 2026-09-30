@@ -52,15 +52,21 @@ struct WorkoutDetailView: View {
                         StatusBadge(status: workout.status, isToday: false)
                     }
                     if !workout.isRest {
-                        HStack(alignment: .firstTextBaseline, spacing: 32) {
+                        Divider()
+                        VStack(alignment: .leading, spacing: 16) {
                             if let metric = Format.workoutMetric(workout, units: units) {
-                                MetricView(value: metric.value, label: metric.unit)
+                                DetailLine(label: "Distance", value: "\(metric.value) \(metric.unit)")
                             }
-                            if let zone = workout.type.paceZone, let range = store.plan?.paces?[zone] {
-                                MetricView(
-                                    value: Format.paceRange(range, units).replacingOccurrences(of: " /\(units.rawValue)", with: ""),
-                                    label: "\(zone.rawValue) pace /\(units.rawValue)"
-                                )
+                            if let zone = workout.type.paceZone {
+                                if let range = store.plan?.paces?[zone] {
+                                    let perUnit = units == .mi ? "per mile" : "per km"
+                                    DetailLine(
+                                        label: "Pace",
+                                        value: "About \(Format.pace(Double(range.min + range.max) / 2, units, withUnit: false)) \(perUnit)",
+                                        note: "Anywhere from \(Format.pace(Double(range.min), units, withUnit: false)) to \(Format.pace(Double(range.max), units, withUnit: false)) is fine."
+                                    )
+                                }
+                                DetailLine(label: "Effort", value: zone.effort)
                             }
                         }
                     }
@@ -111,6 +117,8 @@ struct WorkoutDetailView: View {
             }
         }
         .navigationBarTitleDisplayMode(.inline)
+        // A focused page: the buttons sit alone at the bottom.
+        .toolbarVisibility(.hidden, for: .tabBar)
         .appSheets($sheet)
         .alert("Coming soon", isPresented: $showChangeSoon) {
             Button("OK", role: .cancel) {}
@@ -171,6 +179,30 @@ struct WorkoutDetailView: View {
         case -1: "Yesterday"
         default: nil
         }
+    }
+}
+
+/// A labeled line in the workout card: "Distance", "3.0 miles".
+private struct DetailLine: View {
+    let label: String
+    let value: String
+    var note: String?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(label)
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(.muted)
+            Text(value)
+                .font(.body.weight(.semibold))
+                .fixedSize(horizontal: false, vertical: true)
+            if let note {
+                Text(note)
+                    .font(.subheadline)
+                    .foregroundStyle(.muted)
+            }
+        }
+        .accessibilityElement(children: .combine)
     }
 }
 

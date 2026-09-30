@@ -152,3 +152,16 @@ struct WeekStrip: View {
         }
     }
 }
+
+extension PaceZone {
+    /// How the pace should feel, in plain words for beginners.
+    var effort: String {
+        switch self {
+        case .easy, .recovery: "Easy. You can chat in full sentences."
+        case .long: "Steady and relaxed. Save energy for the finish."
+        case .tempo: "Comfortably hard. You can say a few words at a time."
+        case .interval: "Hard. Push during each rep, then catch your breath."
+        case .race: "Your goal race pace. Practice how it feels."
+        }
+    }
+}
