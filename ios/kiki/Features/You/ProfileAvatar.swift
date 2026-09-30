@@ -3,7 +3,7 @@ import SwiftUI
 
 /// The runner's profile photo, stored on this device. Sign in with Apple
 /// doesn't share a photo, so the default is their initial on a dark circle;
-/// tapping lets them pick one from their library.
+/// tapping it (no visible badge) lets them pick one from their library.
 struct ProfileAvatar: View {
     let userID: String?
     let name: String?
@@ -14,16 +14,9 @@ struct ProfileAvatar: View {
 
     var body: some View {
         PhotosPicker(selection: $selection, matching: .images) {
+            // No badge: adding a photo is a quiet nice-to-have; tapping the
+            // avatar opens the picker.
             avatar
-                .overlay(alignment: .bottomTrailing) {
-                    Image(systemName: "camera.fill")
-                        .font(.system(size: size * 0.13, weight: .semibold))
-                        .foregroundStyle(.paper)
-                        .frame(width: size * 0.32, height: size * 0.32)
-                        .background(Color.ink, in: .circle)
-                        .overlay(Circle().stroke(Color.paper, lineWidth: 3))
-                        .offset(x: 2, y: 2)
-                }
         }
         .buttonStyle(.haptic)
         .accessibilityLabel(image == nil ? "Add a profile photo" : "Change profile photo")
