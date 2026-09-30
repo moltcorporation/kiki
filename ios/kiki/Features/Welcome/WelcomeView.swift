@@ -44,33 +44,27 @@ struct WelcomeView: View {
                 .ignoresSafeArea()
                 .allowsHitTesting(false)
 
-            // Centered at the bottom: wordmark, headline, then the actions.
-            // 20pt side margins, 8pt above the home indicator.
-            VStack(spacing: 32) {
-                VStack(spacing: 10) {
+            // Left-aligned at the bottom: wordmark just above the headline,
+            // then the actions. 20pt side margins, 8pt above the home indicator.
+            VStack(alignment: .leading, spacing: 32) {
+                VStack(alignment: .leading, spacing: 10) {
                     Text("Kiki")
                         .font(.system(size: 26, weight: .black).italic())
                         .opacity(0.9)
                         .accessibilityAddTraits(.isHeader)
                     Text("Your AI\nrunning coach.")
                         .font(.system(size: headlineSize, weight: .black).italic())
-                        .multilineTextAlignment(.center)
+                        .multilineTextAlignment(.leading)
                         .minimumScaleFactor(0.7)
                 }
                 .shadow(color: .black.opacity(0.25), radius: 12, y: 4)
 
-                VStack(spacing: 4) {
+                VStack(spacing: 12) {
                     PrimaryButton("Get started", action: onGetStarted)
-                    Button {
-                        showSignIn = true
-                    } label: {
-                        Text("Already have an account? **Sign in**")
-                            .foregroundStyle(.ink)
-                            .frame(maxWidth: .infinity, minHeight: 44)
-                    }
-                    .buttonStyle(.haptic)
+                    SecondaryButton("Sign in") { showSignIn = true }
                 }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, Metrics.screenMargin)
             .padding(.bottom, 8)
             .opacity(appeared ? 1 : 0)
