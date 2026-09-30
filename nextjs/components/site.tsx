@@ -1,21 +1,18 @@
 import Link from "next/link";
 import { site } from "@/lib/site";
 
+/** The app icon artwork (same file as the iOS icon, `public/kiki-icon.png`). */
 export function LogoMark({ className = "size-8" }: { className?: string }) {
   return (
-    <span
-      aria-hidden
-      className={`inline-grid place-items-center rounded-[28%] bg-ink text-paper ${className}`}
-    >
-      <span className="-ml-[0.04em] text-[0.72em] font-black italic leading-none">K</span>
-    </span>
+    // eslint-disable-next-line @next/next/no-img-element -- tiny static asset, no optimization needed
+    <img src="/kiki-icon.png" alt="" aria-hidden className={`rounded-[22.5%] ${className}`} />
   );
 }
 
 export function Logo() {
   return (
     <Link href="/" className="flex items-center gap-2.5 text-lg" aria-label="Kiki home">
-      <LogoMark className="size-9 text-2xl" />
+      <LogoMark className="size-9" />
       <span className="text-xl font-black italic tracking-tight">Kiki</span>
     </Link>
   );

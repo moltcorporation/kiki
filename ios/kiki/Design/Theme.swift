@@ -185,15 +185,15 @@ struct Card<Content: View>: View {
     }
 }
 
+/// The app icon artwork as an in-app avatar (e.g. the coach in chats).
 struct KikiLogo: View {
     var size: CGFloat = 64
 
     var body: some View {
-        Text("K")
-            .font(.system(size: size * 0.62, weight: .black).italic())
-            .foregroundStyle(.paper)
+        Image(.kikiIcon)
+            .resizable()
             .frame(width: size, height: size)
-            .background(Color.ink, in: .rect(cornerRadius: size * 0.28))
+            .clipShape(.rect(cornerRadius: size * 0.225, style: .continuous))
             .accessibilityLabel("Kiki")
     }
 }

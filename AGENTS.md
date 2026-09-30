@@ -5,7 +5,7 @@ Kiki: AI running coach iOS app. Quiz onboarding â†’ AI-generated training plan â
 ## Brand
 - Look: black/white UI, premium and minimal. Photography and video bring warmth (golden-hour running footage), never the UI chrome.
 - Texture: gritty, asphalt-like film grain with a soft vignette (darker edges, gentle center glow). Used on the splash (`LaunchTexture`) and over the welcome video (`Grain`). Keep it subtle.
-- Logo: "Kiki" wordmark in SF heavy (black) italic, white on dark (`LaunchWordmark`; in SwiftUI `.system(weight: .black).italic()`). The app icon is a white italic K on `#15181D`.
+- Logo: "Kiki" wordmark in SF heavy (black) italic, white on dark (`LaunchWordmark`; in SwiftUI `.system(weight: .black).italic()`). The app icon is the same K on the splash texture; masters in the repo root (`kiki-app-icon-1024.png`, `kiki-app-icon-4096.png`), K width = 58% of the canvas (standard single-glyph padding). Used for the iOS icon, `KikiLogo`, and the site favicon/`icon.png`/`apple-icon.png`/`public/kiki-icon.png`; regenerate all from the master when it changes.
 - Layout on marketing-style screens: left-aligned, wordmark top-left, generous margins (24pt), headline and actions at the bottom over a dark gradient.
 
 ## Layout
