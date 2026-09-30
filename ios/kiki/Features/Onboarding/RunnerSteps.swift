@@ -18,7 +18,7 @@ struct ExperienceStep: View {
 
     var body: some View {
         OnboardingScaffold(
-            title: "How would you describe your running?",
+            title: "How would you rate your running ability?",
             subtitle: "Pick the closest fit.",
             canContinue: model.answers.experience != nil,
             onContinue: {
