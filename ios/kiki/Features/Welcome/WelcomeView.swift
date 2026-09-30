@@ -18,6 +18,20 @@ struct WelcomeView: View {
             LinearGradient(colors: [.black.opacity(0.35), .black.opacity(0)], startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.18))
                 .ignoresSafeArea()
 
+            // Soft corner vignette behind the wordmark, like a film grade,
+            // so it reads over the bright sky without a visible shape.
+            RadialGradient(
+                stops: [
+                    .init(color: .black.opacity(0.6), location: 0),
+                    .init(color: .black.opacity(0.3), location: 0.5),
+                    .init(color: .black.opacity(0), location: 1),
+                ],
+                center: .topLeading,
+                startRadius: 0,
+                endRadius: 320
+            )
+            .ignoresSafeArea()
+
             // Darkens the lower half so the text reads cleanly on any frame.
             LinearGradient(
                 stops: [
