@@ -150,10 +150,11 @@ private struct GoalProgressCard: View {
         let distance = planRuns.reduce(0) { $0 + $1.distanceM }
 
         VStack(alignment: .leading, spacing: 18) {
+            // The page's greeting: as large as the countdown number.
             Text(title)
-                .font(.sectionTitle)
+                .font(.screenTitle)
                 .lineLimit(2)
-                .minimumScaleFactor(0.85)
+                .minimumScaleFactor(0.8)
                 .accessibilityAddTraits(.isHeader)
             VStack(alignment: .leading, spacing: 4) {
                 Text(finale?.title ?? plan.displayName)
