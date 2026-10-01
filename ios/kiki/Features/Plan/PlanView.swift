@@ -45,7 +45,7 @@ struct PlanView: View {
 }
 
 /// The top of the Plan tab: progress and goal together. A ring that fills
-/// day by day through the plan (the percentage inside), beside the goal and its date,
+/// day by day through the plan (days to go inside), beside the goal and its date,
 /// then a hairline and the two stats that matter most: distance run and
 /// average pace.
 struct ProgressCard: View {
@@ -59,13 +59,16 @@ struct ProgressCard: View {
         let timed = runs.filter { $0.durationS > 0 && $0.distanceM > 0 }
         let timedM = timed.reduce(0) { $0 + $1.distanceM }
         let timedS = Double(timed.reduce(0) { $0 + $1.durationS })
+        // The same countdown as Home's goal card ("76 days to go").
+        let endDate = store.workouts.last { $0.type == .race }?.date ?? plan.raceDate
+        let daysLeft = max(0, Day.today.days(until: endDate))
         // How far through the plan by days, so the ring moves every day.
         let planDays = max(plan.startDate.days(until: plan.raceDate), 1)
         let progress = min(max(Double(plan.startDate.days(until: .today)) / Double(planDays), 0), 1)
 
         Card(padding: Spacing.l) {
             HStack(spacing: Spacing.xxl) {
-                PlanRing(progress: progress)
+                PlanRing(progress: progress, daysLeft: daysLeft)
 
                 VStack(alignment: .leading, spacing: Spacing.m) {
                     VStack(alignment: .leading, spacing: Spacing.xxs) {
@@ -117,15 +120,15 @@ struct ProgressCard: View {
 }
 
 /// A black ring filling on a light track as the plan goes by, with the
-/// percentage inside ("8%").
+/// days to go inside: the number, and a small label under it.
 private struct PlanRing: View {
     let progress: Double
+    let daysLeft: Int
 
     private let size: CGFloat = 92
     private let lineWidth: CGFloat = 8
 
     var body: some View {
-        let percent = Int((progress * 100).rounded())
         ZStack {
             Circle()
                 .stroke(Color.track, lineWidth: lineWidth)
@@ -134,12 +137,19 @@ private struct PlanRing: View {
                 .stroke(Color.ink, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
                 .rotationEffect(.degrees(-90))
                 .animation(.smooth, value: progress)
-            HStack(alignment: .firstTextBaseline, spacing: 1) {
-                Text("\(percent)")
-                    .font(.metric(.title))
-                Text("%")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.muted)
+            Group {
+                if daysLeft == 0 {
+                    Text("Today")
+                        .font(.metric(.title3))
+                } else {
+                    VStack(spacing: 0) {
+                        Text("\(daysLeft)")
+                            .font(.metric(.title))
+                        Text(daysLeft == 1 ? "day to go" : "days to go")
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(.muted)
+                    }
+                }
             }
             .lineLimit(1)
             .minimumScaleFactor(0.6)
@@ -148,6 +158,6 @@ private struct PlanRing: View {
         .frame(width: size, height: size)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Plan progress")
-        .accessibilityValue("\(percent) percent")
+        .accessibilityValue(daysLeft == 0 ? "Today" : daysLeft == 1 ? "1 day to go" : "\(daysLeft) days to go")
     }
 }
