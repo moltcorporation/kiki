@@ -45,9 +45,9 @@ struct PlanView: View {
 }
 
 /// The top of the Plan tab: progress and goal together. A ring that fills
-/// as the plan goes by, weeks to go inside it, and a 2×2 grid split by
-/// hairlines: miles run and longest run (progress), race day and race
-/// distance (the goal).
+/// as the plan goes by (weeks to go inside), beside the goal and its date,
+/// then a hairline and the two stats that matter most: distance run and
+/// average pace.
 struct ProgressCard: View {
     @Environment(TrainingStore.self) private var store
     let plan: Plan
@@ -56,64 +56,46 @@ struct ProgressCard: View {
     var body: some View {
         let runs = store.runs.filter { Day($0.startedAt) >= plan.startDate && Day($0.startedAt) <= plan.raceDate }
         let distanceM = runs.reduce(0) { $0 + $1.distanceM }
-        let longestM = runs.map(\.distanceM).max() ?? 0
+        let timed = runs.filter { $0.durationS > 0 && $0.distanceM > 0 }
+        let timedM = timed.reduce(0) { $0 + $1.distanceM }
+        let timedS = Double(timed.reduce(0) { $0 + $1.durationS })
         // Same count as the goal ("10 weeks to go").
         let weeksToGo = max(0, Day.today.days(until: plan.raceDate) / 7)
         // How far through the plan: the same measure as the goal card's bar.
         let total = max(store.totalWeeks, 1)
         let week = min(store.currentWeekNumber ?? (Day.today > plan.raceDate ? total : 0), total)
-        let isRace = plan.goalKind == .race
 
         Card {
             HStack(spacing: Spacing.xl) {
                 PlanRing(progress: Double(week) / Double(total), weeksToGo: weeksToGo)
-                VStack(spacing: 0) {
-                    HStack(spacing: 0) {
-                        Stat(value: Format.distanceNumber(distanceM, units), label: units == .mi ? "Miles run" : "Km run")
-                        verticalRule
-                        Stat(value: Format.distanceNumber(longestM, units), label: "Longest run")
+
+                VStack(alignment: .leading, spacing: Spacing.m) {
+                    VStack(alignment: .leading, spacing: Spacing.xxs) {
+                        Text(plan.displayName)
+                            .font(.rowTitle)
+                            .lineLimit(2)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Text(Plan.goalDate(plan.raceDate))
+                            .font(.detail)
+                            .foregroundStyle(.muted)
                     }
+                    .accessibilityElement(children: .combine)
+
                     Rectangle().fill(Color.hairline).frame(height: 1)
-                    HStack(spacing: 0) {
-                        Stat(value: shortDate(plan.raceDate), label: isRace ? "Race day" : "Goal date")
-                        verticalRule
-                        goalStat(runs: runs)
+
+                    HStack(spacing: Spacing.m) {
+                        Stat(value: Format.distanceNumber(distanceM, units), label: units == .mi ? "Miles run" : "Km run")
+                        Rectangle().fill(Color.hairline).frame(width: 1, height: 32)
+                        Stat(value: timedM > 0 ? Format.pace(timedS / (timedM / 1000), units, withUnit: false) : "–:––",
+                             label: "Avg. pace /\(units.rawValue)")
                     }
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
     }
 
-    /// The goal's distance; for goals without one, what they're working
-    /// toward (30 minutes) or their average pace.
-    @ViewBuilder
-    private func goalStat(runs: [Run]) -> some View {
-        if let meters = plan.raceDistanceM ?? plan.raceDistance?.meters {
-            Stat(value: Format.distance(Double(meters), units), label: "Distance")
-        } else if plan.goalKind == .start {
-            Stat(value: "30 min", label: "Goal")
-        } else {
-            let timed = runs.filter { $0.durationS > 0 && $0.distanceM > 0 }
-            let meters = timed.reduce(0) { $0 + $1.distanceM }
-            let seconds = Double(timed.reduce(0) { $0 + $1.durationS })
-            Stat(value: meters > 0 ? Format.pace(seconds / (meters / 1000), units, withUnit: false) : "–:––",
-                 label: "Avg. pace /\(units.rawValue)")
-        }
-    }
-
-    /// "Dec 16", with the year only when it isn't this year.
-    private func shortDate(_ day: Day) -> String {
-        let isThisYear = Calendar.current.isDate(day.date, equalTo: .now, toGranularity: .year)
-        return isThisYear
-            ? day.date.formatted(.dateTime.month(.abbreviated).day())
-            : day.date.formatted(.dateTime.month(.abbreviated).day().year())
-    }
-
-    private var verticalRule: some View {
-        Rectangle().fill(Color.hairline).frame(width: 1)
-    }
-
-    /// One cell: a bold number over its label.
+    /// A bold number over its label.
     private struct Stat: View {
         let value: String
         let label: String
@@ -131,8 +113,6 @@ struct ProgressCard: View {
                     .minimumScaleFactor(0.8)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.vertical, Spacing.m)
-            .padding(.horizontal, Spacing.m)
             .accessibilityElement(children: .combine)
         }
     }
@@ -156,18 +136,18 @@ private struct PlanRing: View {
                 .stroke(Color.ink, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
                 .rotationEffect(.degrees(-90))
                 .animation(.smooth, value: progress)
-            VStack(spacing: 0) {
+            VStack(spacing: -Spacing.xxs) {
                 Text("\(weeksToGo)")
-                    .font(.metric(.title))
+                    .font(.metric(.largeTitle))
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
                 Text(weeksToGo == 1 ? "week to go" : "weeks to go")
-                    .font(.caption2.weight(.medium))
+                    .font(.caption2.weight(.semibold))
                     .foregroundStyle(.muted)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
             }
-            .padding(.horizontal, lineWidth + Spacing.xs)
+            .padding(.horizontal, lineWidth + Spacing.s)
         }
         .frame(width: size, height: size)
         .accessibilityElement(children: .ignore)
