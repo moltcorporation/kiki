@@ -13,7 +13,7 @@ struct PlanView: View {
             ScrollViewReader { proxy in
                 TabPage("Your plan") {
                     if let plan = store.plan {
-                        PlanProgressCard(plan: plan, units: units)
+                        ProgressCard(plan: plan, units: units)
                     }
                     ForEach(store.weeks, id: \.week) { week, workouts in
                         PageSection("Week \(week)", detail: summary(workouts, units: units)) {
@@ -44,10 +44,10 @@ struct PlanView: View {
     }
 }
 
-/// The top of the Plan tab: three numbers side by side, each over its
-/// label (distance run so far, weeks to go, average pace), and a bar
-/// showing how far through the plan they are.
-struct PlanProgressCard: View {
+/// The top of the Plan tab: a ring that fills as the runner works through
+/// the plan (the week inside it), with the three stats stacked beside it:
+/// distance run so far, weeks to go and average pace.
+struct ProgressCard: View {
     @Environment(TrainingStore.self) private var store
     let plan: Plan
     let units: Units
@@ -61,54 +61,77 @@ struct PlanProgressCard: View {
         let averagePace = timedM > 0 ? timedS / (timedM / 1000) : nil
         // Same count as the goal ("10 weeks to go").
         let weeksToGo = max(0, Day.today.days(until: plan.raceDate) / 7)
-
-        // How far through the plan, the same measure as the goal card's bar.
+        // How far through the plan: the same measure as the goal card's bar.
         let total = max(store.totalWeeks, 1)
         let week = min(store.currentWeekNumber ?? (Day.today > plan.raceDate ? total : 0), total)
 
-        Card(padding: Spacing.l) {
-            VStack(spacing: Spacing.l) {
-                HStack(spacing: 0) {
-                    Stat(value: Format.distanceNumber(distanceM, units), label: units == .mi ? "Miles run" : "Km run")
-                    divider
-                    Stat(value: "\(weeksToGo)", label: weeksToGo == 1 ? "Week to go" : "Weeks to go")
-                    divider
-                    Stat(value: averagePace.map { Format.pace($0, units, withUnit: false) } ?? "–:––",
-                         label: "Avg. pace /\(units.rawValue)")
+        Card {
+            HStack(spacing: Spacing.xxl) {
+                PlanRing(week: week, total: total)
+                Grid(alignment: .leading, horizontalSpacing: Spacing.m, verticalSpacing: Spacing.s) {
+                    StatRow(value: Format.distanceNumber(distanceM, units), label: units == .mi ? "Miles run" : "Km run")
+                    StatRow(value: "\(weeksToGo)", label: weeksToGo == 1 ? "Week to go" : "Weeks to go")
+                    StatRow(value: averagePace.map { Format.pace($0, units, withUnit: false) } ?? "–:––",
+                            label: "Avg. pace /\(units.rawValue)")
                 }
-                ProgressView(value: Double(week), total: Double(total))
-                    .tint(.ink)
-                    .accessibilityLabel("Plan progress")
-                    .accessibilityValue("Week \(max(week, 1)) of \(total)")
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
     }
 
-    private var divider: some View {
-        Rectangle()
-            .fill(Color.hairline)
-            .frame(width: 1, height: 40)
-    }
-
-    /// A big number over its label.
-    private struct Stat: View {
+    /// A bold number with its label beside it.
+    private struct StatRow: View {
         let value: String
         let label: LocalizedStringKey
 
         var body: some View {
-            VStack(spacing: Spacing.xxs) {
+            GridRow(alignment: .firstTextBaseline) {
                 Text(value)
-                    .font(.metric(.title2))
+                    .font(.metric(.title3))
                     .lineLimit(1)
-                    .minimumScaleFactor(0.7)
                 Text(label)
-                    .font(.caption.weight(.medium))
+                    .font(.subheadline)
                     .foregroundStyle(.muted)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
             }
-            .frame(maxWidth: .infinity)
             .accessibilityElement(children: .combine)
         }
+    }
+}
+
+/// A black ring filling on a light track as the weeks go by, with the
+/// current week inside.
+private struct PlanRing: View {
+    let week: Int
+    let total: Int
+
+    private let size: CGFloat = 108
+    private let lineWidth: CGFloat = 10
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .stroke(Color.track, lineWidth: lineWidth)
+            Circle()
+                .trim(from: 0, to: CGFloat(week) / CGFloat(total))
+                .stroke(Color.ink, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+                .animation(.smooth, value: week)
+            VStack(spacing: 0) {
+                Text("Week")
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(.muted)
+                Text("\(max(week, 1))")
+                    .font(.metric(.title))
+                Text("of \(total)")
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(.muted)
+            }
+        }
+        .frame(width: size, height: size)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Plan progress")
+        .accessibilityValue("Week \(max(week, 1)) of \(total)")
     }
 }
