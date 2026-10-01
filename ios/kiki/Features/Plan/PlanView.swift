@@ -5,6 +5,8 @@ import SwiftUI
 struct PlanView: View {
     @Environment(TrainingStore.self) private var store
     @State private var path: [Workout] = []
+    /// Fires the confetti when the finish line scrolls into view.
+    @State private var celebrations = 0
 
     var body: some View {
         let units = store.units
@@ -20,6 +22,14 @@ struct PlanView: View {
                         }
                         .id(week)
                     }
+                    if store.plan != nil, !store.weeks.isEmpty {
+                        FinishLine()
+                            .onScrollVisibilityChange(threshold: 0.8) { visible in
+                                guard visible else { return }
+                                Haptics.success()
+                                celebrations += 1
+                            }
+                    }
                 }
                 .refreshable { await store.refresh() }
                 .hidesTabBar(!path.isEmpty)
@@ -31,6 +41,7 @@ struct PlanView: View {
             }
             .navigationDestination(for: Workout.self) { WorkoutDetailView(workoutID: $0.id) }
         }
+        .overlay { ConfettiBurst(trigger: celebrations).ignoresSafeArea() }
         .onAppear { Analytics.screen("Plan") }
     }
 }
@@ -162,5 +173,32 @@ private struct PlanRing: View {
         case .goalDay: "Today"
         case .finished: "Finished"
         }
+    }
+}
+
+/// The end of the plan, under the last week: a small celebration for
+/// runners who scroll all the way down (the confetti fires as it appears).
+private struct FinishLine: View {
+
+    var body: some View {
+        VStack(spacing: Spacing.s) {
+            Image(systemName: "flag.checkered")
+                .font(.title2)
+                .padding(.bottom, Spacing.xs)
+                .accessibilityHidden(true)
+            Text("The finish line")
+                .font(.cardTitle)
+            Text("You've got this!")
+                .font(.detail)
+                .foregroundStyle(.muted)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .foregroundStyle(.ink)
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, Spacing.xxl)
+        .padding(.top, Spacing.l)
+        .padding(.bottom, Spacing.xxxl)
+        .accessibilityElement(children: .combine)
     }
 }
