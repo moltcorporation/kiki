@@ -125,11 +125,12 @@ private struct GoalProgressCard: View {
     }
 
     private var summary: some View {
-        let finale = store.workouts.last { $0.type == .race }
-        let endDate = finale?.date ?? plan.raceDate
-        let daysLeft = max(0, Day.today.days(until: endDate))
-        let week = store.currentWeekNumber
-        let total = max(store.totalWeeks, 1)
+        let timeline = PlanTimeline(plan: plan, store: store)
+        let countdown = switch timeline.phase {
+        case .underway: timeline.daysLeft == 1 ? "1 day to go" : "\(timeline.daysLeft) days to go"
+        case .goalDay: plan.goalKind == .race ? "It's race day!" : "It's today!"
+        case .finished: "Plan finished"
+        }
 
         return VStack(alignment: .leading, spacing: Spacing.xl) {
             VStack(alignment: .leading, spacing: Spacing.xs) {
@@ -141,23 +142,21 @@ private struct GoalProgressCard: View {
                     .lineLimit(2)
                     .minimumScaleFactor(0.8)
                     .fixedSize(horizontal: false, vertical: true)
-                Text(Plan.goalDate(endDate))
+                Text(Plan.goalDate(timeline.endDate))
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(.muted)
             }
 
             VStack(alignment: .leading, spacing: Spacing.m) {
                 HStack(alignment: .firstTextBaseline) {
-                    Text(daysLeft == 0 ? "It's today!" : daysLeft == 1 ? "1 day to go" : "\(daysLeft) days to go")
+                    Text(countdown)
                         .font(.headline)
                     Spacer()
-                    if let week {
-                        Text("Week \(week) of \(total)")
-                            .font(.subheadline.weight(.medium))
-                            .foregroundStyle(.muted)
-                    }
+                    Text("Week \(timeline.week) of \(timeline.totalWeeks)")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(.muted)
                 }
-                ProgressView(value: Double(min(week ?? 0, total)), total: Double(total))
+                ProgressView(value: Double(timeline.week), total: Double(timeline.totalWeeks))
                     .tint(.ink)
                     .accessibilityHidden(true)
             }

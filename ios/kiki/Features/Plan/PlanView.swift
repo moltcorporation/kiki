@@ -59,16 +59,11 @@ struct ProgressCard: View {
         let timed = runs.filter { $0.durationS > 0 && $0.distanceM > 0 }
         let timedM = timed.reduce(0) { $0 + $1.distanceM }
         let timedS = Double(timed.reduce(0) { $0 + $1.durationS })
-        // The same countdown as Home's goal card ("76 days to go").
-        let endDate = store.workouts.last { $0.type == .race }?.date ?? plan.raceDate
-        let daysLeft = max(0, Day.today.days(until: endDate))
-        // How far through the plan by days, so the ring moves every day.
-        let planDays = max(plan.startDate.days(until: plan.raceDate), 1)
-        let progress = min(max(Double(plan.startDate.days(until: .today)) / Double(planDays), 0), 1)
+        let timeline = PlanTimeline(plan: plan, store: store)
 
         Card(padding: Spacing.l) {
             HStack(spacing: Spacing.xxl) {
-                PlanRing(progress: progress, daysLeft: daysLeft)
+                PlanRing(timeline: timeline)
 
                 VStack(alignment: .leading, spacing: Spacing.m) {
                     VStack(alignment: .leading, spacing: Spacing.xxs) {
@@ -76,7 +71,7 @@ struct ProgressCard: View {
                             .font(.rowTitle)
                             .lineLimit(2)
                             .fixedSize(horizontal: false, vertical: true)
-                        Text(Plan.goalDate(plan.raceDate))
+                        Text(Plan.goalDate(timeline.endDate))
                             .font(.detail)
                             .foregroundStyle(.muted)
                     }
@@ -120,10 +115,10 @@ struct ProgressCard: View {
 }
 
 /// A black ring filling on a light track as the plan goes by, with the
-/// days to go inside: the number, and a small label under it.
+/// days to go inside (the number, and a small label under it). Full with
+/// "Today" on the goal day, and a checkmark once it has passed.
 private struct PlanRing: View {
-    let progress: Double
-    let daysLeft: Int
+    let timeline: PlanTimeline
 
     private let size: CGFloat = 92
     private let lineWidth: CGFloat = 8
@@ -133,19 +128,28 @@ private struct PlanRing: View {
             Circle()
                 .stroke(Color.track, lineWidth: lineWidth)
             Circle()
-                .trim(from: 0, to: progress)
+                .trim(from: 0, to: timeline.progress)
                 .stroke(Color.ink, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
                 .rotationEffect(.degrees(-90))
-                .animation(.smooth, value: progress)
+                .animation(.smooth, value: timeline.progress)
             Group {
-                if daysLeft == 0 {
+                switch timeline.phase {
+                case .underway:
+                    VStack(spacing: 0) {
+                        Text("\(timeline.daysLeft)")
+                            .font(.metric(.title))
+                        Text(timeline.daysLeft == 1 ? "day to go" : "days to go")
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(.muted)
+                    }
+                case .goalDay:
                     Text("Today")
                         .font(.metric(.title3))
-                } else {
-                    VStack(spacing: 0) {
-                        Text("\(daysLeft)")
-                            .font(.metric(.title))
-                        Text(daysLeft == 1 ? "day to go" : "days to go")
+                case .finished:
+                    VStack(spacing: Spacing.xxs) {
+                        Image(systemName: "checkmark")
+                            .font(.title2.weight(.bold))
+                        Text("Finished")
                             .font(.caption2.weight(.semibold))
                             .foregroundStyle(.muted)
                     }
@@ -158,6 +162,14 @@ private struct PlanRing: View {
         .frame(width: size, height: size)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Plan progress")
-        .accessibilityValue(daysLeft == 0 ? "Today" : daysLeft == 1 ? "1 day to go" : "\(daysLeft) days to go")
+        .accessibilityValue(accessibilityValue)
+    }
+
+    private var accessibilityValue: String {
+        switch timeline.phase {
+        case .underway: timeline.daysLeft == 1 ? "1 day to go" : "\(timeline.daysLeft) days to go"
+        case .goalDay: "Today"
+        case .finished: "Finished"
+        }
     }
 }
