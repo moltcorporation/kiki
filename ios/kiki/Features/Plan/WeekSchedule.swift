@@ -59,7 +59,7 @@ private struct DayLabel: View {
 
     var body: some View {
         let isToday = day == .today
-        VStack(spacing: 0) {
+        VStack(spacing: Spacing.xs) {
             Text(Format.weekday(day, style: .abbreviated).uppercased())
                 .font(.caption2.weight(.semibold))
                 .foregroundStyle(isToday ? Color.ink : Color.muted)
@@ -67,7 +67,7 @@ private struct DayLabel: View {
                 .font(.callout.weight(.semibold))
                 .monospacedDigit()
                 .foregroundStyle(isToday ? Color.paper : Color.ink)
-                .frame(width: 28, height: 28)
+                .frame(width: 26, height: 26)
                 .background(isToday ? Color.ink : Color.clear, in: .circle)
         }
         .frame(width: 40)
