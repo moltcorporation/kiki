@@ -36,7 +36,10 @@ struct TodayView: View {
 
                 PageSection("Today") {
                     if let workout = store.workouts.first(where: { $0.date == .today }) {
-                        WeekSchedule(workouts: [workout], units: units)
+                        NavigationLink(value: workout) {
+                            TodayCard(workout: workout, run: store.run(for: workout), units: units, paces: store.plan?.paces)
+                        }
+                        .buttonStyle(.haptic)
                     } else {
                         OutsidePlanCard(day: .today, plan: store.plan)
                     }
@@ -189,6 +192,87 @@ extension Plan {
         return isThisYear
             ? day.date.formatted(.dateTime.month(.wide).day())
             : day.date.formatted(.dateTime.month(.wide).day().year())
+    }
+}
+
+/// Today's workout at a glance: what it is, how far and how fast (or what
+/// they actually ran, once logged), and how it should feel. The whole card
+/// opens the workout.
+struct TodayCard: View {
+    let workout: Workout
+    let run: Run?
+    let units: Units
+    let paces: PaceZones?
+
+    var body: some View {
+        HStack(spacing: Spacing.m) {
+            VStack(alignment: .leading, spacing: Spacing.m) {
+                Text(workout.isRest ? "Rest day" : workout.title)
+                    .font(.cardTitle)
+
+                if workout.isRest {
+                    Text("Recovery is when your body gets stronger. Take it easy today.")
+                        .font(.detail)
+                        .foregroundStyle(.muted)
+                } else if let run {
+                    // Logged: what they actually did.
+                    HStack(alignment: .firstTextBaseline, spacing: Spacing.xl) {
+                        Figure(value: Format.distanceNumber(run.distanceM, units), unit: units.rawValue)
+                        Figure(value: Format.duration(run.durationS), unit: nil)
+                        if let pace = run.pace {
+                            Figure(value: Format.pace(pace, units, withUnit: false), unit: "/\(units.rawValue)")
+                        }
+                    }
+                    Text("Done\(run.feeling.map { " · Felt \($0.label.lowercased()) \($0.emoji)" } ?? "")")
+                        .font(.detail)
+                        .foregroundStyle(.muted)
+                } else {
+                    // Planned: how far, how fast, how it should feel.
+                    HStack(alignment: .firstTextBaseline, spacing: Spacing.xl) {
+                        if let meters = workout.distanceM {
+                            Figure(value: Format.distanceNumber(Double(meters), units), unit: units.rawValue)
+                        } else if let seconds = workout.durationS {
+                            Figure(value: "\(Int((Double(seconds) / 60).rounded()))", unit: "min")
+                        }
+                        if let zone = workout.type.paceZone, let range = paces?[zone] {
+                            Figure(value: Format.pace(Double(range.min + range.max) / 2, units, withUnit: false), unit: "/\(units.rawValue)")
+                        }
+                    }
+                    if let zone = workout.type.paceZone {
+                        Text(zone.effort)
+                            .font(.detail)
+                            .foregroundStyle(.muted)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            RowChevron()
+        }
+        .foregroundStyle(.ink)
+        .padding(Metrics.cardPadding)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .elevatedCard()
+        .contentShape(.rect(cornerRadius: Radius.card))
+        .accessibilityElement(children: .combine)
+        .accessibilityHint("Shows the workout")
+    }
+
+    /// A bold number with a small unit after it ("2.0 mi", "11:56 /mi").
+    private struct Figure: View {
+        let value: String
+        let unit: String?
+
+        var body: some View {
+            HStack(alignment: .firstTextBaseline, spacing: Spacing.xxs) {
+                Text(value).font(.metric(.title2))
+                if let unit {
+                    Text(unit)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.muted)
+                }
+            }
+        }
     }
 }
 
