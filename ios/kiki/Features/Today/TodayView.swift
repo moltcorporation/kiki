@@ -1,10 +1,12 @@
 import SwiftUI
 
-/// Home: the goal countdown and progress, today's workout, and the next few
+/// Home: the goal card (with the plan actions), today's workout and the next few
 /// days, on the shared tab layout.
 struct TodayView: View {
     @Environment(TrainingStore.self) private var store
-    @Environment(RunTracker.self) private var tracker
+
+    /// Switches to the Plan tab (the goal card's "View plan").
+    var onViewPlan: () -> Void = {}
 
     @State private var sheet: AppSheet?
     /// Holds `Workout`s and `HomeRoute`s.
@@ -17,28 +19,15 @@ struct TodayView: View {
 
         NavigationStack(path: $path) {
             TabPage(.wordmark) {
-                // The goal, with Adjust my plan right under it.
+                // The goal: Home's header, with the plan actions in its footer.
                 if let plan = store.plan {
-                    VStack(spacing: Metrics.stackSpacing) {
-                        Button { path.append(HomeRoute.goal) } label: {
-                            GoalProgressCard(plan: plan, units: units)
-                        }
-                        .buttonStyle(.haptic)
-                        .accessibilityHint("Shows your goal details")
-                        ListCard {
-                            Button {
-                                sheet = .adjust
-                            } label: {
-                                ListRow(
-                                    icon: "sparkles",
-                                    title: Text("Adjust my plan"),
-                                    subtitles: ["Tired, busy or sore? Tell Kiki."],
-                                    showsChevron: true
-                                )
-                            }
-                            .buttonStyle(.haptic)
-                        }
-                    }
+                    GoalProgressCard(
+                        plan: plan,
+                        units: units,
+                        onOpen: { path.append(HomeRoute.goal) },
+                        onAdjust: { sheet = .adjust },
+                        onViewPlan: onViewPlan
+                    )
                 }
 
                 if let pending = store.pendingPlan, pending.status == .generating {
@@ -47,17 +36,7 @@ struct TodayView: View {
 
                 PageSection("Today") {
                     if let workout = store.workouts.first(where: { $0.date == .today }) {
-                        WorkoutHeroCard(
-                            workout: workout,
-                            run: store.run(for: workout),
-                            units: units,
-                            paces: store.plan?.paces,
-                            onDone: { sheet = .log(workout, store.run(for: workout)) },
-                            onStart: workout.isRest ? nil : { tracker.start(for: workout) }
-                        )
-                        .contentShape(.rect(cornerRadius: Radius.card))
-                        .onTapGesture { path.append(workout) }
-                        .accessibilityAction(named: "Show details") { path.append(workout) }
+                        WorkoutListCard(workouts: [workout], units: units)
                     } else {
                         OutsidePlanCard(day: .today, plan: store.plan)
                     }
@@ -106,19 +85,53 @@ struct WorkoutListCard: View {
 }
 
 /// The first thing on Today: a countdown to the goal and progress so far.
+/// Home's header: the goal countdown and progress on the asphalt (tap for
+/// the goal details), with the plan actions in its footer.
 private struct GoalProgressCard: View {
     @Environment(TrainingStore.self) private var store
     let plan: Plan
     let units: Units
+    let onOpen: () -> Void
+    let onAdjust: () -> Void
+    let onViewPlan: () -> Void
 
     var body: some View {
+        VStack(spacing: 0) {
+            Button(action: onOpen) {
+                summary
+            }
+            .buttonStyle(.haptic)
+            .accessibilityElement(children: .combine)
+            .accessibilityHint("Shows your goal details")
+
+            Rectangle()
+                .fill(Color.hairline)
+                .frame(height: 1)
+
+            HStack(spacing: 0) {
+                footerAction("Adjust plan", systemImage: "sparkles", action: onAdjust)
+                Rectangle()
+                    .fill(Color.hairline)
+                    .frame(width: 1, height: Spacing.xl)
+                footerAction("View plan", systemImage: "calendar", action: onViewPlan)
+            }
+        }
+        // Always dark: white type on the asphalt, in light and dark mode.
+        .foregroundStyle(.ink)
+        .environment(\.colorScheme, .dark)
+        .background { AsphaltBackground() }
+        .clipShape(.rect(cornerRadius: Radius.card))
+        .elevation(.raised)
+    }
+
+    private var summary: some View {
         let finale = store.workouts.last { $0.type == .race }
         let endDate = finale?.date ?? plan.raceDate
         let daysLeft = max(0, Day.today.days(until: endDate))
         let week = store.currentWeekNumber
         let total = max(store.totalWeeks, 1)
 
-        VStack(alignment: .leading, spacing: Spacing.xl) {
+        return VStack(alignment: .leading, spacing: Spacing.xl) {
             VStack(alignment: .leading, spacing: Spacing.xs) {
                 Text("Your goal")
                     .font(.eyebrow)
@@ -149,15 +162,22 @@ private struct GoalProgressCard: View {
                     .accessibilityHidden(true)
             }
         }
-        // Always dark: white type on the asphalt, in light and dark mode.
         .foregroundStyle(.ink)
-        .environment(\.colorScheme, .dark)
         .padding(Metrics.cardPadding)
         .frame(maxWidth: .infinity, alignment: .topLeading)
-        .background { AsphaltBackground() }
-        .clipShape(.rect(cornerRadius: Radius.card))
-        .elevation(.raised)
-        .accessibilityElement(children: .combine)
+        .contentShape(.rect)
+    }
+
+    /// One half of the footer: icon + label, centered, full height.
+    private func footerAction(_ title: LocalizedStringKey, systemImage: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Label(title, systemImage: systemImage)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.ink)
+                .frame(maxWidth: .infinity, minHeight: Metrics.buttonHeight - Spacing.s)
+                .contentShape(.rect)
+        }
+        .buttonStyle(.haptic)
     }
 }
 
@@ -189,77 +209,6 @@ extension Plan {
         return isThisYear
             ? day.date.formatted(.dateTime.month(.wide).day())
             : day.date.formatted(.dateTime.month(.wide).day().year())
-    }
-}
-
-/// Today's workout: a standard white card that leads with a big title and
-/// metrics. Home's only dark card is the goal, so the two don't compete.
-struct WorkoutHeroCard: View {
-    let workout: Workout
-    let run: Run?
-    let units: Units
-    let paces: PaceZones?
-    let onDone: () -> Void
-    let onStart: (() -> Void)?
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.l) {
-            HStack {
-                Text(workout.type.label)
-                    .font(.eyebrow)
-                    .foregroundStyle(.muted)
-                Spacer()
-                if workout.status == .completed {
-                    Label("Done", systemImage: "checkmark.circle.fill")
-                        .font(.eyebrow)
-                }
-            }
-
-            Text(workout.title)
-                .font(.heroTitle)
-
-            if let metric = Format.workoutMetric(workout, units: units) {
-                HStack(alignment: .firstTextBaseline, spacing: Spacing.xxxl) {
-                    MetricView(value: metric.value, label: metric.unit)
-                    if let zone = workout.type.paceZone, let range = paces?[zone] {
-                        MetricView(
-                            value: Format.pace(Double(range.max + range.min) / 2, units, withUnit: false),
-                            label: "\(zone.rawValue) /\(units.rawValue)"
-                        )
-                    }
-                }
-            }
-
-            Text(workout.description)
-                .font(.detail)
-                .foregroundStyle(.muted)
-                .lineLimit(4)
-
-            if let run {
-                RunSummaryLine(run: run, units: units)
-            }
-
-            if !workout.isRest {
-                HStack(spacing: Spacing.m) {
-                    PrimaryButton(workout.status == .completed ? "Edit run" : "Mark as done", action: onDone)
-                    if let onStart, workout.status != .completed {
-                        CircleButton("Start run with GPS", systemImage: "figure.run", action: onStart)
-                    }
-                }
-                .controlSize(.small)
-                .padding(.top, Spacing.xs)
-            } else {
-                Button("Log a run anyway", action: onDone)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.ink)
-                    .frame(minHeight: Metrics.minTapTarget)
-                    .buttonStyle(.haptic)
-            }
-        }
-        .foregroundStyle(.ink)
-        .padding(Metrics.cardPadding)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .elevatedCard()
     }
 }
 
