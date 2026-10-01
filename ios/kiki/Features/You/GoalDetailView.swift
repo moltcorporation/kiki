@@ -15,7 +15,8 @@ struct GoalDetailView: View {
             if let plan = store.plan {
                 PageHeader(
                     title: LocalizedStringKey(plan.displayName),
-                    subtitle: LocalizedStringKey(plan.goalDetails(units: store.units).joined(separator: " · "))
+                    // The details are in the rows below; the date is enough here.
+                    subtitle: LocalizedStringKey(Plan.goalDate(plan.raceDate))
                 )
                 VStack(alignment: .leading, spacing: Metrics.sectionHeaderSpacing) {
                     ListCard {
