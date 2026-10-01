@@ -44,88 +44,53 @@ struct PlanView: View {
     }
 }
 
-/// The top of the Plan tab: three progress rings (runs, distance, weeks)
-/// that fill as the runner works through the plan. Nothing else, so where
-/// they stand is clear at a glance.
+/// The top of the Plan tab: two numbers, side by side. Miles run so far
+/// (it feels like an accomplishment) and the week they're on.
 struct PlanProgressCard: View {
     @Environment(TrainingStore.self) private var store
     let plan: Plan
     let units: Units
 
     var body: some View {
-        let workouts = store.workouts.filter { !$0.isRest }
-        let runsDone = workouts.filter { $0.status == .completed }.count
-        let plannedM = Double(workouts.compactMap(\.distanceM).reduce(0, +))
         let doneM = store.runs
             .filter { Day($0.startedAt) >= plan.startDate && Day($0.startedAt) <= plan.raceDate }
             .reduce(0) { $0 + $1.distanceM }
         let total = max(store.totalWeeks, 1)
-        let week = min(store.currentWeekNumber ?? 0, total)
+        let week = max(min(store.currentWeekNumber ?? 1, total), 1)
 
-        Card {
-            HStack(alignment: .top, spacing: 0) {
-                ProgressRing(
-                    value: "\(runsDone)", target: "of \(workouts.count)", label: "Runs",
-                    progress: Double(runsDone) / Double(max(workouts.count, 1)), color: .ringRuns
-                )
-                ProgressRing(
-                    value: Format.distanceNumber(doneM, units, decimals: 0),
-                    target: "of \(Format.distanceNumber(plannedM, units, decimals: 0))",
-                    label: units == .mi ? "Miles" : "Km",
-                    progress: doneM / max(plannedM, 1), color: .ringDistance
-                )
-                ProgressRing(
-                    value: "\(week)", target: "of \(total)", label: "Weeks",
-                    progress: Double(week) / Double(total), color: .ringWeeks
-                )
+        Card(padding: Spacing.l) {
+            HStack(spacing: 0) {
+                Stat(value: Format.distanceNumber(doneM, units), suffix: nil, label: units == .mi ? "Miles run" : "Kilometers run")
+                Rectangle()
+                    .fill(Color.hairline)
+                    .frame(width: 1, height: 40)
+                Stat(value: "\(week)", suffix: "of \(total)", label: "Week")
             }
         }
     }
-}
 
-/// A ring that fills with progress, its number in the middle ("12" over
-/// "of 35") and what it counts below.
-private struct ProgressRing: View {
-    let value: String
-    let target: String
-    let label: LocalizedStringKey
-    let progress: Double
-    let color: Color
+    /// A big number (with an optional quieter suffix) over its label.
+    private struct Stat: View {
+        let value: String
+        let suffix: String?
+        let label: LocalizedStringKey
 
-    private let size: CGFloat = 84
-    private let lineWidth: CGFloat = 10
-
-    var body: some View {
-        VStack(spacing: Spacing.s) {
-            ZStack {
-                Circle()
-                    .stroke(color.opacity(0.18), lineWidth: lineWidth)
-                Circle()
-                    .trim(from: 0, to: min(max(progress, 0), 1))
-                    .stroke(color, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
-                    .rotationEffect(.degrees(-90))
-                    .animation(.smooth, value: progress)
-                VStack(spacing: 0) {
-                    Text(value)
-                        .font(.metric(.title3))
-                        .minimumScaleFactor(0.6)
-                        .lineLimit(1)
-                    Text(target)
-                        .font(.caption2.weight(.medium))
-                        .foregroundStyle(.muted)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.7)
+        var body: some View {
+            VStack(spacing: Spacing.xxs) {
+                HStack(alignment: .firstTextBaseline, spacing: Spacing.xs) {
+                    Text(value).font(.metric(.title))
+                    if let suffix {
+                        Text(suffix)
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.muted)
+                    }
                 }
-                .padding(.horizontal, lineWidth + Spacing.xs)
+                Text(label)
+                    .font(.footnote.weight(.medium))
+                    .foregroundStyle(.muted)
             }
-            .frame(width: size, height: size)
-
-            Text(label)
-                .font(.subheadline.weight(.semibold))
+            .frame(maxWidth: .infinity)
+            .accessibilityElement(children: .combine)
         }
-        .frame(maxWidth: .infinity)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(label)
-        .accessibilityValue("\(value) \(target)")
     }
 }

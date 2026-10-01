@@ -103,14 +103,6 @@ extension Color {
     /// on Home's goal card.
     static var glow: Color { Color(red: 0.45, green: 1, blue: 0.25) }
 
-    // Progress rings (Plan tab). The only other color in the app; each ring
-    // keeps its color everywhere it appears.
-    /// Runs done.
-    static var ringRuns: Color { Color(red: 0.2, green: 0.8, blue: 0.35) }
-    /// Distance run.
-    static var ringDistance: Color { Color(red: 0.12, green: 0.6, blue: 1) }
-    /// Weeks through the plan.
-    static var ringWeeks: Color { Color(red: 0.56, green: 0.38, blue: 0.97) }
 }
 
 // MARK: - Haptics
