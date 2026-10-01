@@ -168,11 +168,7 @@ struct PlanPreviewStep: View {
             }
 
             PageSection("Your first week") {
-                ListCard(dividerInset: WorkoutRow.textInset) {
-                    ForEach(Array(runs.prefix(4))) { workout in
-                        WorkoutRow(workout: workout, units: units, isNavigable: false)
-                    }
-                }
+                WeekSchedule(workouts: store.weeks.first?.workouts ?? [], units: units, isNavigable: false)
             }
         } actions: {
             PrimaryButton("Start my plan") {

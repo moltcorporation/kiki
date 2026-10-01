@@ -36,7 +36,7 @@ struct TodayView: View {
 
                 PageSection("Today") {
                     if let workout = store.workouts.first(where: { $0.date == .today }) {
-                        WorkoutListCard(workouts: [workout], units: units)
+                        WeekSchedule(workouts: [workout], units: units)
                     } else {
                         OutsidePlanCard(day: .today, plan: store.plan)
                     }
@@ -44,7 +44,7 @@ struct TodayView: View {
 
                 if !upcoming.isEmpty {
                     PageSection("Upcoming") {
-                        WorkoutListCard(workouts: upcoming, units: units)
+                        WeekSchedule(workouts: upcoming, units: units)
                     }
                 }
 
@@ -66,25 +66,6 @@ struct TodayView: View {
     }
 }
 
-/// A list of workouts in one card (Home's Upcoming, each week on Plan).
-/// Rows open the workout.
-struct WorkoutListCard: View {
-    let workouts: [Workout]
-    let units: Units
-
-    var body: some View {
-        ListCard(dividerInset: WorkoutRow.textInset) {
-            ForEach(workouts) { workout in
-                NavigationLink(value: workout) {
-                    WorkoutRow(workout: workout, units: units)
-                }
-                .buttonStyle(.haptic)
-            }
-        }
-    }
-}
-
-/// The first thing on Today: a countdown to the goal and progress so far.
 /// Home's header: the goal countdown and progress on the asphalt (tap for
 /// the goal details), with the plan actions in its footer.
 private struct GoalProgressCard: View {

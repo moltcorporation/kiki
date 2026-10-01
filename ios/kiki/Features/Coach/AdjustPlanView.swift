@@ -121,11 +121,7 @@ struct AdjustPlanView: View {
             CoachBubble(text: adjustment.reply ?? "Your plan is updated.")
             if !workouts.isEmpty {
                 PageSection("Updated workouts") {
-                    ListCard(dividerInset: WorkoutRow.textInset) {
-                        ForEach(workouts) { workout in
-                            WorkoutRow(workout: workout, units: store.units, isNavigable: false)
-                        }
-                    }
+                    WeekSchedule(workouts: workouts, units: store.units, isNavigable: false)
                 }
             }
         }

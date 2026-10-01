@@ -9,11 +9,13 @@ import SwiftUI
 struct WeekSchedule: View {
     let workouts: [Workout]
     let units: Units
+    /// Off where there's nowhere to go (onboarding, the adjust sheet).
+    var isNavigable = true
 
     var body: some View {
         ListCard(dividerInset: RowMetrics.horizontalPadding, verticalPadding: Spacing.s) {
             ForEach(workouts.sorted { $0.date < $1.date }) { workout in
-                if workout.isRest {
+                if workout.isRest || !isNavigable {
                     DayRow(workout: workout, units: units)
                 } else {
                     NavigationLink(value: workout) {
