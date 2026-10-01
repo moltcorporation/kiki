@@ -44,9 +44,10 @@ struct PlanView: View {
     }
 }
 
-/// The top of the Plan tab: a ring that fills as the runner works through
-/// the plan, and four stats beside it in a 2×2 grid split by hairlines:
-/// distance run, longest run, weeks to go and average pace.
+/// The top of the Plan tab: progress and goal together. A ring that fills
+/// as the plan goes by, weeks to go inside it, and a 2×2 grid split by
+/// hairlines: miles run and longest run (progress), race day and race
+/// distance (the goal).
 struct ProgressCard: View {
     @Environment(TrainingStore.self) private var store
     let plan: Plan
@@ -56,20 +57,16 @@ struct ProgressCard: View {
         let runs = store.runs.filter { Day($0.startedAt) >= plan.startDate && Day($0.startedAt) <= plan.raceDate }
         let distanceM = runs.reduce(0) { $0 + $1.distanceM }
         let longestM = runs.map(\.distanceM).max() ?? 0
-        let timedRuns = runs.filter { $0.durationS > 0 && $0.distanceM > 0 }
-        let timedM = timedRuns.reduce(0) { $0 + $1.distanceM }
-        let timedS = Double(timedRuns.reduce(0) { $0 + $1.durationS })
-        let averagePace = timedM > 0 ? timedS / (timedM / 1000) : nil
         // Same count as the goal ("10 weeks to go").
         let weeksToGo = max(0, Day.today.days(until: plan.raceDate) / 7)
         // How far through the plan: the same measure as the goal card's bar.
         let total = max(store.totalWeeks, 1)
         let week = min(store.currentWeekNumber ?? (Day.today > plan.raceDate ? total : 0), total)
-        let unit = units == .mi ? "mi" : "km"
+        let isRace = plan.goalKind == .race
 
         Card {
             HStack(spacing: Spacing.xl) {
-                PlanRing(week: week, total: total)
+                PlanRing(progress: Double(week) / Double(total), weeksToGo: weeksToGo)
                 VStack(spacing: 0) {
                     HStack(spacing: 0) {
                         Stat(value: Format.distanceNumber(distanceM, units), label: units == .mi ? "Miles run" : "Km run")
@@ -78,14 +75,38 @@ struct ProgressCard: View {
                     }
                     Rectangle().fill(Color.hairline).frame(height: 1)
                     HStack(spacing: 0) {
-                        Stat(value: "\(weeksToGo)", label: weeksToGo == 1 ? "Week to go" : "Weeks to go")
+                        Stat(value: shortDate(plan.raceDate), label: isRace ? "Race day" : "Goal date")
                         verticalRule
-                        Stat(value: averagePace.map { Format.pace($0, units, withUnit: false) } ?? "–:––",
-                             label: "Avg. pace /\(unit)")
+                        goalStat(runs: runs)
                     }
                 }
             }
         }
+    }
+
+    /// The goal's distance; for goals without one, what they're working
+    /// toward (30 minutes) or their average pace.
+    @ViewBuilder
+    private func goalStat(runs: [Run]) -> some View {
+        if let meters = plan.raceDistanceM ?? plan.raceDistance?.meters {
+            Stat(value: Format.distance(Double(meters), units), label: "Distance")
+        } else if plan.goalKind == .start {
+            Stat(value: "30 min", label: "Goal")
+        } else {
+            let timed = runs.filter { $0.durationS > 0 && $0.distanceM > 0 }
+            let meters = timed.reduce(0) { $0 + $1.distanceM }
+            let seconds = Double(timed.reduce(0) { $0 + $1.durationS })
+            Stat(value: meters > 0 ? Format.pace(seconds / (meters / 1000), units, withUnit: false) : "–:––",
+                 label: "Avg. pace /\(units.rawValue)")
+        }
+    }
+
+    /// "Dec 16", with the year only when it isn't this year.
+    private func shortDate(_ day: Day) -> String {
+        let isThisYear = Calendar.current.isDate(day.date, equalTo: .now, toGranularity: .year)
+        return isThisYear
+            ? day.date.formatted(.dateTime.month(.abbreviated).day())
+            : day.date.formatted(.dateTime.month(.abbreviated).day().year())
     }
 
     private var verticalRule: some View {
@@ -117,12 +138,13 @@ struct ProgressCard: View {
     }
 }
 
-/// A black ring filling on a light track as the weeks go by.
+/// A black ring filling on a light track as the plan goes by, with the
+/// weeks to go inside.
 private struct PlanRing: View {
-    let week: Int
-    let total: Int
+    let progress: Double
+    let weeksToGo: Int
 
-    private let size: CGFloat = 96
+    private let size: CGFloat = 104
     private let lineWidth: CGFloat = 12
 
     var body: some View {
@@ -130,14 +152,26 @@ private struct PlanRing: View {
             Circle()
                 .stroke(Color.track, lineWidth: lineWidth)
             Circle()
-                .trim(from: 0, to: CGFloat(week) / CGFloat(total))
+                .trim(from: 0, to: min(max(progress, 0), 1))
                 .stroke(Color.ink, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
                 .rotationEffect(.degrees(-90))
-                .animation(.smooth, value: week)
+                .animation(.smooth, value: progress)
+            VStack(spacing: 0) {
+                Text("\(weeksToGo)")
+                    .font(.metric(.title))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
+                Text(weeksToGo == 1 ? "week to go" : "weeks to go")
+                    .font(.caption2.weight(.medium))
+                    .foregroundStyle(.muted)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+            }
+            .padding(.horizontal, lineWidth + Spacing.xs)
         }
         .frame(width: size, height: size)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Plan progress")
-        .accessibilityValue("Week \(max(week, 1)) of \(total)")
+        .accessibilityValue(weeksToGo == 1 ? "1 week to go" : "\(weeksToGo) weeks to go")
     }
 }
