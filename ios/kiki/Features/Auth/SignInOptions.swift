@@ -131,6 +131,7 @@ private final class AppleAuthorization: NSObject, ASAuthorizationControllerDeleg
 /// exactly one place: the documents open, and plain words hit a private
 /// "toggle" link handled below.
 struct ConsentCheckbox: View {
+    @Environment(\.openURL) private var openURL
     @Binding var isOn: Bool
     private static let toggleURL = URL(string: "kiki-consent://toggle")!
 
@@ -152,7 +153,9 @@ struct ConsentCheckbox: View {
                         toggle()
                         return .handled
                     }
-                    return .systemAction
+                    // The documents open in the app's in-app browser.
+                    openURL(url)
+                    return .handled
                 })
         }
         .accessibilityElement(children: .ignore)
@@ -160,8 +163,8 @@ struct ConsentCheckbox: View {
         .accessibilityAddTraits(.isButton)
         .accessibilityAddTraits(isOn ? .isSelected : [])
         .accessibilityAction { toggle() }
-        .accessibilityAction(named: "Open Terms of Service") { UIApplication.shared.open(Config.termsURL) }
-        .accessibilityAction(named: "Open Privacy Policy") { UIApplication.shared.open(Config.privacyURL) }
+        .accessibilityAction(named: "Open Terms of Service") { openURL(Config.termsURL) }
+        .accessibilityAction(named: "Open Privacy Policy") { openURL(Config.privacyURL) }
     }
 
     private var sentence: AttributedString {

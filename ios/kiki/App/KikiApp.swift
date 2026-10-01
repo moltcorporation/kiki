@@ -20,6 +20,8 @@ struct KikiApp: App {
                 .environment(onboarding)
                 .environment(tracker)
                 .tint(.ink)
+                // Web links open in an in-app browser.
+                .environment(\.openURL, InAppBrowser.openURLAction)
                 .task { await subscriptions.observe() }
                 .onAppear {
                     APIClient.shared.onUnauthorized = { [auth] in auth.clearSession() }
