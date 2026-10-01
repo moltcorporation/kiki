@@ -3,8 +3,8 @@ import SwiftUI
 /// One week of the plan as a schedule, like a calendar's list view: every
 /// day is an equal-height row split by hairlines, the date on the left and
 /// the day's workout as a simple event block (accent bar, title, amount).
-/// Done workouts lose the block and turn gray with a check; rest days are
-/// just the word. Each workout is its own block so press-and-hold to move
+/// Done workouts lose the block and are struck through; rest days are just
+/// the word. Each workout is its own block so press-and-hold to move
 /// or edit it can be added later.
 struct WeekSchedule: View {
     let workouts: [Workout]
@@ -77,8 +77,8 @@ private struct DayLabel: View {
 }
 
 /// A workout as a calendar event: a gray block with an ink accent bar, the
-/// title, and how much on the right. Done: no block, gray, checked.
-/// Skipped: no block, gray, struck through.
+/// title, and how much on the right. Done: no block, gray, struck through.
+/// Skipped: the same, with "Skipped" in place of the amount.
 private struct WorkoutEvent: View {
     let workout: Workout
     let units: Units
@@ -91,16 +91,12 @@ private struct WorkoutEvent: View {
                 Capsule()
                     .fill(Color.ink)
                     .frame(width: 3, height: 20)
-            case .completed:
-                Image(systemName: "checkmark")
-                    .font(.footnote.weight(.bold))
-                    .accessibilityLabel("Done")
-            case .skipped:
+            case .completed, .skipped:
                 EmptyView()
             }
             Text(workout.title)
                 .font(.subheadline.weight(isPlanned ? .semibold : .regular))
-                .strikethrough(workout.status == .skipped)
+                .strikethrough(!isPlanned)
                 .lineLimit(1)
             Spacer(minLength: Spacing.s)
             Text(workout.status == .skipped ? "Skipped" : amount ?? "")
@@ -113,6 +109,7 @@ private struct WorkoutEvent: View {
         .padding(.horizontal, isPlanned ? Spacing.s : 0)
         .frame(maxWidth: .infinity, minHeight: 40, alignment: .leading)
         .background(isPlanned ? Color.wash : Color.clear, in: .rect(cornerRadius: Radius.inner))
+        .accessibilityValue(workout.status == .completed ? "Done" : workout.status == .skipped ? "Skipped" : "")
     }
 
     /// Just how much, since the title already says what kind of run.
