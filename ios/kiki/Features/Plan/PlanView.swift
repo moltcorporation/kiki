@@ -5,10 +5,11 @@ import SwiftUI
 /// the current week.
 struct PlanView: View {
     @Environment(TrainingStore.self) private var store
+    @State private var path: [Workout] = []
 
     var body: some View {
         let units = store.units
-        NavigationStack {
+        NavigationStack(path: $path) {
             ScrollViewReader { proxy in
                 TabPage(.text("Your plan")) {
                     if let plan = store.plan {
@@ -22,6 +23,7 @@ struct PlanView: View {
                     }
                 }
                 .refreshable { await store.refresh() }
+                .hidesTabBar(!path.isEmpty)
                 .onAppear {
                     if let current = store.currentWeekNumber, current > 1 {
                         proxy.scrollTo(current, anchor: .top)

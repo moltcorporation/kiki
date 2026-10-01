@@ -64,6 +64,7 @@ struct TodayView: View {
 
             }
             .refreshable { await store.refresh() }
+            .hidesTabBar(!path.isEmpty)
             .navigationDestination(for: Workout.self) { WorkoutDetailView(workoutID: $0.id) }
             .appSheets($sheet)
             .overlay(alignment: .bottom) { OfflineBanner() }

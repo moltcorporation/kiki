@@ -41,6 +41,17 @@ struct TabPage<Content: View>: View {
     }
 }
 
+extension View {
+    /// Put on a tab's root screen with `!path.isEmpty`: hides the tab bar
+    /// while a screen is pushed. Driving it from the root makes the bar
+    /// slide away with the push and fade back in during the pop; hiding it
+    /// from the pushed screen brings it back only after the pop ends.
+    func hidesTabBar(_ hidden: Bool) -> some View {
+        toolbarVisibility(hidden ? .hidden : .visible, for: .tabBar)
+            .animation(.default, value: hidden)
+    }
+}
+
 /// A tab's title. Home's is the Kiki wordmark, centered like a logo;
 /// the others are plain titles aligned left.
 struct TabTitle: View {
@@ -71,7 +82,8 @@ struct TabTitle: View {
 
 /// A screen pushed from a tab (or the root of a full sheet): the page
 /// background, standard margins and section spacing, and an inline
-/// navigation title. Add `.bottomActions { }` for pinned buttons.
+/// navigation title. Add `.bottomActions { }` for pinned buttons. The tab
+/// bar hides while it's pushed (see `hidesTabBar(_:)`).
 struct DetailPage<Content: View>: View {
     let title: LocalizedStringKey?
     @ViewBuilder let content: Content
@@ -86,6 +98,7 @@ struct DetailPage<Content: View>: View {
             VStack(alignment: .leading, spacing: Metrics.sectionSpacing) {
                 content
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, Metrics.screenMargin)
             .padding(.top, Metrics.topInset)
             .padding(.bottom, Metrics.bottomInset)

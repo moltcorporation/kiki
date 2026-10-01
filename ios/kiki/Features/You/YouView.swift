@@ -14,7 +14,8 @@ struct YouView: View {
 
     @AppStorage("reminders.enabled") private var remindersEnabled = true
     @AppStorage(BodyUnits.storageKey) private var bodyUnitsStored = ""
-    @State private var path: [Route] = []
+    /// Holds `Route`s and `Run`s (Run history opens a run).
+    @State private var path = NavigationPath()
     @State private var goalFlow: OnboardingModel?
     @State private var showCustomerCenter = false
     @State private var confirmSignOut = false
@@ -41,6 +42,7 @@ struct YouView: View {
                 accountSection
                 footer
             }
+            .hidesTabBar(!path.isEmpty)
             .navigationDestination(for: Route.self) { route in
                 switch route {
                 case .goal: GoalDetailView(onEdit: startGoalEdit)
@@ -101,7 +103,7 @@ struct YouView: View {
         PageSection("Your goal") {
             if let plan = store.plan {
                 ListCard {
-                    Button { path.append(.goal) } label: {
+                    Button { path.append(Route.goal) } label: {
                         ListRow(
                             icon: plan.goalKind.icon,
                             title: Text(plan.displayName),
@@ -124,24 +126,24 @@ struct YouView: View {
     private func trainingSection(_ profile: Profile) -> some View {
         ListSection("Your training") {
             SettingsRow(icon: "figure.run", label: "Experience", value: profile.experience.title) {
-                path.append(.edit(.experience))
+                path.append(Route.edit(.experience))
             }
             if profile.experience != .new {
                 SettingsRow(icon: "chart.bar", label: "Weekly distance",
                               value: Format.distance(Double(profile.weeklyDistanceM), store.units, decimals: 0)) {
-                    path.append(.edit(.weeklyVolume))
+                    path.append(Route.edit(.weeklyVolume))
                 }
             }
             SettingsRow(icon: "calendar", label: "Run days", value: RunDaysSelector.summary(profile.runDays)) {
-                path.append(.edit(.runDays))
+                path.append(Route.edit(.runDays))
             }
             SettingsRow(icon: (profile.coachingStyle ?? .balanced).icon, label: "Coaching style",
                           value: (profile.coachingStyle ?? .balanced).title) {
-                path.append(.edit(.coachingStyle))
+                path.append(Route.edit(.coachingStyle))
             }
             SettingsRow(icon: "list.bullet", label: "Run history",
                           value: store.runs.isEmpty ? "None yet" : "\(store.runs.count)") {
-                path.append(.runs)
+                path.append(Route.runs)
             }
         }
     }
@@ -150,16 +152,16 @@ struct YouView: View {
         let bodyUnits = BodyUnits.resolve(bodyUnitsStored, default: store.units)
         return ListSection("About you") {
             SettingsRow(icon: "person", label: "Name", value: profile.firstName ?? "Add") {
-                path.append(.edit(.name))
+                path.append(Route.edit(.name))
             }
             SettingsRow(icon: "birthday.cake", label: "Age", value: profile.age.map(String.init) ?? "Add") {
-                path.append(.edit(.age))
+                path.append(Route.edit(.age))
             }
             SettingsRow(icon: "ruler", label: "Height", value: profile.heightCm.map { Format.height($0, bodyUnits) } ?? "Add") {
-                path.append(.edit(.height))
+                path.append(Route.edit(.height))
             }
             SettingsRow(icon: "scalemass", label: "Weight", value: profile.weightKg.map { Format.weight($0, bodyUnits) } ?? "Add") {
-                path.append(.edit(.weight))
+                path.append(Route.edit(.weight))
             }
         }
     }
@@ -167,7 +169,7 @@ struct YouView: View {
     private var appSection: some View {
         ListSection("App") {
             SettingsRow(icon: "ruler", label: "Units", value: store.units.title) {
-                path.append(.edit(.units))
+                path.append(Route.edit(.units))
             }
             SettingsToggleRow(icon: "bell", label: "Run day reminders", isOn: $remindersEnabled)
                 .onChange(of: remindersEnabled) { _, enabled in
