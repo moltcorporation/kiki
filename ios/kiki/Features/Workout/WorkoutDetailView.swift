@@ -101,8 +101,6 @@ struct WorkoutDetailView: View {
                 actions(workout, run: run)
             }
         }
-        // A focused page: the buttons sit alone at the bottom.
-        .toolbarVisibility(.hidden, for: .tabBar)
         .appSheets($sheet)
         .alert("Coming soon", isPresented: $showChangeSoon) {
             Button("OK", role: .cancel) {}

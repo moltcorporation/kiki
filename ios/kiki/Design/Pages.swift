@@ -9,37 +9,24 @@ import SwiftUI
 // Inside a page, content is grouped into `PageSection`s (a title above a
 // card) spaced `Metrics.sectionSpacing` apart.
 
-/// The shared layout for every tab: a large left-aligned title that scrolls
-/// with the content (no floating bar), the same spacing above and below it,
-/// the page background, and a fade under the status bar.
+/// The shared layout for every tab: a title that scrolls with the content
+/// (no floating bar), the same spacing above and below it, the page
+/// background, and a fade under the status bar. Home's title is the Kiki
+/// wordmark, centered; Plan and Profile use a left-aligned 34pt title.
 struct TabPage<Content: View>: View {
     let title: TabTitle.Kind
-    /// Optional quiet text on the right of the title row (Home's greeting).
-    var accessory: String?
     @ViewBuilder let content: Content
 
-    init(_ title: TabTitle.Kind, accessory: String? = nil, @ViewBuilder content: () -> Content) {
+    init(_ title: TabTitle.Kind, @ViewBuilder content: () -> Content) {
         self.title = title
-        self.accessory = accessory
         self.content = content()
     }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                HStack(alignment: .center, spacing: Spacing.m) {
-                    TabTitle(kind: title)
-                        .fixedSize()
-                    Spacer(minLength: 0)
-                    if let accessory {
-                        Text(accessory)
-                            .font(.subheadline.weight(.medium))
-                            .foregroundStyle(.muted)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.8)
-                    }
-                }
-                .padding(.bottom, Metrics.titleSpacing)
+                TabTitle(kind: title)
+                    .padding(.bottom, Metrics.titleSpacing)
                 VStack(alignment: .leading, spacing: Metrics.sectionSpacing) {
                     content
                 }
@@ -54,7 +41,8 @@ struct TabPage<Content: View>: View {
     }
 }
 
-/// A tab's title, left aligned. Home's is the Kiki wordmark.
+/// A tab's title. Home's is the Kiki wordmark, centered like a logo;
+/// the others are plain titles aligned left.
 struct TabTitle: View {
     enum Kind {
         /// The Kiki wordmark (Home).
@@ -66,13 +54,18 @@ struct TabTitle: View {
     let kind: Kind
 
     var body: some View {
-        Group {
-            switch kind {
-            case .wordmark: Text("Kiki").font(.wordmark)
-            case .text(let text): Text(text).font(.screenTitle)
-            }
+        switch kind {
+        case .wordmark:
+            Text("Kiki")
+                .font(.wordmark)
+                .frame(maxWidth: .infinity)
+                .accessibilityAddTraits(.isHeader)
+        case .text(let text):
+            Text(text)
+                .font(.screenTitle)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .accessibilityAddTraits(.isHeader)
         }
-        .accessibilityAddTraits(.isHeader)
     }
 }
 

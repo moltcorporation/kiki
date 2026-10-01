@@ -13,9 +13,25 @@ struct TodayView: View {
         let units = store.units
 
         NavigationStack(path: $path) {
-            TabPage(.wordmark, accessory: greeting) {
+            TabPage(.wordmark) {
+                // The goal, with Adjust my plan right under it.
                 if let plan = store.plan {
-                    GoalProgressCard(plan: plan, units: units)
+                    VStack(spacing: Metrics.stackSpacing) {
+                        GoalProgressCard(plan: plan, units: units)
+                        ListCard {
+                            Button {
+                                sheet = .adjust
+                            } label: {
+                                ListRow(
+                                    icon: "sparkles",
+                                    title: Text("Adjust my plan"),
+                                    subtitles: ["Tired, busy or sore? Tell Kiki."],
+                                    showsChevron: true
+                                )
+                            }
+                            .buttonStyle(.haptic)
+                        }
+                    }
                 }
 
                 if let pending = store.pendingPlan, pending.status == .generating {
@@ -46,19 +62,6 @@ struct TodayView: View {
                     }
                 }
 
-                ListCard {
-                    Button {
-                        sheet = .adjust
-                    } label: {
-                        ListRow(
-                            icon: "sparkles",
-                            title: Text("Adjust my plan"),
-                            subtitles: ["Tired, busy or sore? Tell Kiki."],
-                            showsChevron: true
-                        )
-                    }
-                    .buttonStyle(.haptic)
-                }
             }
             .refreshable { await store.refresh() }
             .navigationDestination(for: Workout.self) { WorkoutDetailView(workoutID: $0.id) }
@@ -66,12 +69,6 @@ struct TodayView: View {
             .overlay(alignment: .bottom) { OfflineBanner() }
         }
         .onAppear { Analytics.screen("Home") }
-    }
-
-    private var greeting: String {
-        let hour = Calendar.current.component(.hour, from: .now)
-        let part = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening"
-        return store.profile?.firstName.map { "\(part), \($0)!" } ?? "\(part)!"
     }
 
     /// The next several days after today (rest days included, so the
