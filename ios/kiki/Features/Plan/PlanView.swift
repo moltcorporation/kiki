@@ -45,8 +45,8 @@ struct PlanView: View {
 }
 
 /// The top of the Plan tab: a ring that fills as the runner works through
-/// the plan (the week inside it), with the three stats stacked beside it:
-/// distance run so far, weeks to go and average pace.
+/// the plan, and four stats beside it in a 2×2 grid split by hairlines:
+/// distance run, longest run, weeks to go and average pace.
 struct ProgressCard: View {
     @Environment(TrainingStore.self) private var store
     let plan: Plan
@@ -55,6 +55,7 @@ struct ProgressCard: View {
     var body: some View {
         let runs = store.runs.filter { Day($0.startedAt) >= plan.startDate && Day($0.startedAt) <= plan.raceDate }
         let distanceM = runs.reduce(0) { $0 + $1.distanceM }
+        let longestM = runs.map(\.distanceM).max() ?? 0
         let timedRuns = runs.filter { $0.durationS > 0 && $0.distanceM > 0 }
         let timedM = timedRuns.reduce(0) { $0 + $1.distanceM }
         let timedS = Double(timedRuns.reduce(0) { $0 + $1.durationS })
@@ -64,50 +65,65 @@ struct ProgressCard: View {
         // How far through the plan: the same measure as the goal card's bar.
         let total = max(store.totalWeeks, 1)
         let week = min(store.currentWeekNumber ?? (Day.today > plan.raceDate ? total : 0), total)
+        let unit = units == .mi ? "mi" : "km"
 
         Card {
-            HStack(spacing: Spacing.xxl) {
+            HStack(spacing: Spacing.xl) {
                 PlanRing(week: week, total: total)
-                Grid(alignment: .leading, horizontalSpacing: Spacing.m, verticalSpacing: Spacing.s) {
-                    StatRow(value: Format.distanceNumber(distanceM, units), label: units == .mi ? "Miles run" : "Km run")
-                    StatRow(value: "\(weeksToGo)", label: weeksToGo == 1 ? "Week to go" : "Weeks to go")
-                    StatRow(value: averagePace.map { Format.pace($0, units, withUnit: false) } ?? "–:––",
-                            label: "Avg. pace /\(units.rawValue)")
+                VStack(spacing: 0) {
+                    HStack(spacing: 0) {
+                        Stat(value: Format.distanceNumber(distanceM, units), label: units == .mi ? "Miles run" : "Km run")
+                        verticalRule
+                        Stat(value: Format.distanceNumber(longestM, units), label: "Longest run")
+                    }
+                    Rectangle().fill(Color.hairline).frame(height: 1)
+                    HStack(spacing: 0) {
+                        Stat(value: "\(weeksToGo)", label: weeksToGo == 1 ? "Week to go" : "Weeks to go")
+                        verticalRule
+                        Stat(value: averagePace.map { Format.pace($0, units, withUnit: false) } ?? "–:––",
+                             label: "Avg. pace /\(unit)")
+                    }
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
     }
 
-    /// A bold number with its label beside it.
-    private struct StatRow: View {
+    private var verticalRule: some View {
+        Rectangle().fill(Color.hairline).frame(width: 1)
+    }
+
+    /// One cell: a bold number over its label.
+    private struct Stat: View {
         let value: String
-        let label: LocalizedStringKey
+        let label: String
 
         var body: some View {
-            GridRow(alignment: .firstTextBaseline) {
+            VStack(alignment: .leading, spacing: Spacing.xxs) {
                 Text(value)
                     .font(.metric(.title3))
                     .lineLimit(1)
+                    .minimumScaleFactor(0.7)
                 Text(label)
-                    .font(.subheadline)
+                    .font(.caption.weight(.medium))
                     .foregroundStyle(.muted)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.vertical, Spacing.m)
+            .padding(.horizontal, Spacing.m)
             .accessibilityElement(children: .combine)
         }
     }
 }
 
-/// A black ring filling on a light track as the weeks go by, with the
-/// current week inside.
+/// A black ring filling on a light track as the weeks go by.
 private struct PlanRing: View {
     let week: Int
     let total: Int
 
-    private let size: CGFloat = 108
-    private let lineWidth: CGFloat = 10
+    private let size: CGFloat = 96
+    private let lineWidth: CGFloat = 12
 
     var body: some View {
         ZStack {
@@ -118,16 +134,6 @@ private struct PlanRing: View {
                 .stroke(Color.ink, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
                 .rotationEffect(.degrees(-90))
                 .animation(.smooth, value: week)
-            VStack(spacing: 0) {
-                Text("Week")
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(.muted)
-                Text("\(max(week, 1))")
-                    .font(.metric(.title))
-                Text("of \(total)")
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(.muted)
-            }
         }
         .frame(width: size, height: size)
         .accessibilityElement(children: .ignore)
