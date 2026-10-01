@@ -109,7 +109,7 @@ struct DetailPage<Content: View>: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, Metrics.screenMargin)
-            .padding(.top, Metrics.topInset)
+            .padding(.top, Metrics.detailTopInset)
             .padding(.bottom, Metrics.bottomInset)
         }
         .scrollDismissesKeyboard(.interactively)

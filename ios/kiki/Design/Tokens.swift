@@ -32,6 +32,9 @@ enum Metrics {
     /// Apple's large titles (e.g. Settings): an empty 44pt bar row, then
     /// the title. Home's wordmark sits at `topInset` instead.
     static let largeTitleTopInset: CGFloat = 58
+    /// Space between a pushed screen's navigation bar and its first
+    /// element, matching Apple's (e.g. Settings > General).
+    static let detailTopInset: CGFloat = 18
     /// Space after the last element of a scrolling page.
     static let bottomInset: CGFloat = 32
     /// Space between a page title and its first section.
