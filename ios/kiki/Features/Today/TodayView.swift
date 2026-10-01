@@ -128,7 +128,7 @@ private struct GoalProgressCard: View {
                     .lineLimit(2)
                     .minimumScaleFactor(0.8)
                     .fixedSize(horizontal: false, vertical: true)
-                Text(plan.goalSubline(units: units, endDate: endDate))
+                Text(Plan.goalDate(endDate))
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(.muted)
             }
@@ -182,17 +182,13 @@ extension Plan {
         }
     }
 
-    /// The when (and the distance, if a named race hides it).
-    func goalSubline(units: Units, endDate: Day) -> String {
-        let date = endDate.date.formatted(.dateTime.weekday(.wide).month(.wide).day())
-        switch goalKind {
-        case .race:
-            return raceName == nil ? date : "\(distanceLabel(units: units)) · \(date)"
-        case .faster:
-            return "Time trial · \(date)"
-        case .start, .fit:
-            return "By \(date)"
-        }
+    /// The goal's date, under the headline: "December 16", with the year
+    /// only when it isn't this year ("March 7, 2027").
+    static func goalDate(_ day: Day) -> String {
+        let isThisYear = Calendar.current.isDate(day.date, equalTo: .now, toGranularity: .year)
+        return isThisYear
+            ? day.date.formatted(.dateTime.month(.wide).day())
+            : day.date.formatted(.dateTime.month(.wide).day().year())
     }
 }
 
