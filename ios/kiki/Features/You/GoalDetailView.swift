@@ -134,28 +134,6 @@ extension Plan {
     var weekCount: Int {
         max(1, startDate.mondayOfWeek.days(until: raceDate.mondayOfWeek) / 7 + 1)
     }
-
-    /// Short lines describing the goal, for cards and headers.
-    func goalDetails(units: Units) -> [String] {
-        let weeksLeft = max(0, Day.today.days(until: raceDate) / 7)
-        switch goalKind {
-        case .race:
-            let date = raceDate.date.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day())
-            let target = goalType == .time ? goalTimeS.map { "Goal \(Format.duration($0))" } : "Finish strong"
-            return [
-                [raceName == nil ? nil : distanceLabel(units: units), date].compactMap { $0 }.joined(separator: " · "),
-                [target, weeksLeft > 0 ? "\(weeksLeft) weeks to go" : nil].compactMap { $0 }.joined(separator: " · "),
-            ]
-        case .faster:
-            return [
-                [goalTimeS.map { "Goal \(Format.duration($0))" }, "\(weekCount)-week plan"].compactMap { $0 }.joined(separator: " · "),
-            ]
-        case .start:
-            return ["Run 30 minutes non-stop · \(weekCount) weeks"]
-        case .fit:
-            return ["Run consistently · \(weekCount) weeks"]
-        }
-    }
 }
 
 extension OnboardingModel {

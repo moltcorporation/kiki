@@ -105,7 +105,7 @@ struct YouView: View {
                         ListRow(
                             icon: plan.goalKind.icon,
                             title: Text(plan.displayName),
-                            subtitles: plan.goalDetails(units: store.units),
+                            subtitles: ["View and change your goal"],
                             showsChevron: true
                         )
                     }
