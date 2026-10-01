@@ -31,7 +31,7 @@ struct YouView: View {
 
     var body: some View {
         NavigationStack(path: $path) {
-            TabPage(.text("Profile")) {
+            TabPage("Profile") {
                 profileCard
                 goalSection
                 if let profile = store.profile {
@@ -45,16 +45,14 @@ struct YouView: View {
             .hidesTabBar(!path.isEmpty)
             .navigationDestination(for: Route.self) { route in
                 switch route {
-                case .goal: GoalDetailView(onEdit: startGoalEdit)
+                case .goal: GoalDetailView()
                 case .runs: RunsView()
                 case .edit(let field): ProfileFieldEditor(field: field)
                 }
             }
             .navigationDestination(for: Run.self) { RunDetailView(run: $0) }
             .sheet(isPresented: $showCustomerCenter) { CustomerCenterView() }
-            .fullScreenCover(item: $goalFlow) { model in
-                OnboardingFlow().environment(model)
-            }
+            .goalEditFlow($goalFlow)
             .confirmationDialog("Sign out of Kiki?", isPresented: $confirmSignOut, titleVisibility: .visible) {
                 Button("Sign out", role: .destructive) {
                     Task { await auth.signOut() }
@@ -215,17 +213,9 @@ struct YouView: View {
 
     // MARK: Actions
 
-    /// Opens the goal questions from onboarding, prefilled with the current
-    /// goal. `.goal` changes the whole goal; any other step edits just that
-    /// detail. Either way the flow ends with a confirmation before rebuilding.
+    /// "Set your goal" (no plan yet): the goal questions from onboarding.
     private func startGoalEdit(_ step: OnboardingModel.Step) {
-        let mode: OnboardingModel.Mode = step == .goal ? .newGoal : .editGoal(step)
-        let model = OnboardingModel(mode: mode, profile: store.profile, plan: store.plan)
-        model.onFinish = { [weak model] in
-            if goalFlow === model { goalFlow = nil }
-        }
-        goalFlow = model
-        Analytics.track("goal_edit_started", ["step": step.rawValue])
+        goalFlow = .goalEdit(step, store: store) { goalFlow = nil }
     }
 
     private func updateReminders(_ enabled: Bool) async {

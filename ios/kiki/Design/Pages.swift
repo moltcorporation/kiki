@@ -9,15 +9,14 @@ import SwiftUI
 // Inside a page, content is grouped into `PageSection`s (a title above a
 // card) spaced `Metrics.sectionSpacing` apart.
 
-/// The shared layout for every tab: a title that scrolls with the content
-/// (no floating bar), the same spacing above and below it, the page
-/// background, and a fade under the status bar. Home's title is the Kiki
-/// wordmark, centered; Plan and Profile use a left-aligned 34pt title.
+/// The shared layout for every tab: a 34pt title that scrolls with the
+/// content (no floating bar) at Apple's large-title position, the same
+/// spacing below it, the page background, and a fade under the status bar.
 struct TabPage<Content: View>: View {
-    let title: TabTitle.Kind
+    let title: LocalizedStringKey
     @ViewBuilder let content: Content
 
-    init(_ title: TabTitle.Kind, @ViewBuilder content: () -> Content) {
+    init(_ title: LocalizedStringKey, @ViewBuilder content: () -> Content) {
         self.title = title
         self.content = content()
     }
@@ -25,14 +24,14 @@ struct TabPage<Content: View>: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                TabTitle(kind: title)
+                TabTitle(title)
                     .padding(.bottom, Metrics.titleSpacing)
                 VStack(alignment: .leading, spacing: Metrics.sectionSpacing) {
                     content
                 }
             }
             .padding(.horizontal, Metrics.screenMargin)
-            .padding(.top, title.topInset)
+            .padding(.top, Metrics.largeTitleTopInset)
             .padding(.bottom, Metrics.bottomInset)
         }
         .background { PageBackground() }
@@ -52,40 +51,21 @@ extension View {
     }
 }
 
-/// A tab's title. Home's is the Kiki wordmark, centered like a logo;
-/// the others are plain titles aligned left.
+/// A tab's title: 34pt bold, aligned left, where Apple's large titles sit.
+/// Home's is the greeting ("Good morning, Stuart!").
 struct TabTitle: View {
-    enum Kind {
-        /// The Kiki wordmark (Home).
-        case wordmark
-        /// A plain title (Plan, Profile).
-        case text(LocalizedStringKey)
+    let text: LocalizedStringKey
 
-        /// Titles sit where Apple's large titles do; the wordmark sits
-        /// higher, like a logo.
-        var topInset: CGFloat {
-            switch self {
-            case .wordmark: Metrics.topInset
-            case .text: Metrics.largeTitleTopInset
-            }
-        }
+    init(_ text: LocalizedStringKey) {
+        self.text = text
     }
 
-    let kind: Kind
-
     var body: some View {
-        switch kind {
-        case .wordmark:
-            Text("Kiki")
-                .font(.wordmark)
-                .frame(maxWidth: .infinity)
-                .accessibilityAddTraits(.isHeader)
-        case .text(let text):
-            Text(text)
-                .font(.screenTitle)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .accessibilityAddTraits(.isHeader)
-        }
+        Text(text)
+            .font(.screenTitle)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .fixedSize(horizontal: false, vertical: true)
+            .accessibilityAddTraits(.isHeader)
     }
 }
 

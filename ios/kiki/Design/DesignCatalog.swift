@@ -11,7 +11,7 @@ private struct DesignCatalog: View {
 
     var body: some View {
         NavigationStack {
-            TabPage(.text("Design")) {
+            TabPage("Design") {
                 PageSection("Type") {
                     Card {
                         VStack(alignment: .leading, spacing: Spacing.s) {

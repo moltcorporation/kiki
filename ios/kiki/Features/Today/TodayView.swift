@@ -7,17 +7,24 @@ struct TodayView: View {
     @Environment(RunTracker.self) private var tracker
 
     @State private var sheet: AppSheet?
-    @State private var path: [Workout] = []
+    /// Holds `Workout`s and `HomeRoute`s.
+    @State private var path = NavigationPath()
+
+    enum HomeRoute: Hashable { case goal }
 
     var body: some View {
         let units = store.units
 
         NavigationStack(path: $path) {
-            TabPage(.wordmark) {
+            TabPage(LocalizedStringKey(greeting)) {
                 // The goal, with Adjust my plan right under it.
                 if let plan = store.plan {
                     VStack(spacing: Metrics.stackSpacing) {
-                        GoalProgressCard(plan: plan, units: units)
+                        Button { path.append(HomeRoute.goal) } label: {
+                            GoalProgressCard(plan: plan, units: units)
+                        }
+                        .buttonStyle(.haptic)
+                        .accessibilityHint("Shows your goal details")
                         ListCard {
                             Button {
                                 sheet = .adjust
@@ -66,10 +73,18 @@ struct TodayView: View {
             .refreshable { await store.refresh() }
             .hidesTabBar(!path.isEmpty)
             .navigationDestination(for: Workout.self) { WorkoutDetailView(workoutID: $0.id) }
+            .navigationDestination(for: HomeRoute.self) { _ in GoalDetailView() }
             .appSheets($sheet)
             .overlay(alignment: .bottom) { OfflineBanner() }
         }
         .onAppear { Analytics.screen("Home") }
+    }
+
+    /// "Good morning, Stuart!"
+    private var greeting: String {
+        let hour = Calendar.current.component(.hour, from: .now)
+        let part = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening"
+        return store.profile?.firstName.map { "\(part), \($0)!" } ?? "\(part)!"
     }
 
     /// The next several days after today (rest days included, so the
@@ -188,8 +203,8 @@ extension Plan {
     }
 }
 
-/// Today's workout. Runs show as a dark hero card (the standard card in the
-/// inverted color scheme); rest days as a plain card.
+/// Today's workout: a standard white card that leads with a big title and
+/// metrics. Home's only dark card is the goal, so the two don't compete.
 struct WorkoutHeroCard: View {
     let workout: Workout
     let run: Run?
@@ -199,7 +214,7 @@ struct WorkoutHeroCard: View {
     let onStart: (() -> Void)?
 
     var body: some View {
-        let content = VStack(alignment: .leading, spacing: Spacing.l) {
+        VStack(alignment: .leading, spacing: Spacing.l) {
             HStack {
                 Text(workout.type.label)
                     .font(.eyebrow)
@@ -255,14 +270,7 @@ struct WorkoutHeroCard: View {
         .foregroundStyle(.ink)
         .padding(Metrics.cardPadding)
         .frame(maxWidth: .infinity, alignment: .leading)
-
-        if workout.isRest {
-            content.elevatedCard()
-        } else {
-            content
-                .elevatedCard(elevation: .raised)
-                .invertedColorScheme()
-        }
+        .elevatedCard()
     }
 }
 

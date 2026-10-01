@@ -3,11 +3,12 @@ import SwiftUI
 /// Every detail of the current goal, each editable on its own. The race
 /// name is a label and saves instantly; anything that changes the training
 /// opens that question from onboarding and confirms before rebuilding.
+/// Opened from Home's goal card and from the Profile tab.
 struct GoalDetailView: View {
     @Environment(TrainingStore.self) private var store
-    let onEdit: (OnboardingModel.Step) -> Void
 
     @State private var editingName = false
+    @State private var goalFlow: OnboardingModel?
 
     var body: some View {
         DetailPage("Your goal") {
@@ -25,7 +26,12 @@ struct GoalDetailView: View {
             }
         }
         .sheet(isPresented: $editingName) { RaceNameSheet() }
+        .goalEditFlow($goalFlow)
         .onAppear { Analytics.screen("Goal Details") }
+    }
+
+    private func onEdit(_ step: OnboardingModel.Step) {
+        goalFlow = .goalEdit(step, store: store) { goalFlow = nil }
     }
 
     @ViewBuilder
@@ -147,6 +153,29 @@ extension Plan {
             return ["Run 30 minutes non-stop · \(weekCount) weeks"]
         case .fit:
             return ["Run consistently · \(weekCount) weeks"]
+        }
+    }
+}
+
+extension OnboardingModel {
+    /// The goal questions from onboarding, prefilled with the current goal.
+    /// `.goal` changes the whole goal; any other step edits just that
+    /// detail. Either way the flow ends with a confirmation before
+    /// rebuilding. `onFinish` dismisses it.
+    static func goalEdit(_ step: Step, store: TrainingStore, onFinish: @escaping () -> Void) -> OnboardingModel {
+        let mode: Mode = step == .goal ? .newGoal : .editGoal(step)
+        let model = OnboardingModel(mode: mode, profile: store.profile, plan: store.plan)
+        model.onFinish = onFinish
+        Analytics.track("goal_edit_started", ["step": step.rawValue])
+        return model
+    }
+}
+
+extension View {
+    /// Presents a goal edit flow from `OnboardingModel.goalEdit` full screen.
+    func goalEditFlow(_ flow: Binding<OnboardingModel?>) -> some View {
+        fullScreenCover(item: flow) { model in
+            OnboardingFlow().environment(model)
         }
     }
 }
