@@ -45,7 +45,7 @@ struct PlanView: View {
 }
 
 /// The top of the Plan tab: progress and goal together. A ring that fills
-/// as the plan goes by (weeks left inside), beside the goal and its date,
+/// day by day through the plan (the percentage inside), beside the goal and its date,
 /// then a hairline and the two stats that matter most: distance run and
 /// average pace.
 struct ProgressCard: View {
@@ -59,15 +59,13 @@ struct ProgressCard: View {
         let timed = runs.filter { $0.durationS > 0 && $0.distanceM > 0 }
         let timedM = timed.reduce(0) { $0 + $1.distanceM }
         let timedS = Double(timed.reduce(0) { $0 + $1.durationS })
-        // Same count as the goal ("10 weeks to go").
-        let weeksLeft = max(0, Day.today.days(until: plan.raceDate) / 7)
-        // How far through the plan: the same measure as the goal card's bar.
-        let total = max(store.totalWeeks, 1)
-        let week = min(store.currentWeekNumber ?? (Day.today > plan.raceDate ? total : 0), total)
+        // How far through the plan by days, so the ring moves every day.
+        let planDays = max(plan.startDate.days(until: plan.raceDate), 1)
+        let progress = min(max(Double(plan.startDate.days(until: .today)) / Double(planDays), 0), 1)
 
         Card(padding: Spacing.l) {
             HStack(spacing: Spacing.xxl) {
-                PlanRing(progress: Double(week) / Double(total), weeksLeft: weeksLeft)
+                PlanRing(progress: progress)
 
                 VStack(alignment: .leading, spacing: Spacing.m) {
                     VStack(alignment: .leading, spacing: Spacing.xxs) {
@@ -119,39 +117,37 @@ struct ProgressCard: View {
 }
 
 /// A black ring filling on a light track as the plan goes by, with the
-/// weeks left inside: the number, and a small label under it.
+/// percentage inside ("8%").
 private struct PlanRing: View {
     let progress: Double
-    let weeksLeft: Int
 
     private let size: CGFloat = 92
     private let lineWidth: CGFloat = 8
 
     var body: some View {
+        let percent = Int((progress * 100).rounded())
         ZStack {
             Circle()
                 .stroke(Color.track, lineWidth: lineWidth)
             Circle()
-                .trim(from: 0, to: min(max(progress, 0), 1))
+                .trim(from: 0, to: progress)
                 .stroke(Color.ink, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
                 .rotationEffect(.degrees(-90))
                 .animation(.smooth, value: progress)
-            VStack(spacing: 0) {
-                Text("\(weeksLeft)")
+            HStack(alignment: .firstTextBaseline, spacing: 1) {
+                Text("\(percent)")
                     .font(.metric(.title))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.6)
-                Text(weeksLeft == 1 ? "week left" : "weeks left")
-                    .font(.caption2.weight(.semibold))
+                Text("%")
+                    .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.muted)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
             }
+            .lineLimit(1)
+            .minimumScaleFactor(0.6)
             .padding(.horizontal, lineWidth + Spacing.s)
         }
         .frame(width: size, height: size)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Plan progress")
-        .accessibilityValue(weeksLeft == 1 ? "1 week left" : "\(weeksLeft) weeks left")
+        .accessibilityValue("\(percent) percent")
     }
 }
