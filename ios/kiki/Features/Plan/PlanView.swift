@@ -17,7 +17,7 @@ struct PlanView: View {
                     }
                     ForEach(store.weeks, id: \.week) { week, workouts in
                         PageSection("Week \(week)", detail: summary(workouts, units: units)) {
-                            WorkoutListCard(workouts: workouts, units: units)
+                            WeekSchedule(workouts: workouts, units: units)
                         }
                         .id(week)
                     }

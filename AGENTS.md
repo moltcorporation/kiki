@@ -19,6 +19,7 @@ Every screen is built from these files. Never use raw numbers, hex colors, fixed
 - `Rows.swift`: one row anatomy. Lists are a `ListCard` (adds inset dividers between rows automatically) of `ListRow`s: circled `RowIcon`, title (`.content` semibold, `.setting` regular), gray subtitles, gray value, chevron when it opens something. `SettingsRow` / `SettingsToggleRow` for settings, `WorkoutRow` adds a date column. `InfoRow`/`InfoList` for benefit lists.
 - `Buttons.swift`: `PrimaryButton` (one per screen), `SecondaryButton`, `TextButton` (Skip, Not now), `CircleButton` (icon beside a pill), `BackButton`. `.controlSize(.small)` for 48pt buttons inside cards. Custom tappables use `.buttonStyle(.haptic)`.
 - `Inputs.swift`: `OptionCard`/`ChoiceList` (list choices, radio or checkbox), `SelectableTile` (grid choices, filled when selected), `.inputField()` and `LabeledField` for text, `RulerPicker`, `DurationWheel`, `RunDaysSelector`, `InputHint`.
+- Plan weeks use `WeekSchedule` (`Features/Plan`): a date column (today in an ink circle) beside one tile per workout (icon, title, just the distance or time) and dashed slots for rest days. Tiles are separate objects so press-and-hold to move or edit can be added later.
 - `Content.swift`: `KikiLogo`, `Pill`, `MetricView`, `CoachBubble`/`UserBubble`, `MessageCard` (status and empty states).
 
 ### Logo specs
