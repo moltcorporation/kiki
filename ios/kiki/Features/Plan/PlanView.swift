@@ -65,8 +65,8 @@ struct ProgressCard: View {
         let total = max(store.totalWeeks, 1)
         let week = min(store.currentWeekNumber ?? (Day.today > plan.raceDate ? total : 0), total)
 
-        Card {
-            HStack(spacing: Spacing.xl) {
+        Card(padding: Spacing.l) {
+            HStack(spacing: Spacing.l) {
                 PlanRing(progress: Double(week) / Double(total), weeksToGo: weeksToGo)
 
                 VStack(alignment: .leading, spacing: Spacing.m) {
@@ -118,38 +118,39 @@ struct ProgressCard: View {
     }
 }
 
-/// A black ring filling on a light track as the plan goes by, with the
-/// weeks to go inside.
+/// A black ring filling on a light track as the plan goes by, the weeks to
+/// go inside it and its label underneath (like a Whoop ring).
 private struct PlanRing: View {
     let progress: Double
     let weeksToGo: Int
 
-    private let size: CGFloat = 104
-    private let lineWidth: CGFloat = 12
+    private let size: CGFloat = 72
+    private let lineWidth: CGFloat = 8
 
     var body: some View {
-        ZStack {
-            Circle()
-                .stroke(Color.track, lineWidth: lineWidth)
-            Circle()
-                .trim(from: 0, to: min(max(progress, 0), 1))
-                .stroke(Color.ink, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
-                .rotationEffect(.degrees(-90))
-                .animation(.smooth, value: progress)
-            VStack(spacing: -Spacing.xxs) {
+        VStack(spacing: Spacing.s) {
+            ZStack {
+                Circle()
+                    .stroke(Color.track, lineWidth: lineWidth)
+                Circle()
+                    .trim(from: 0, to: min(max(progress, 0), 1))
+                    .stroke(Color.ink, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                    .animation(.smooth, value: progress)
                 Text("\(weeksToGo)")
-                    .font(.metric(.largeTitle))
+                    .font(.metric(.title2))
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
-                Text(weeksToGo == 1 ? "week to go" : "weeks to go")
-                    .font(.caption2.weight(.semibold))
-                    .foregroundStyle(.muted)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
+                    .padding(.horizontal, lineWidth + Spacing.xs)
             }
-            .padding(.horizontal, lineWidth + Spacing.s)
+            .frame(width: size, height: size)
+
+            Text(weeksToGo == 1 ? "Week to go" : "Weeks to go")
+                .font(.caption.weight(.medium))
+                .foregroundStyle(.muted)
+                .lineLimit(1)
+                .fixedSize()
         }
-        .frame(width: size, height: size)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Plan progress")
         .accessibilityValue(weeksToGo == 1 ? "1 week to go" : "\(weeksToGo) weeks to go")
