@@ -40,6 +40,11 @@ struct DistanceStep: View {
             canContinue: model.answers.raceDistance != nil
         ) {
             ChoiceList(options: options, selection: model.answers.raceDistance) { distance in
+                // A new distance reopens the calendar on a realistic date for
+                // it, unless only the distance of an existing race is edited.
+                if distance != model.answers.raceDistance, model.mode == .full || model.mode == .newGoal {
+                    model.answers.raceDate = nil
+                }
                 model.answers.raceDistance = distance
                 if distance == .other { showCustom = true }
             }
@@ -76,14 +81,15 @@ private struct CustomDistanceSheet: View {
     }
 }
 
-/// Race date on a calendar where only realistic dates are selectable (at
-/// least a week out, at most a year), plus an optional race name for a
-/// more personal plan. "I don't have a date yet" uses a suggested date.
+/// Race date on a calendar (any day from tomorrow to a year out), opening
+/// on a realistic date for the distance (`suggestedRaceDate`), plus an
+/// optional race name for a more personal plan. "I don't have a date yet"
+/// uses the suggested date.
 struct RaceDateStep: View {
     @Environment(OnboardingModel.self) private var model
 
     private var range: ClosedRange<Date> {
-        Day.today.adding(days: 7).date...Day.today.adding(days: 52 * 7 - 1).date
+        Day.today.adding(days: 1).date...Day.today.adding(days: 52 * 7 - 1).date
     }
 
     var body: some View {
