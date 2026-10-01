@@ -4,53 +4,96 @@ import SwiftUI
 /// day is an equal-height row split by hairlines, the date on the left and
 /// the day's workout as a simple event block (accent bar, title, amount).
 /// Done workouts lose the block and are struck through; rest days are just
-/// the word. Each workout is its own block so press-and-hold to move
-/// or edit it can be added later.
+/// the word. Only the block is interactive: tap to open the workout, and
+/// (with `onMove`) press and hold to drag an upcoming workout to another day.
 struct WeekSchedule: View {
     let workouts: [Workout]
     let units: Units
     /// Off where there's nowhere to go (onboarding, the adjust sheet).
     var isNavigable = true
+    /// Called when a workout is dropped on another day. Nil turns dragging
+    /// off (Home, onboarding).
+    var onMove: ((_ workoutID: UUID, _ day: Day) -> Void)?
 
     var body: some View {
         ListCard(dividerInset: RowMetrics.horizontalPadding, verticalPadding: Spacing.s) {
             ForEach(workouts.sorted { $0.date < $1.date }) { workout in
-                if workout.isRest || !isNavigable {
-                    DayRow(workout: workout, units: units)
-                } else {
-                    NavigationLink(value: workout) {
-                        DayRow(workout: workout, units: units)
-                    }
-                    .buttonStyle(.haptic)
-                }
+                DayRow(workout: workout, units: units, isNavigable: isNavigable, onMove: onMove)
             }
         }
     }
 }
 
-/// One day: the date column and the day's workout (or "Rest").
+/// One day: the date column and the day's workout (or "Rest"). The row is
+/// a drop target when moving is on; it outlines where a dragged workout
+/// would land.
 private struct DayRow: View {
     let workout: Workout
     let units: Units
+    let isNavigable: Bool
+    let onMove: ((UUID, Day) -> Void)?
+
+    @State private var isTargeted = false
 
     static let height: CGFloat = 60
 
     var body: some View {
-        HStack(spacing: Spacing.m) {
+        let row = HStack(spacing: Spacing.m) {
             DayLabel(day: workout.date)
-            if workout.isRest {
-                Text("Rest")
-                    .font(.subheadline)
-                    .foregroundStyle(.muted)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            } else {
-                WorkoutEvent(workout: workout, units: units)
-            }
+            content
+                .overlay {
+                    if isTargeted {
+                        RoundedRectangle(cornerRadius: Radius.inner)
+                            .strokeBorder(Color.ink, style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
+                            .padding(.vertical, -Spacing.xs)
+                    }
+                }
+                .animation(.snappy(duration: 0.15), value: isTargeted)
         }
         .padding(.horizontal, RowMetrics.horizontalPadding)
         .frame(height: Self.height)
-        .contentShape(.rect)
-        .accessibilityElement(children: .combine)
+
+        if let onMove {
+            row.dropDestination(for: String.self) { items, _ in
+                guard let id = items.first.flatMap(UUID.init(uuidString:)), id != workout.id else { return false }
+                Haptics.success()
+                onMove(id, workout.date)
+                return true
+            } isTargeted: { targeted in
+                if targeted && !isTargeted { Haptics.select() }
+                isTargeted = targeted
+            }
+        } else {
+            row
+        }
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        if workout.isRest {
+            Text("Rest")
+                .font(.subheadline)
+                .foregroundStyle(.muted)
+                .frame(maxWidth: .infinity, minHeight: 40, alignment: .leading)
+                .accessibilityLabel("\(workout.date.date.formatted(.dateTime.weekday(.wide))), rest")
+        } else if isNavigable {
+            let link = NavigationLink(value: workout) {
+                WorkoutEvent(workout: workout, units: units)
+                    .contentShape(.rect(cornerRadius: Radius.inner))
+            }
+            .buttonStyle(.haptic)
+            if onMove != nil, workout.status == .planned {
+                link.draggable(workout.id.uuidString) {
+                    WorkoutEvent(workout: workout, units: units)
+                        .frame(width: 260)
+                        .background(Color.surface, in: .rect(cornerRadius: Radius.inner))
+                }
+            } else {
+                link
+            }
+        } else {
+            WorkoutEvent(workout: workout, units: units)
+        }
     }
 }
 

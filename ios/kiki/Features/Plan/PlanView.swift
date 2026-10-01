@@ -7,6 +7,20 @@ struct PlanView: View {
     @State private var path: [Workout] = []
     /// Fires the confetti when the finish line scrolls into view.
     @State private var celebrations = 0
+    /// Shown briefly after a drop until moving workouts is wired up.
+    @State private var moveNotice = false
+
+    /// A workout was dropped on another day. The UI is ready; saving the
+    /// move needs the API, so for now this only says it's coming.
+    /// TODO: call the store to swap the workout's date with `day`'s.
+    private func moveWorkout(_ id: UUID, to day: Day) {
+        Analytics.track("workout_move_attempted")
+        moveNotice = true
+        Task {
+            try? await Task.sleep(for: .seconds(2))
+            moveNotice = false
+        }
+    }
 
     var body: some View {
         let units = store.units
@@ -18,7 +32,7 @@ struct PlanView: View {
                     }
                     ForEach(store.weeks, id: \.week) { week, workouts in
                         PageSection("Week \(week)") {
-                            WeekSchedule(workouts: workouts, units: units)
+                            WeekSchedule(workouts: workouts, units: units, onMove: moveWorkout)
                         }
                         .id(week)
                     }
@@ -42,6 +56,18 @@ struct PlanView: View {
             .navigationDestination(for: Workout.self) { WorkoutDetailView(workoutID: $0.id) }
         }
         .overlay { ConfettiBurst(trigger: celebrations).ignoresSafeArea() }
+        .overlay(alignment: .bottom) {
+            if moveNotice {
+                Label("Moving workouts is coming soon", systemImage: "calendar.badge.clock")
+                    .font(.footnote.weight(.semibold))
+                    .padding(.horizontal, Spacing.l)
+                    .padding(.vertical, Spacing.m)
+                    .glassEffect()
+                    .padding(.bottom, Spacing.s)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
+        .animation(.snappy, value: moveNotice)
         .onAppear { Analytics.screen("Plan") }
     }
 }
