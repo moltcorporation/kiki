@@ -16,10 +16,11 @@ struct TodayView: View {
         let units = store.units
 
         NavigationStack(path: $path) {
-            TabPage(LocalizedStringKey(greeting)) {
-                // The goal, with Adjust my plan right under it.
+            TabPage(.wordmark) {
+                // The greeting introduces the goal, with Adjust my plan
+                // right under it.
                 if let plan = store.plan {
-                    VStack(spacing: Metrics.stackSpacing) {
+                    PageSection(LocalizedStringKey(greeting)) {
                         Button { path.append(HomeRoute.goal) } label: {
                             GoalProgressCard(plan: plan, units: units)
                         }
