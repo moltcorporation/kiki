@@ -44,9 +44,9 @@ struct PlanView: View {
     }
 }
 
-/// The top of the Plan tab, dark like a scoreboard: three numbers side by
-/// side, each over its label (distance run so far, weeks to go, average
-/// pace), and a bar showing how far through the plan they are.
+/// The top of the Plan tab: three numbers side by side, each over its
+/// label (distance run so far, weeks to go, average pace), and a bar
+/// showing how far through the plan they are.
 struct PlanProgressCard: View {
     @Environment(TrainingStore.self) private var store
     let plan: Plan
@@ -82,9 +82,6 @@ struct PlanProgressCard: View {
                     .accessibilityValue("Week \(max(week, 1)) of \(total)")
             }
         }
-        // Dark, so the stats read as the plan's scoreboard (the tab's one
-        // dark card).
-        .invertedColorScheme()
     }
 
     private var divider: some View {
