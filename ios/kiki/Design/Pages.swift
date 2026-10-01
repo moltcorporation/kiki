@@ -32,7 +32,7 @@ struct TabPage<Content: View>: View {
                 }
             }
             .padding(.horizontal, Metrics.screenMargin)
-            .padding(.top, Metrics.topInset)
+            .padding(.top, title.topInset)
             .padding(.bottom, Metrics.bottomInset)
         }
         .background { PageBackground() }
@@ -60,6 +60,15 @@ struct TabTitle: View {
         case wordmark
         /// A plain title (Plan, Profile).
         case text(LocalizedStringKey)
+
+        /// Titles sit where Apple's large titles do; the wordmark sits
+        /// higher, like a logo.
+        var topInset: CGFloat {
+            switch self {
+            case .wordmark: Metrics.topInset
+            case .text: Metrics.largeTitleTopInset
+            }
+        }
     }
 
     let kind: Kind

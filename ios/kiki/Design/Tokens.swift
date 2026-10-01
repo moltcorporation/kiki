@@ -28,6 +28,10 @@ enum Metrics {
     static let screenMargin: CGFloat = 20
     /// The first element sits this far below the safe area.
     static let topInset: CGFloat = 8
+    /// Where a tab's large title starts below the safe area, matching
+    /// Apple's large titles (e.g. Settings): an empty 44pt bar row, then
+    /// the title. Home's wordmark sits at `topInset` instead.
+    static let largeTitleTopInset: CGFloat = 58
     /// Space after the last element of a scrolling page.
     static let bottomInset: CGFloat = 32
     /// Space between a page title and its first section.
