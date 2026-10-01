@@ -99,6 +99,9 @@ extension Color {
     static var track: Color { .ink.opacity(0.12) }
     /// Destructive actions (Delete account).
     static var destructive: Color { .red }
+    /// The only brand color: a bright runner's volt green, used solely as
+    /// the light drifting across the asphalt on Home's goal card.
+    static var glow: Color { Color(red: 0.45, green: 1, blue: 0.25) }
 }
 
 // MARK: - Haptics

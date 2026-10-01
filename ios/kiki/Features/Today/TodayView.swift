@@ -174,7 +174,7 @@ private struct GoalProgressCard: View {
             Label(title, systemImage: systemImage)
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(.ink)
-                .frame(maxWidth: .infinity, minHeight: Metrics.buttonHeight - Spacing.s)
+                .frame(maxWidth: .infinity, minHeight: Metrics.buttonHeight)
                 .contentShape(.rect)
         }
         .buttonStyle(.haptic)
