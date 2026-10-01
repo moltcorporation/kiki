@@ -44,10 +44,9 @@ struct PlanView: View {
     }
 }
 
-/// The top of the Plan tab: where the runner stands, at a glance. Runs and
-/// distance done against the whole plan, the current week, and every week
-/// as a bar (height = planned distance, black = done) so they see the
-/// build-up and where they are in it.
+/// The top of the Plan tab: three progress rings (runs, distance, weeks)
+/// that fill as the runner works through the plan. Nothing else, so where
+/// they stand is clear at a glance.
 struct PlanProgressCard: View {
     @Environment(TrainingStore.self) private var store
     let plan: Plan
@@ -60,71 +59,73 @@ struct PlanProgressCard: View {
         let doneM = store.runs
             .filter { Day($0.startedAt) >= plan.startDate && Day($0.startedAt) <= plan.raceDate }
             .reduce(0) { $0 + $1.distanceM }
-        let week = store.currentWeekNumber ?? 0
         let total = max(store.totalWeeks, 1)
+        let week = min(store.currentWeekNumber ?? 0, total)
 
         Card {
-            VStack(alignment: .leading, spacing: Spacing.xl) {
-                Text("Your progress")
-                    .font(.eyebrow)
-                    .foregroundStyle(.muted)
-
-                HStack(alignment: .firstTextBaseline, spacing: 0) {
-                    MetricView(value: "\(runsDone)", label: "of \(workouts.count) runs", style: .title2)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    MetricView(value: Format.distanceNumber(doneM, units), label: "of \(Format.distance(plannedM, units, decimals: 0))", style: .title2)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    MetricView(value: "\(min(week, total))", label: "of \(total) weeks", style: .title2)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-
-                VStack(spacing: Spacing.s) {
-                    WeekBars(weeks: store.weeks, currentWeek: week)
-                    HStack {
-                        Text("Start")
-                        Spacer()
-                        Text(Plan.goalDate(plan.raceDate))
-                    }
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(.muted)
-                }
+            HStack(alignment: .top, spacing: 0) {
+                ProgressRing(
+                    value: "\(runsDone)", target: "of \(workouts.count)", label: "Runs",
+                    progress: Double(runsDone) / Double(max(workouts.count, 1)), color: .ringRuns
+                )
+                ProgressRing(
+                    value: Format.distanceNumber(doneM, units, decimals: 0),
+                    target: "of \(Format.distanceNumber(plannedM, units, decimals: 0))",
+                    label: units == .mi ? "Miles" : "Km",
+                    progress: doneM / max(plannedM, 1), color: .ringDistance
+                )
+                ProgressRing(
+                    value: "\(week)", target: "of \(total)", label: "Weeks",
+                    progress: Double(week) / Double(total), color: .ringWeeks
+                )
             }
         }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Your progress: \(runsDone) of \(workouts.count) runs done, \(Format.distance(doneM, units)) of \(Format.distance(plannedM, units, decimals: 0)), week \(min(week, total)) of \(total)")
     }
 }
 
-/// One bar per week: height is the week's planned distance, the black fill
-/// is what's done, and the current week's bar is darker.
-private struct WeekBars: View {
-    let weeks: [(week: Int, workouts: [Workout])]
-    let currentWeek: Int
-    private let height: CGFloat = 56
+/// A ring that fills with progress, its number in the middle ("12" over
+/// "of 35") and what it counts below.
+private struct ProgressRing: View {
+    let value: String
+    let target: String
+    let label: LocalizedStringKey
+    let progress: Double
+    let color: Color
+
+    private let size: CGFloat = 84
+    private let lineWidth: CGFloat = 10
 
     var body: some View {
-        let totals = weeks.map { week in
-            let runs = week.workouts.filter { !$0.isRest }
-            let planned = Double(runs.compactMap(\.distanceM).reduce(0, +))
-            let done = Double(runs.filter { $0.status == .completed }.compactMap(\.distanceM).reduce(0, +))
-            return (week: week.week, planned: planned, done: done)
-        }
-        let peak = max(totals.map(\.planned).max() ?? 1, 1)
-
-        HStack(alignment: .bottom, spacing: Spacing.xs) {
-            ForEach(totals, id: \.week) { week in
-                let barHeight = max(Spacing.xs, height * week.planned / peak)
-                ZStack(alignment: .bottom) {
-                    Capsule()
-                        .fill(week.week == currentWeek ? Color.ink.opacity(0.3) : Color.track)
-                    Capsule()
-                        .fill(Color.ink)
-                        .frame(height: week.planned > 0 ? barHeight * min(week.done / week.planned, 1) : 0)
+        VStack(spacing: Spacing.s) {
+            ZStack {
+                Circle()
+                    .stroke(color.opacity(0.18), lineWidth: lineWidth)
+                Circle()
+                    .trim(from: 0, to: min(max(progress, 0), 1))
+                    .stroke(color, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                    .animation(.smooth, value: progress)
+                VStack(spacing: 0) {
+                    Text(value)
+                        .font(.metric(.title3))
+                        .minimumScaleFactor(0.6)
+                        .lineLimit(1)
+                    Text(target)
+                        .font(.caption2.weight(.medium))
+                        .foregroundStyle(.muted)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
                 }
-                .frame(maxWidth: .infinity)
-                .frame(height: barHeight)
+                .padding(.horizontal, lineWidth + Spacing.xs)
             }
+            .frame(width: size, height: size)
+
+            Text(label)
+                .font(.subheadline.weight(.semibold))
         }
-        .frame(height: height, alignment: .bottom)
+        .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(label)
+        .accessibilityValue("\(value) \(target)")
     }
 }
