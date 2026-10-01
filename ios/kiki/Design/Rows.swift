@@ -19,6 +19,9 @@ enum RowMetrics {
 /// Conditional rows and `ForEach` work; dividers follow what's shown.
 struct ListCard<Content: View>: View {
     var dividerInset: CGFloat = RowMetrics.textInset
+    /// Extra space above the first row and below the last, for rows that
+    /// sit close to their edges (e.g. the Plan tab's day rows).
+    var verticalPadding: CGFloat = 0
     @ViewBuilder let content: Content
 
     var body: some View {
@@ -32,6 +35,7 @@ struct ListCard<Content: View>: View {
                 }
             }
         }
+        .padding(.vertical, verticalPadding)
         .frame(maxWidth: .infinity, alignment: .leading)
         .elevatedCard()
     }

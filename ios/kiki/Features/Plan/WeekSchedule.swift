@@ -11,7 +11,7 @@ struct WeekSchedule: View {
     let units: Units
 
     var body: some View {
-        ListCard(dividerInset: RowMetrics.horizontalPadding) {
+        ListCard(dividerInset: RowMetrics.horizontalPadding, verticalPadding: Spacing.s) {
             ForEach(workouts.sorted { $0.date < $1.date }) { workout in
                 if workout.isRest {
                     DayRow(workout: workout, units: units)
