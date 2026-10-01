@@ -227,7 +227,7 @@ struct HeightInput: View {
 
     var body: some View {
         let bodyUnits = BodyUnits.resolve(stored, default: units)
-        VStack(spacing: 32) {
+        VStack(spacing: Spacing.xxxl) {
             BodyUnitsPicker(stored: $stored, current: bodyUnits, imperial: "ft / in", metric: "cm")
             if bodyUnits == .mi {
                 RulerPicker(
@@ -253,7 +253,7 @@ struct WeightInput: View {
 
     var body: some View {
         let bodyUnits = BodyUnits.resolve(stored, default: units)
-        VStack(spacing: 32) {
+        VStack(spacing: Spacing.xxxl) {
             BodyUnitsPicker(stored: $stored, current: bodyUnits, imperial: "lb", metric: "kg")
             if bodyUnits == .mi {
                 RulerPicker(

@@ -15,7 +15,7 @@ struct PlanView: View {
                         PlanHeader(plan: plan)
                     }
                     ForEach(store.weeks, id: \.week) { week, workouts in
-                        TabSection("Week \(week)", detail: summary(workouts, units: units)) {
+                        PageSection("Week \(week)", detail: summary(workouts, units: units)) {
                             WorkoutListCard(workouts: workouts, units: units)
                         }
                         .id(week)
@@ -47,10 +47,10 @@ struct PlanHeader: View {
 
     var body: some View {
         let days = Day.today.days(until: plan.raceDate)
-        Group {
-            VStack(alignment: .leading, spacing: 10) {
-                Text(plan.title ?? plan.displayName).font(.title3.weight(.bold))
-                HStack(spacing: 20) {
+        Card {
+            VStack(alignment: .leading, spacing: Spacing.m) {
+                Text(plan.title ?? plan.displayName).font(.cardTitle)
+                HStack(spacing: Spacing.xl) {
                     Label(Format.shortDate(plan.raceDate), systemImage: "flag.checkered")
                     if days > 0 { Label("\(days) days", systemImage: "hourglass") }
                     if let predicted = plan.predictedTimeS {
@@ -60,12 +60,9 @@ struct PlanHeader: View {
                 .font(.subheadline.weight(.medium))
                 .foregroundStyle(.muted)
                 if let summary = plan.summary {
-                    Text(summary).font(.subheadline).foregroundStyle(.muted).lineLimit(3)
+                    Text(summary).font(.detail).foregroundStyle(.muted).lineLimit(3)
                 }
             }
         }
-        .padding(20)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .elevatedCard(cornerRadius: 24)
     }
 }

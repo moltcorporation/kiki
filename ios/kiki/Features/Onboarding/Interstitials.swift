@@ -93,10 +93,10 @@ struct GoalCheckStep: View {
             subtitle: LocalizedStringKey(summary.checkMessage),
             continueTitle: isRebuild ? "Build my new plan" : "Continue"
         ) {
-            Card(padding: 24) {
+            Card(padding: Spacing.xxl) {
                 GoalJourney(weeks: summary.weeks, endLabel: summary.endLabel)
             }
-            VStack(alignment: .leading, spacing: 16) {
+            InfoList {
                 InfoRow(symbol: "target", text: LocalizedStringKey(summary.goalLine))
                 InfoRow(symbol: "calendar", text: "\(model.answers.runDays.count) \(model.answers.runDays.count == 1 ? "run" : "runs") a week on \(RunDaysSelector.summary(model.answers.runDays))")
                 InfoRow(symbol: "figure.run", text: "Starting from where you are today")
@@ -104,7 +104,6 @@ struct GoalCheckStep: View {
                     InfoRow(symbol: "arrow.triangle.2.circlepath", text: "This replaces your current plan. Runs you've logged are kept.")
                 }
             }
-            .padding(.top, 24)
         }
     }
 }
@@ -116,7 +115,7 @@ private struct GoalJourney: View {
     @State private var drawn: CGFloat = 0
 
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: Spacing.m) {
             GeometryReader { proxy in
                 let w = proxy.size.width, h = proxy.size.height
                 ZStack {
@@ -131,7 +130,7 @@ private struct GoalJourney: View {
                     .trim(from: 0, to: drawn)
                     .stroke(Color.ink, style: StrokeStyle(lineWidth: 4, lineCap: .round))
 
-                    Circle().stroke(Color.ink, lineWidth: 3).background(Circle().fill(Color.paper))
+                    Circle().stroke(Color.ink, lineWidth: 3).background(Circle().fill(Color.surface))
                         .frame(width: 16, height: 16)
                         .position(x: 8, y: h - 8)
                     Image(systemName: "flag.checkered")
@@ -170,28 +169,13 @@ struct FlexibilityStep: View {
             title: model.firstName.map { "\($0), life happens. Kiki adapts." } ?? "Life happens. Kiki adapts.",
             subtitle: "Tired, busy, sore or ahead of schedule? Tell Kiki anytime and your plan updates in seconds."
         ) {
-            VStack(spacing: 12) {
-                Text("I'm wiped out this week. Work has been brutal.")
-                    .padding(.horizontal, 18)
-                    .padding(.vertical, 14)
-                    .background(Color.wash, in: .rect(cornerRadius: 22))
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-                    .padding(.leading, 48)
-                HStack(alignment: .bottom, spacing: 10) {
-                    KikiLogo(size: 32)
-                    Text("No problem. I swapped Thursday's run for rest and eased up Saturday. We'll pick it back up next week.")
-                        .foregroundStyle(.paper)
-                        .padding(.horizontal, 18)
-                        .padding(.vertical, 14)
-                        .background(Color.ink, in: .rect(cornerRadius: 22))
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.trailing, 24)
+            VStack(spacing: Spacing.m) {
+                UserBubble(text: "I'm wiped out this week. Work has been brutal.")
+                CoachBubble(text: "No problem. I swapped Thursday's run for rest and eased up Saturday. We'll pick it back up next week.")
             }
             .accessibilityElement(children: .combine)
 
             FlowChips(items: ["Missed a run", "Feeling tired", "Something hurts", "Busy week", "Too easy"])
-                .padding(.top, 24)
         }
     }
 }
@@ -201,15 +185,16 @@ private struct FlowChips: View {
 
     var body: some View {
         let rows = stride(from: 0, to: items.count, by: 3).map { Array(items[$0..<min($0 + 3, items.count)]) }
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: Spacing.s) {
             ForEach(rows, id: \.self) { row in
-                HStack(spacing: 8) {
+                HStack(spacing: Spacing.s) {
                     ForEach(row, id: \.self) { item in
                         Text(item)
                             .font(.subheadline.weight(.medium))
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 8)
-                            .overlay(Capsule().stroke(Color.primary.opacity(0.15)))
+                            .padding(.horizontal, Spacing.m)
+                            .padding(.vertical, Spacing.s)
+                            .background(Color.surface, in: .capsule)
+                            .overlay(Capsule().strokeBorder(Color.hairline))
                     }
                 }
             }
@@ -235,72 +220,36 @@ struct SummaryStep: View {
             case .faster: .timeframe
             case .start, .fit: nil   // fixed length
             }
-            VStack(spacing: 0) {
+            ListCard {
                 SummaryRow(symbol: "target", label: "Goal", value: summary.goalLine) { model.edit(.goal) }
                 SummaryRow(symbol: "calendar", label: "Timeline", value: summary.timelineLine,
                            action: timelineStep.map { step in { model.edit(step) } })
                 SummaryRow(symbol: "figure.run", label: "Experience", value: (answers.experience ?? .new).title) { model.edit(.experience) }
-                SummaryRow(symbol: "clock", label: "Run days", value: RunDaysSelector.summary(answers.runDays)) { model.edit(.runDays) }
+                SummaryRow(symbol: "calendar.badge.checkmark", label: "Run days", value: RunDaysSelector.summary(answers.runDays)) { model.edit(.runDays) }
                 SummaryRow(symbol: (answers.coachingStyle ?? .balanced).icon, label: "Coaching",
-                           value: (answers.coachingStyle ?? .balanced).title, isLast: true) { model.edit(.coachingStyle) }
+                           value: (answers.coachingStyle ?? .balanced).title) { model.edit(.coachingStyle) }
             }
-            .background(Color.wash, in: .rect(cornerRadius: 24))
         }
     }
 
+    /// A settings-style row; rows without an action (fixed answers) show
+    /// no chevron.
     private struct SummaryRow: View {
         let symbol: String
-        let label: String
+        let label: LocalizedStringKey
         let value: String
-        var isLast = false
         var action: (() -> Void)?
 
         var body: some View {
-            VStack(spacing: 0) {
-                Button {
-                    action?()
-                } label: {
-                    HStack(spacing: 14) {
-                        Image(systemName: symbol)
-                            .font(.body.weight(.semibold))
-                            .frame(width: 28)
-                            .accessibilityHidden(true)
-                        Text(label).foregroundStyle(.muted)
-                        Spacer()
-                        Text(value).font(.body.weight(.semibold)).multilineTextAlignment(.trailing)
-                        if action != nil {
-                            Image(systemName: "chevron.right")
-                                .font(.footnote.weight(.semibold))
-                                .foregroundStyle(.tertiary)
-                                .accessibilityHidden(true)
-                        }
-                    }
-                    .padding(.horizontal, 18)
-                    .padding(.vertical, 16)
-                    .contentShape(.rect)
-                }
-                .buttonStyle(.haptic)
-                .foregroundStyle(.ink)
-                .disabled(action == nil)
-                .accessibilityHint(action == nil ? "" : "Double-tap to change")
-                if !isLast { Divider().padding(.leading, 60) }
+            Button {
+                action?()
+            } label: {
+                ListRow(icon: symbol, title: Text(label), value: value, emphasis: .setting, showsChevron: action != nil)
             }
-        }
-    }
-}
-
-struct InfoRow: View {
-    let symbol: String
-    let text: LocalizedStringKey
-
-    var body: some View {
-        HStack(spacing: 14) {
-            Image(systemName: symbol)
-                .font(.body.weight(.semibold))
-                .frame(width: 40, height: 40)
-                .background(Color.wash, in: .circle)
-                .accessibilityHidden(true)
-            Text(text).font(.body)
+            .buttonStyle(.haptic)
+            .disabled(action == nil)
+            .accessibilityElement(children: .combine)
+            .accessibilityHint(action == nil ? "" : "Double-tap to change")
         }
     }
 }

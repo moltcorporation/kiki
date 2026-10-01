@@ -18,61 +18,52 @@ struct PaywallView: View {
     private var monthly: Package? { offering?.monthly }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 28) {
-                VStack(alignment: .leading, spacing: 10) {
-                    Text(trialEligible ? "Start your free week" : "Unlock your plan")
-                        .font(.display(.largeTitle))
-                    Text(headline).foregroundStyle(.muted)
-                }
-
-                if trialEligible {
-                    TrialTimeline()
-                } else {
-                    VStack(alignment: .leading, spacing: 16) {
-                        InfoRow(symbol: "calendar", text: "Your full plan, day by day")
-                        InfoRow(symbol: "sparkles", text: "Unlimited coach adjustments")
-                        InfoRow(symbol: "location.fill", text: "GPS run tracking and progress")
-                    }
-                }
-
-                if let annual, let monthly {
-                    VStack(spacing: 12) {
-                        PackageOption(
-                            title: "Yearly",
-                            price: annual.storeProduct.localizedPriceString + "/year",
-                            detail: annual.storeProduct.localizedPricePerMonth.map { "\($0)/month" },
-                            badge: savings(annual: annual, monthly: monthly).map { "Save \($0)%" },
-                            isSelected: selected == annual
-                        ) { selected = annual }
-                        PackageOption(
-                            title: "Monthly",
-                            price: monthly.storeProduct.localizedPriceString + "/month",
-                            detail: nil,
-                            badge: nil,
-                            isSelected: selected == monthly
-                        ) { selected = monthly }
-                    }
-                } else {
-                    ProgressView().frame(maxWidth: .infinity, minHeight: 140)
+        FlowPage(
+            title: trialEligible ? "Start your free week" : "Unlock your plan",
+            subtitle: LocalizedStringKey(headline),
+            titleStyle: .display
+        ) {
+            if trialEligible {
+                TrialTimeline()
+            } else {
+                InfoList {
+                    InfoRow(symbol: "calendar", text: "Your full plan, day by day")
+                    InfoRow(symbol: "sparkles", text: "Unlimited coach adjustments")
+                    InfoRow(symbol: "location.fill", text: "GPS run tracking and progress")
                 }
             }
-            .padding(24)
-        }
-        .scrollBounceBehavior(.basedOnSize)
-        .safeAreaInset(edge: .bottom) {
-            VStack(spacing: 12) {
-                PrimaryButton(
-                    trialEligible ? "Start my 7-day free trial" : "Continue",
-                    isLoading: isPurchasing,
-                    isEnabled: selected != nil && !isRestoring,
-                    action: purchase
-                )
+
+            if let annual, let monthly {
+                VStack(spacing: Metrics.stackSpacing) {
+                    OptionCard(
+                        title: "Yearly",
+                        subtitle: annual.storeProduct.localizedPriceString + "/year",
+                        badge: savings(annual: annual, monthly: monthly).map { "Save \($0)%" },
+                        detail: annual.storeProduct.localizedPricePerMonth.map { "\($0)/month" },
+                        isSelected: selected == annual
+                    ) { selected = annual }
+                    OptionCard(
+                        title: "Monthly",
+                        subtitle: monthly.storeProduct.localizedPriceString + "/month",
+                        isSelected: selected == monthly
+                    ) { selected = monthly }
+                }
+            } else {
+                ProgressView().frame(maxWidth: .infinity, minHeight: 140)
+            }
+        } actions: {
+            PrimaryButton(
+                trialEligible ? "Start my 7-day free trial" : "Continue",
+                isLoading: isPurchasing,
+                isEnabled: selected != nil && !isRestoring,
+                action: purchase
+            )
+            VStack(spacing: Spacing.s) {
                 Text(priceTerms)
                     .font(.footnote)
                     .foregroundStyle(.muted)
                     .multilineTextAlignment(.center)
-                HStack(spacing: 18) {
+                HStack(spacing: Spacing.l) {
                     Link("Terms", destination: Config.termsURL)
                     Link("Privacy", destination: Config.privacyURL)
                     Button(isRestoring ? "Restoring…" : "Restore", action: restore)
@@ -80,11 +71,9 @@ struct PaywallView: View {
                 }
                 .font(.footnote.weight(.medium))
                 .foregroundStyle(.muted)
+                .frame(minHeight: Metrics.minTapTarget)
             }
-            .padding(.horizontal, 24)
-            .padding(.top, 12)
-            .padding(.bottom, 8)
-            .background(Color.paper)
+            .padding(.top, Spacing.s)
         }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -102,7 +91,7 @@ struct PaywallView: View {
                 .accessibilityLabel("Account options")
             }
         }
-        .background(Color.paper)
+        .background { PageBackground() }
         .task { await load() }
         .alert(message ?? "", isPresented: .constant(message != nil)) {
             Button("OK") { message = nil }
@@ -205,7 +194,7 @@ private struct TrialTimeline: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             ForEach(Array(items.enumerated()), id: \.offset) { index, item in
-                HStack(alignment: .top, spacing: 16) {
+                HStack(alignment: .top, spacing: Spacing.l) {
                     VStack(spacing: 0) {
                         Image(systemName: item.symbol)
                             .font(.subheadline.weight(.bold))
@@ -213,64 +202,17 @@ private struct TrialTimeline: View {
                             .frame(width: 40, height: 40)
                             .background(Color.ink, in: .circle)
                         if index < items.count - 1 {
-                            Rectangle().fill(Color.ink.opacity(0.15)).frame(width: 3, height: 28)
+                            Rectangle().fill(Color.track).frame(width: 3, height: 28)
                         }
                     }
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(item.title).font(.headline)
-                        Text(item.detail).font(.subheadline).foregroundStyle(.muted)
+                    VStack(alignment: .leading, spacing: Spacing.xxs) {
+                        Text(item.title).font(.rowTitle)
+                        Text(item.detail).font(.detail).foregroundStyle(.muted)
                     }
-                    .padding(.top, 2)
+                    .padding(.top, Spacing.xxs)
                 }
             }
         }
         .accessibilityElement(children: .combine)
-    }
-}
-
-private struct PackageOption: View {
-    let title: String
-    let price: String
-    let detail: String?
-    let badge: String?
-    let isSelected: Bool
-    let action: () -> Void
-
-    var body: some View {
-        Button {
-            Haptics.select()
-            action()
-        } label: {
-            HStack(spacing: 14) {
-                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                    .font(.title2)
-                    .foregroundStyle(isSelected ? Color.ink : Color.muted.opacity(0.5))
-                    .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: 2) {
-                    HStack(spacing: 8) {
-                        Text(title).font(.headline)
-                        if let badge {
-                            Text(badge)
-                                .font(.caption.weight(.bold))
-                                .foregroundStyle(.paper)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 3)
-                                .background(Color.ink, in: .capsule)
-                        }
-                    }
-                    Text(price).font(.subheadline).foregroundStyle(.muted)
-                }
-                Spacer()
-                if let detail {
-                    Text(detail).font(.subheadline.weight(.semibold))
-                }
-            }
-            .foregroundStyle(.ink)
-            .padding(18)
-            .background(Color.wash, in: .rect(cornerRadius: 20))
-            .overlay(RoundedRectangle(cornerRadius: 20).stroke(Color.ink, lineWidth: isSelected ? 2 : 0))
-        }
-        .buttonStyle(.plain)
-        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }

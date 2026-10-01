@@ -33,28 +33,20 @@ struct LogRunView: View {
         NavigationStack {
             Form {
                 Section {
-                    VStack(alignment: .leading, spacing: 14) {
-                        Text("How did it feel?").font(.headline)
-                        HStack(spacing: 8) {
+                    VStack(alignment: .leading, spacing: Spacing.m) {
+                        Text("How did it feel?").font(.rowTitle)
+                        HStack(spacing: Spacing.s) {
                             ForEach(Feeling.allCases, id: \.self) { option in
-                                Button {
-                                    Haptics.select()
-                                    feeling = option
-                                } label: {
-                                    VStack(spacing: 6) {
+                                SelectableTile(isSelected: feeling == option, action: { feeling = option }) {
+                                    VStack(spacing: Spacing.xs) {
                                         Text(option.emoji).font(.title)
                                         Text(option.label).font(.caption.weight(.semibold))
                                     }
-                                    .frame(maxWidth: .infinity, minHeight: 72)
-                                    .foregroundStyle(feeling == option ? Color.paper : Color.ink)
-                                    .background(feeling == option ? Color.ink : Color.wash, in: .rect(cornerRadius: 16))
                                 }
-                                .buttonStyle(.plain)
-                                .accessibilityAddTraits(feeling == option ? .isSelected : [])
                             }
                         }
                     }
-                    .listRowInsets(EdgeInsets(top: 16, leading: 16, bottom: 16, trailing: 16))
+                    .listRowInsets(EdgeInsets(top: Spacing.l, leading: Spacing.l, bottom: Spacing.l, trailing: Spacing.l))
                 }
 
                 Section {
@@ -95,13 +87,14 @@ struct LogRunView: View {
                 }
 
                 Section {
-                    VStack(alignment: .leading, spacing: 8) {
+                    VStack(alignment: .leading, spacing: Spacing.s) {
                         HStack {
                             Text("Effort")
                             Spacer()
                             Text("\(Int(effort))/10 · \(effortLabel)").foregroundStyle(.muted)
                         }
                         Slider(value: $effort, in: 1...10, step: 1)
+                            .tint(.ink)
                             .onChange(of: effort) { Haptics.select() }
                     }
                     TextField("Notes (optional)", text: $notes, axis: .vertical)
@@ -119,6 +112,8 @@ struct LogRunView: View {
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background { PageBackground() }
             .navigationTitle(workout?.title ?? "Log a run")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

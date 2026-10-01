@@ -43,17 +43,11 @@ struct ProfileFieldEditor: View {
     @FocusState private var nameFocused: Bool
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                if let draft = Binding($draft) {
-                    editor(draft)
-                }
+        DetailPage(LocalizedStringKey(field.title)) {
+            if let draft = Binding($draft) {
+                editor(draft)
             }
-            .padding(20)
         }
-        .scrollDismissesKeyboard(.interactively)
-        .navigationTitle(field.title)
-        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                 Button("Save", systemImage: "checkmark", action: save)
@@ -100,33 +94,31 @@ struct ProfileFieldEditor: View {
                 get: { profile.wrappedValue.firstName ?? "" },
                 set: { profile.wrappedValue.firstName = $0 }
             ))
-            .font(.system(size: 34, weight: .bold))
+            .font(.screenTitle)
             .textContentType(.givenName)
             .textInputAutocapitalization(.words)
             .autocorrectionDisabled()
             .focused($nameFocused)
             .onSubmit(save)
-            .padding(.vertical, 18)
-            .padding(.horizontal, 20)
-            .background(Color.wash, in: .rect(cornerRadius: 20))
+            .inputField()
         case .age:
             AgeInput(age: Binding(
                 get: { profile.wrappedValue.age ?? Defaults.age },
                 set: { profile.wrappedValue.birthYear = Profile.birthYear(forAge: $0) }
             ))
-            .padding(.top, 24)
+            .padding(.top, Spacing.xxl)
         case .height:
             HeightInput(heightCm: Binding(
                 get: { profile.wrappedValue.heightCm ?? Defaults.heightCm },
                 set: { profile.wrappedValue.heightCm = $0 }
             ), units: units)
-            .padding(.top, 24)
+            .padding(.top, Spacing.xxl)
         case .weight:
             WeightInput(weightKg: Binding(
                 get: { profile.wrappedValue.weightKg ?? Defaults.weightKg },
                 set: { profile.wrappedValue.weightKg = $0 }
             ), units: units)
-            .padding(.top, 24)
+            .padding(.top, Spacing.xxl)
         }
     }
 

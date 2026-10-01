@@ -1,8 +1,9 @@
 import SwiftUI
 
-/// Shared layout for onboarding questions: a large title, the question
-/// content, and an optional pinned Continue button. The back button and
-/// progress bar live in `OnboardingFlow` so they stay fixed between screens.
+/// Shared layout for onboarding questions: a `FlowPage` with the Continue
+/// button (and an optional text button like "Skip") pinned at the bottom.
+/// The back button and progress bar live in `OnboardingFlow` so they stay
+/// fixed between screens.
 struct OnboardingScaffold<Content: View>: View {
     @Environment(OnboardingModel.self) private var model
 
@@ -18,48 +19,18 @@ struct OnboardingScaffold<Content: View>: View {
     @ViewBuilder let content: Content
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 12) {
-                    Text(title)
-                        .font(.screenTitle)
-                        .fixedSize(horizontal: false, vertical: true)
-                    if let subtitle {
-                        Text(subtitle)
-                            .font(.body)
-                            .foregroundStyle(.muted)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    content
-                        .padding(.top, 28)
-                }
-                .padding(.horizontal, Metrics.screenMargin)
-                .padding(.top, 16)
-                .padding(.bottom, 24)
-            }
-            .scrollDismissesKeyboard(.interactively)
-            .scrollBounceBehavior(.basedOnSize)
-        }
-        .safeAreaInset(edge: .bottom) {
+        FlowPage(title: title, subtitle: subtitle) {
+            content
+        } actions: {
             if showsContinue {
-                VStack(spacing: 4) {
-                    PrimaryButton(continueTitle, isEnabled: canContinue) {
-                        (onContinue ?? model.advance)()
-                    }
-                    if let secondaryTitle {
-                        Button(secondaryTitle) { (onSecondary ?? model.advance)() }
-                            .font(.body.weight(.semibold))
-                            .foregroundStyle(.muted)
-                            .frame(maxWidth: .infinity, minHeight: 44)
-                            .buttonStyle(.haptic)
-                    }
+                PrimaryButton(continueTitle, isEnabled: canContinue) {
+                    (onContinue ?? model.advance)()
                 }
-                .padding(.horizontal, Metrics.screenMargin)
-                .padding(.bottom, 8)
-                .background(Color.paper)
+                if let secondaryTitle {
+                    TextButton(secondaryTitle) { (onSecondary ?? model.advance)() }
+                }
             }
         }
-        .background(Color.paper)
     }
 }
 
@@ -72,16 +43,16 @@ struct OnboardingHeader: View {
     let onBack: () -> Void
 
     var body: some View {
-        HStack(spacing: 14) {
+        HStack(spacing: Spacing.m) {
             BackButton(action: onBack)
                 // Keeps its space when hidden so the bar never shifts.
                 .opacity(canGoBack ? 1 : 0)
                 .disabled(!canGoBack)
 
-            HStack(spacing: 5) {
+            HStack(spacing: Spacing.xs) {
                 ForEach(0..<max(total, 1), id: \.self) { index in
                     Capsule()
-                        .fill(index < step ? Color.ink : Color.primary.opacity(0.1))
+                        .fill(index < step ? Color.ink : Color.track)
                         .frame(height: 4)
                 }
             }
@@ -91,30 +62,9 @@ struct OnboardingHeader: View {
             .accessibilityValue("Step \(step) of \(total)")
         }
         // The 44pt tap area overhangs the 36pt circle by 4pt; this keeps the
-        // circle itself on the screen margin, 8pt below the safe area.
+        // circle itself on the screen margin.
         .padding(.leading, Metrics.screenMargin - 4)
         .padding(.trailing, Metrics.screenMargin)
-        .padding(.top, 4)
-    }
-}
-
-/// The round back button used at the top of full-screen flows. Kept quiet
-/// (small, light, regular-weight arrow) so the title leads; the tap area is
-/// still 44pt.
-struct BackButton: View {
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            Image(systemName: "arrow.left")
-                .font(.callout.weight(.regular))
-                .foregroundStyle(.muted)
-                .frame(width: 36, height: 36)
-                .background(Color.wash.opacity(0.8), in: .circle)
-                .frame(width: 44, height: 44)
-                .contentShape(.circle)
-        }
-        .buttonStyle(.haptic)
-        .accessibilityLabel("Back")
+        .padding(.top, Spacing.xs)
     }
 }

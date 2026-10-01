@@ -62,13 +62,13 @@ struct WelcomeView: View {
                 .font(.system(size: 28, weight: .black).italic())
                 .shadow(color: .black.opacity(0.25), radius: 10)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                .padding(.top, 8)
+                .padding(.top, Metrics.topInset)
                 .opacity(appeared ? 1 : 0)
                 .accessibilityAddTraits(.isHeader)
 
             // Centered at the bottom: headline, then the actions. 20pt side
             // margins, 8pt above the home indicator.
-            VStack(spacing: 32) {
+            VStack(spacing: Spacing.xxxl) {
                 Text("Your AI\nrunning coach.")
                     .font(.system(size: headlineSize, weight: .black).italic())
                     .multilineTextAlignment(.center)
@@ -76,20 +76,20 @@ struct WelcomeView: View {
                     .shadow(color: .black.opacity(0.25), radius: 12, y: 4)
                     .accessibilityAddTraits(.isHeader)
 
-                VStack(spacing: 4) {
+                VStack(spacing: Spacing.xs) {
                     PrimaryButton("Get started", action: onGetStarted)
                     Button {
                         showSignIn = true
                     } label: {
                         Text("Already have an account? **Sign in**")
                             .foregroundStyle(.ink)
-                            .frame(maxWidth: .infinity, minHeight: 44)
+                            .frame(maxWidth: .infinity, minHeight: Metrics.minTapTarget)
                     }
                     .buttonStyle(.haptic)
                 }
             }
             .padding(.horizontal, Metrics.screenMargin)
-            .padding(.bottom, 8)
+            .padding(.bottom, Spacing.s)
             .opacity(appeared ? 1 : 0)
             .offset(y: appeared ? 0 : 16)
         }

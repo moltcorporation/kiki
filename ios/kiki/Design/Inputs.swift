@@ -1,5 +1,10 @@
 import SwiftUI
 
+// Inputs: controls for answering questions, shared by onboarding and the
+// Profile tab. Choices are `OptionCard`s (a list, with a radio or checkbox)
+// or `SelectableTile`s (a grid, filled when selected). Text fields use
+// `.inputField()`. All sit on `controlSurface`.
+
 /// A single-choice list of radio cards. Selecting doesn't advance; the
 /// surrounding screen decides what happens next.
 struct ChoiceList<Value: Hashable>: View {
@@ -16,7 +21,7 @@ struct ChoiceList<Value: Hashable>: View {
     let onSelect: (Value) -> Void
 
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: Metrics.stackSpacing) {
             ForEach(options, id: \.value) { option in
                 OptionCard(
                     title: option.title,
@@ -47,7 +52,7 @@ struct RulerPicker: View {
     var body: some View {
         VStack(spacing: 28) {
             Text(label(value))
-                .font(.system(size: 64, weight: .heavy).italic().monospacedDigit())
+                .heroMetricFont()
                 .contentTransition(.numericText(value: Double(value)))
                 .animation(.snappy, value: value)
                 .frame(maxWidth: .infinity)
@@ -60,7 +65,7 @@ struct RulerPicker: View {
                                 let major = tick % majorEvery == 0
                                 VStack(spacing: 0) {
                                     Rectangle()
-                                        .fill(major ? Color.ink : Color.muted.opacity(0.35))
+                                        .fill(major ? Color.ink : Color.track)
                                         .frame(width: major ? 2.5 : 1.5, height: major ? 40 : 22)
                                     Spacer(minLength: 0)
                                 }
@@ -125,8 +130,8 @@ struct RunDaysSelector: View {
     var experience: Experience?
 
     var body: some View {
-        VStack(spacing: 16) {
-            VStack(spacing: 10) {
+        VStack(spacing: Spacing.l) {
+            VStack(spacing: Metrics.stackSpacing) {
                 ForEach(1...7, id: \.self) { day in
                     let selected = days.contains(day)
                     OptionCard(title: Self.fullName(day), indicator: .checkbox, isSelected: selected) {
@@ -226,17 +231,183 @@ struct InputHint: View {
         .font(.subheadline.weight(emphasized ? .semibold : .medium))
         .foregroundStyle(emphasized ? Color.ink : Color.muted)
         .multilineTextAlignment(.center)
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(Color.wash, in: .rect(cornerRadius: 16))
-        .overlay {
-            if emphasized { RoundedRectangle(cornerRadius: 16).stroke(Color.ink, lineWidth: 1.5) }
-        }
+        .padding(.horizontal, Spacing.l)
+        .padding(.vertical, Spacing.m)
         .frame(maxWidth: .infinity)
+        .controlSurface(isSelected: emphasized)
         .animation(.snappy, value: message)
         .onChange(of: emphasized) { _, isEmphasized in
             if isEmphasized { Haptics.warning() }
         }
         .accessibilityElement(children: .combine)
+    }
+}
+
+// MARK: - Choices
+
+/// A selectable card for single or multiple choice: optional icon or
+/// ability ring, a title with optional subtitle (and badge), an optional
+/// trailing detail, and a radio or checkbox. Selected cards get an ink
+/// outline.
+struct OptionCard: View {
+    enum Indicator { case radio, checkbox }
+
+    let title: String
+    var subtitle: String?
+    var icon: String?
+    /// 1–4: draws an ability ring that fills with the level.
+    var level: Int?
+    /// A small pill beside the title ("Save 50%").
+    var badge: String?
+    /// Bold text before the indicator ("$4.99/month").
+    var detail: String?
+    var indicator: Indicator = .radio
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button {
+            Haptics.select()
+            action()
+        } label: {
+            HStack(spacing: Spacing.l) {
+                if let level {
+                    LevelRing(level: level)
+                } else if let icon {
+                    Image(systemName: icon)
+                        .font(.title3)
+                        .frame(width: 28)
+                        .accessibilityHidden(true)
+                }
+                VStack(alignment: .leading, spacing: Spacing.xs) {
+                    HStack(spacing: Spacing.s) {
+                        Text(title).font(.rowTitle)
+                        if let badge { Pill(badge) }
+                    }
+                    if let subtitle {
+                        Text(subtitle)
+                            .font(.detail)
+                            .foregroundStyle(.muted)
+                    }
+                }
+                Spacer(minLength: Spacing.s)
+                if let detail {
+                    Text(detail).font(.subheadline.weight(.semibold))
+                }
+                SelectionIndicator(style: indicator, isSelected: isSelected)
+            }
+            .multilineTextAlignment(.leading)
+            .foregroundStyle(.ink)
+            .padding(.horizontal, Spacing.xl)
+            .padding(.vertical, subtitle == nil ? Spacing.xl : Spacing.l)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .controlSurface(isSelected: isSelected)
+            .contentShape(.rect(cornerRadius: Radius.control))
+        }
+        .buttonStyle(.plain)
+        .animation(.snappy(duration: 0.2), value: isSelected)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
+    }
+}
+
+private struct SelectionIndicator: View {
+    let style: OptionCard.Indicator
+    let isSelected: Bool
+
+    var body: some View {
+        Group {
+            switch style {
+            case .radio:
+                ZStack {
+                    Circle().strokeBorder(isSelected ? Color.ink : Color.track, lineWidth: isSelected ? 2 : 1.5)
+                    if isSelected { Circle().fill(Color.ink).padding(6) }
+                }
+            case .checkbox:
+                RoundedRectangle(cornerRadius: 7)
+                    .fill(isSelected ? Color.ink : .clear)
+                    .strokeBorder(isSelected ? Color.ink : Color.track, lineWidth: 1.5)
+                    .overlay {
+                        if isSelected {
+                            Image(systemName: "checkmark").font(.caption.weight(.bold)).foregroundStyle(.paper)
+                        }
+                    }
+            }
+        }
+        .frame(width: 26, height: 26)
+        .accessibilityHidden(true)
+    }
+}
+
+/// Ring that fills a quarter per level (1–4).
+private struct LevelRing: View {
+    let level: Int
+
+    var body: some View {
+        ZStack {
+            Circle().stroke(Color.track, lineWidth: 4)
+            Circle()
+                .trim(from: 0, to: CGFloat(min(max(level, 1), 4)) / 4)
+                .stroke(Color.ink, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+        }
+        .frame(width: 38, height: 38)
+        .accessibilityHidden(true)
+    }
+}
+
+/// A square-ish choice in a grid (how a run felt, why to adjust): content
+/// on a control surface, filled ink when selected.
+struct SelectableTile<Label: View>: View {
+    let isSelected: Bool
+    var minHeight: CGFloat = 72
+    var alignment: Alignment = .center
+    let action: () -> Void
+    @ViewBuilder let label: Label
+
+    var body: some View {
+        Button {
+            Haptics.select()
+            action()
+        } label: {
+            label
+                .padding(Spacing.m)
+                .frame(maxWidth: .infinity, minHeight: minHeight, alignment: alignment)
+                .foregroundStyle(isSelected ? Color.paper : Color.ink)
+                .background(isSelected ? Color.ink : Color.clear, in: .rect(cornerRadius: Radius.control))
+                .controlSurface()
+                .contentShape(.rect(cornerRadius: Radius.control))
+        }
+        .buttonStyle(.plain)
+        .animation(.snappy(duration: 0.2), value: isSelected)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
+    }
+}
+
+// MARK: - Text fields
+
+extension View {
+    /// The standard text field box. Set the font on the field (`.screenTitle`
+    /// for a single big answer like a name, `.title3.weight(.semibold)` for a
+    /// short label, `.body` for longer text).
+    func inputField() -> some View {
+        padding(.horizontal, Spacing.xl)
+            .padding(.vertical, Spacing.l)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .controlSurface()
+    }
+}
+
+/// A labeled text field ("Race name (optional)").
+struct LabeledField<Field: View>: View {
+    let label: LocalizedStringKey
+    @ViewBuilder let field: Field
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Spacing.s) {
+            Text(label)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.muted)
+            field.inputField()
+        }
     }
 }

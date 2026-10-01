@@ -9,26 +9,23 @@ struct AccountStep: View {
             subtitle: "Create an account to keep your plan and progress.",
             showsContinue: false
         ) {
-            VStack(spacing: 24) {
-                VStack(alignment: .leading, spacing: 16) {
+            VStack(spacing: Spacing.xxxl + Spacing.s) {
+                InfoList {
                     InfoRow(symbol: "sparkles", text: "A personalized plan, built just for you")
                     InfoRow(symbol: "arrow.triangle.2.circlepath", text: "Adjust it anytime, like a real coach")
                     InfoRow(symbol: "lock.fill", text: "Private and secure. We never sell your data.")
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.bottom, 16)
 
                 if model.isSignedIn {
                     // RootView continues once the account loads (plan → app, else build one).
-                    HStack(spacing: 10) {
+                    HStack(spacing: Spacing.m) {
                         ProgressView()
                         Text("Loading your account…").foregroundStyle(.muted)
                     }
-                    .frame(maxWidth: .infinity, minHeight: 56)
+                    .frame(maxWidth: .infinity, minHeight: Metrics.buttonHeight)
                 } else {
                     SignInOptions {}
                 }
-
             }
         }
     }
@@ -53,10 +50,10 @@ struct GeneratingStep: View {
     ]
 
     var body: some View {
-        VStack(spacing: 32) {
+        VStack(spacing: Spacing.xxxl) {
             Spacer()
             ZStack {
-                Circle().stroke(Color.wash, lineWidth: 14)
+                Circle().stroke(Color.track, lineWidth: 14)
                 Circle()
                     .trim(from: 0, to: displayed / 100)
                     .stroke(Color.ink, style: StrokeStyle(lineWidth: 14, lineCap: .round))
@@ -70,7 +67,7 @@ struct GeneratingStep: View {
             .accessibilityLabel("Building your plan")
             .accessibilityValue("\(Int(displayed)) percent")
 
-            VStack(spacing: 8) {
+            VStack(spacing: Spacing.s) {
                 Text(error == nil ? (model.firstName.map { "Building your plan, \($0)" } ?? "Building your plan") : "Something went wrong")
                     .font(.screenTitle)
                     .multilineTextAlignment(.center)
@@ -78,15 +75,15 @@ struct GeneratingStep: View {
                     .foregroundStyle(.muted)
                     .multilineTextAlignment(.center)
             }
-            .padding(.horizontal, 32)
+            .padding(.horizontal, Spacing.xxxl)
 
             if error == nil {
-                VStack(alignment: .leading, spacing: 14) {
+                VStack(alignment: .leading, spacing: Spacing.m) {
                     ForEach(milestones, id: \.0) { threshold, label in
                         let done = displayed >= Double(threshold + 12)
-                        HStack(spacing: 12) {
+                        HStack(spacing: Spacing.m) {
                             Image(systemName: done ? "checkmark.circle.fill" : "circle")
-                                .foregroundStyle(done ? Color.ink : Color.muted.opacity(0.4))
+                                .foregroundStyle(done ? Color.ink : Color.track)
                                 .contentTransition(.symbolEffect(.replace))
                             Text(label)
                                 .foregroundStyle(displayed >= Double(threshold) ? Color.ink : Color.muted)
@@ -104,8 +101,7 @@ struct GeneratingStep: View {
                 .padding(.horizontal, Metrics.screenMargin)
             }
         }
-        .padding(.bottom, 8)
-        .background(Color.paper)
+        .padding(.bottom, Spacing.s)
         .task(id: attempt) { await build() }
         .task { await animateProgress() }
     }
@@ -157,47 +153,33 @@ struct PlanPreviewStep: View {
         let runs = store.workouts.filter { !$0.isRest }
         let finale = store.workouts.last { $0.type == .race }
 
-        ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
-                VStack(alignment: .leading, spacing: 10) {
-                    Text(model.firstName.map { "\($0), your plan is ready" } ?? "Your plan is ready")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.muted)
-                    Text(store.plan?.title ?? "Your plan")
-                        .font(.display(.largeTitle))
-                        .fixedSize(horizontal: false, vertical: true)
-                    if let summary = store.plan?.summary {
-                        Text(summary).foregroundStyle(.muted)
-                    }
+        FlowPage(
+            eyebrow: LocalizedStringKey(model.firstName.map { "\($0), your plan is ready" } ?? "Your plan is ready"),
+            title: LocalizedStringKey(store.plan?.title ?? "Your plan"),
+            subtitle: store.plan?.summary.map { LocalizedStringKey($0) },
+            titleStyle: .display
+        ) {
+            HStack(spacing: Metrics.stackSpacing) {
+                Stat(value: "\(store.totalWeeks)", label: "weeks")
+                Stat(value: "\(Int((Double(runs.count) / Double(max(store.totalWeeks, 1))).rounded()))", label: "runs a week")
+                if let finale {
+                    Stat(value: Format.shortDate(finale.date), label: finale.title)
                 }
+            }
 
-                HStack(spacing: 12) {
-                    Stat(value: "\(store.totalWeeks)", label: "weeks")
-                    Stat(value: "\(Int((Double(runs.count) / Double(max(store.totalWeeks, 1))).rounded()))", label: "runs a week")
-                    if let finale {
-                        Stat(value: Format.shortDate(finale.date), label: finale.title)
-                    }
-                }
-
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Your first week").font(.headline)
+            PageSection("Your first week") {
+                ListCard(dividerInset: WorkoutRow.textInset) {
                     ForEach(Array(runs.prefix(4))) { workout in
-                        WorkoutRow(workout: workout, units: units)
+                        WorkoutRow(workout: workout, units: units, isNavigable: false)
                     }
                 }
             }
-            .padding(24)
-        }
-        .safeAreaInset(edge: .bottom) {
+        } actions: {
             PrimaryButton("Start my plan") {
                 Analytics.track(model.mode == .full ? "onboarding_completed" : "goal_changed")
                 model.finish()
             }
-            .padding(.horizontal, Metrics.screenMargin)
-            .padding(.bottom, 8)
-            .background(Color.paper)
         }
-        .background(Color.paper)
         .onAppear { Analytics.screen("Plan Preview") }
     }
 
@@ -206,13 +188,13 @@ struct PlanPreviewStep: View {
         let label: String
 
         var body: some View {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(value).font(.metric(.title2)).minimumScaleFactor(0.6).lineLimit(1)
-                Text(label).font(.footnote).foregroundStyle(.muted).lineLimit(1)
+            Card(padding: Spacing.l) {
+                VStack(alignment: .leading, spacing: Spacing.xxs) {
+                    Text(value).font(.metric(.title2)).minimumScaleFactor(0.6).lineLimit(1)
+                    Text(label).font(.footnote).foregroundStyle(.muted).lineLimit(1)
+                }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(16)
-            .background(Color.wash, in: .rect(cornerRadius: 18))
+            .accessibilityElement(children: .combine)
         }
     }
 }

@@ -10,33 +10,20 @@ struct GoalDetailView: View {
     @State private var editingName = false
 
     var body: some View {
-        ScrollView {
+        DetailPage("Your goal") {
             if let plan = store.plan {
-                VStack(alignment: .leading, spacing: 28) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(plan.displayName)
-                            .font(.screenTitle)
-                        Text(plan.goalDetails(units: store.units).joined(separator: " · "))
-                            .foregroundStyle(.muted)
-                    }
-
-                    PreferenceGroup {
+                PageHeader(
+                    title: LocalizedStringKey(plan.displayName),
+                    subtitle: LocalizedStringKey(plan.goalDetails(units: store.units).joined(separator: " · "))
+                )
+                VStack(alignment: .leading, spacing: Metrics.sectionHeaderSpacing) {
+                    ListCard {
                         rows(plan)
                     }
-
-                    Text("Changing your goal, distance, date or goal time builds a new plan from today. You'll see it before anything changes, and runs you've logged are kept.")
-                        .font(.footnote)
-                        .foregroundStyle(.muted)
-
+                    Footnote("Changing your goal, distance, date or goal time builds a new plan from today. You'll see it before anything changes, and runs you've logged are kept.")
                 }
-                .padding(.horizontal, 24)
-                .padding(.top, 8)
-                .padding(.bottom, 32)
             }
         }
-        .background(Color.paper)
-        .navigationTitle("Your goal")
-        .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $editingName) { RaceNameSheet() }
         .onAppear { Analytics.screen("Goal Details") }
     }
@@ -44,35 +31,32 @@ struct GoalDetailView: View {
     @ViewBuilder
     private func rows(_ plan: Plan) -> some View {
         let units = store.units
-        PreferenceRow(icon: plan.goalKind.icon, label: "Goal", value: plan.goalKind.title,
-                      showsDivider: plan.goalKind == .race || plan.goalKind == .faster) {
+        SettingsRow(icon: plan.goalKind.icon, label: "Goal", value: plan.goalKind.title) {
             onEdit(.goal)
         }
         switch plan.goalKind {
         case .race:
-            PreferenceRow(icon: "point.topleft.down.to.point.bottomright.curvepath", label: "Distance",
+            SettingsRow(icon: "point.topleft.down.to.point.bottomright.curvepath", label: "Distance",
                           value: plan.distanceLabel(units: units)) { onEdit(.distance) }
-            PreferenceRow(icon: "calendar", label: "Race date",
+            SettingsRow(icon: "calendar", label: "Race date",
                           value: plan.raceDate.date.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day().year())) {
                 onEdit(.raceDate)
             }
-            PreferenceRow(icon: "character.cursor.ibeam", label: "Race name", value: plan.raceName ?? "Add") {
+            SettingsRow(icon: "character.cursor.ibeam", label: "Race name", value: plan.raceName ?? "Add") {
                 editingName = true
             }
-            PreferenceRow(icon: "flag.checkered", label: "Race-day goal",
-                          value: plan.goalType == .time ? "Hit a time" : "Just finish",
-                          showsDivider: plan.goalType == .time) { onEdit(.raceGoal) }
+            SettingsRow(icon: "flag.checkered", label: "Race-day goal",
+                          value: plan.goalType == .time ? "Hit a time" : "Just finish") { onEdit(.raceGoal) }
             if plan.goalType == .time {
-                PreferenceRow(icon: "stopwatch", label: "Goal time", value: plan.goalTimeS.map { Format.duration($0) } ?? "Add",
-                              showsDivider: false) { onEdit(.goalTime) }
+                SettingsRow(icon: "stopwatch", label: "Goal time", value: plan.goalTimeS.map { Format.duration($0) } ?? "Add") { onEdit(.goalTime) }
             }
         case .faster:
-            PreferenceRow(icon: "point.topleft.down.to.point.bottomright.curvepath", label: "Distance",
+            SettingsRow(icon: "point.topleft.down.to.point.bottomright.curvepath", label: "Distance",
                           value: plan.distanceLabel(units: units)) { onEdit(.distance) }
-            PreferenceRow(icon: "stopwatch", label: "Goal time", value: plan.goalTimeS.map { Format.duration($0) } ?? "Add") {
+            SettingsRow(icon: "stopwatch", label: "Goal time", value: plan.goalTimeS.map { Format.duration($0) } ?? "Add") {
                 onEdit(.goalTime)
             }
-            PreferenceRow(icon: "calendar", label: "Plan length", value: "\(plan.weekCount) weeks", showsDivider: false) {
+            SettingsRow(icon: "calendar", label: "Plan length", value: "\(plan.weekCount) weeks") {
                 onEdit(.timeframe)
             }
         case .start, .fit:
@@ -92,31 +76,17 @@ private struct RaceNameSheet: View {
     @FocusState private var focused: Bool
 
     var body: some View {
-        VStack(spacing: 0) {
-            Text("Race name")
-                .font(.sheetTitle)
-                .frame(maxWidth: .infinity)
-                .padding(.top, 28)
-                .padding(.bottom, 18)
-            Divider()
-            VStack(spacing: 16) {
-                TextField("e.g. Chicago Marathon", text: $name)
-                    .font(.title3.weight(.semibold))
-                    .textInputAutocapitalization(.words)
-                    .autocorrectionDisabled()
-                    .submitLabel(.done)
-                    .focused($focused)
-                    .onSubmit(save)
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 16)
-                    .background(Color.wash, in: .rect(cornerRadius: 20))
-                PrimaryButton("Save", isLoading: isSaving, action: save)
-            }
-            .padding(24)
+        CompactSheet("Race name") {
+            TextField("e.g. Chicago Marathon", text: $name)
+                .font(.title3.weight(.semibold))
+                .textInputAutocapitalization(.words)
+                .autocorrectionDisabled()
+                .submitLabel(.done)
+                .focused($focused)
+                .onSubmit(save)
+                .inputField()
+            PrimaryButton("Save", isLoading: isSaving, action: save)
         }
-        .presentationDetents([.height(250)])
-        .presentationCornerRadius(32)
-        .presentationDragIndicator(.visible)
         .alert("Couldn't save", isPresented: .constant(error != nil)) {
             Button("OK") { error = nil }
         } message: {

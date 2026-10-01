@@ -59,51 +59,32 @@ struct AdjustPlanView: View {
     }
 
     private var input: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                Text("What's going on?")
-                    .font(.screenTitle)
-                LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
-                    ForEach(AdjustReason.allCases, id: \.self) { option in
-                        Button {
-                            Haptics.select()
-                            reason = option
-                        } label: {
-                            VStack(alignment: .leading, spacing: 10) {
-                                Image(systemName: option.symbol).font(.title3)
-                                Text(option.label).font(.subheadline.weight(.semibold)).multilineTextAlignment(.leading)
-                            }
-                            .frame(maxWidth: .infinity, minHeight: 88, alignment: .topLeading)
-                            .padding(14)
-                            .foregroundStyle(reason == option ? Color.paper : Color.ink)
-                            .background(reason == option ? Color.ink : Color.wash, in: .rect(cornerRadius: 18))
+        DetailPage {
+            PageHeader(title: "What's going on?")
+            LazyVGrid(columns: [GridItem(.flexible(), spacing: Spacing.m), GridItem(.flexible(), spacing: Spacing.m)], spacing: Spacing.m) {
+                ForEach(AdjustReason.allCases, id: \.self) { option in
+                    SelectableTile(isSelected: reason == option, minHeight: 88, alignment: .topLeading, action: { reason = option }) {
+                        VStack(alignment: .leading, spacing: Spacing.s) {
+                            Image(systemName: option.symbol).font(.title3)
+                            Text(option.label).font(.subheadline.weight(.semibold)).multilineTextAlignment(.leading)
                         }
-                        .buttonStyle(.plain)
-                        .accessibilityAddTraits(reason == option ? .isSelected : [])
-                    }
-                }
-
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Tell Kiki more").font(.headline)
-                    TextField(placeholder, text: $message, axis: .vertical)
-                        .lineLimit(3...6)
-                        .focused($messageFocused)
-                        .padding(16)
-                        .background(Color.wash, in: .rect(cornerRadius: 16))
-                    if reason == .injured {
-                        Text("If pain is sharp, getting worse, or lasts more than a few days, please see a medical professional.")
-                            .font(.footnote)
-                            .foregroundStyle(.muted)
+                        .padding(Spacing.xxs)
                     }
                 }
             }
-            .padding(20)
+
+            PageSection("Tell Kiki more") {
+                TextField(placeholder, text: $message, axis: .vertical)
+                    .lineLimit(3...6)
+                    .focused($messageFocused)
+                    .inputField()
+                if reason == .injured {
+                    Footnote("If pain is sharp, getting worse, or lasts more than a few days, please see a medical professional.")
+                }
+            }
         }
-        .scrollDismissesKeyboard(.interactively)
-        .safeAreaInset(edge: .bottom) {
+        .bottomActions {
             PrimaryButton("Update my plan", isEnabled: reason != nil, action: submit)
-                .padding(.horizontal, 20)
-                .padding(.bottom, 8)
         }
     }
 
@@ -120,40 +101,36 @@ struct AdjustPlanView: View {
     }
 
     private var working: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: Spacing.l) {
             Spacer()
             ProgressView().controlSize(.large)
-            Text("Kiki is rethinking your plan…").font(.title3.weight(.semibold))
-            Text("This takes a few seconds.").foregroundStyle(.muted)
+            VStack(spacing: Spacing.xs) {
+                Text("Kiki is rethinking your plan…").font(.cardTitle)
+                Text("This takes a few seconds.").foregroundStyle(.muted)
+            }
             Spacer()
         }
         .frame(maxWidth: .infinity)
+        .background { PageBackground() }
     }
 
     private func result(_ adjustment: Adjustment) -> some View {
         let changed = Set(adjustment.changedDates ?? [])
         let workouts = store.workouts.filter { changed.contains($0.date) }
-        return ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                HStack(alignment: .top, spacing: 12) {
-                    KikiLogo(size: 40)
-                    Text(adjustment.reply ?? "Your plan is updated.")
-                        .padding(16)
-                        .background(Color.wash, in: .rect(cornerRadius: 20))
-                }
-                if !workouts.isEmpty {
-                    Text("Updated workouts").font(.headline)
-                    ForEach(workouts) { workout in
-                        WorkoutRow(workout: workout, units: store.units)
+        return DetailPage {
+            CoachBubble(text: adjustment.reply ?? "Your plan is updated.")
+            if !workouts.isEmpty {
+                PageSection("Updated workouts") {
+                    ListCard(dividerInset: WorkoutRow.textInset) {
+                        ForEach(workouts) { workout in
+                            WorkoutRow(workout: workout, units: store.units, isNavigable: false)
+                        }
                     }
                 }
             }
-            .padding(20)
         }
-        .safeAreaInset(edge: .bottom) {
+        .bottomActions {
             PrimaryButton("Done") { dismiss() }
-                .padding(.horizontal, 20)
-                .padding(.bottom, 8)
         }
     }
 
@@ -163,9 +140,10 @@ struct AdjustPlanView: View {
         } description: {
             Text(error)
         } actions: {
-            Button("Try again") { phase = .input }
-                .buttonStyle(.borderedProminent)
+            PrimaryButton("Try again") { phase = .input }
+                .padding(.horizontal, Metrics.screenMargin)
         }
+        .background { PageBackground() }
     }
 
     private func submit() {

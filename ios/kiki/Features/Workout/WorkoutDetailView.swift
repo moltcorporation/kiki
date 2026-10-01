@@ -23,37 +23,31 @@ struct WorkoutDetailView: View {
         let units = store.units
         let run = store.run(for: workout)
 
-        return ScrollView {
-            VStack(alignment: .leading, spacing: Metrics.sectionSpacing) {
-                // The date leads.
-                VStack(alignment: .leading, spacing: 2) {
-                    if let relative = relativeDay(workout.date) {
-                        Text(relative)
-                            .font(.headline)
-                            .foregroundStyle(.muted)
-                    }
-                    Text(workout.date.date, format: .dateTime.weekday(.wide).month(.wide).day())
-                        .font(.screenTitle)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
+        return DetailPage {
+            // The date leads.
+            PageHeader(
+                eyebrow: relativeDay(workout.date).map { LocalizedStringKey($0) },
+                title: LocalizedStringKey(workout.date.date.formatted(.dateTime.weekday(.wide).month(.wide).day()))
+            )
 
-                // What to run.
-                VStack(alignment: .leading, spacing: 16) {
-                    HStack(spacing: 12) {
-                        WorkoutIcon(workout: workout, size: 44)
-                        VStack(alignment: .leading, spacing: 2) {
+            // What to run.
+            Card {
+                VStack(alignment: .leading, spacing: Spacing.l) {
+                    HStack(spacing: RowMetrics.spacing) {
+                        WorkoutIcon(workout: workout, size: .large)
+                        VStack(alignment: .leading, spacing: Spacing.xxs) {
                             Text(workout.type.label)
-                                .font(.subheadline.weight(.medium))
+                                .font(.eyebrow)
                                 .foregroundStyle(.muted)
                             Text(workout.title)
-                                .font(.title2.weight(.bold))
+                                .font(.cardTitle)
                         }
                         Spacer(minLength: 0)
-                        StatusBadge(status: workout.status, isToday: false)
+                        StatusBadge(status: workout.status)
                     }
                     if !workout.isRest {
                         Divider()
-                        VStack(alignment: .leading, spacing: 16) {
+                        VStack(alignment: .leading, spacing: Spacing.l) {
                             if let metric = Format.workoutMetric(workout, units: units) {
                                 DetailLine(label: "Distance", value: "\(metric.value) \(metric.unit)")
                             }
@@ -71,52 +65,42 @@ struct WorkoutDetailView: View {
                         }
                     }
                 }
-                .padding(20)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .elevatedCard(cornerRadius: 24)
+            }
 
-                // Exactly what to do.
-                TabSection("What to do") {
+            // Exactly what to do.
+            PageSection("What to do") {
+                Card {
                     VStack(alignment: .leading, spacing: 0) {
                         Text(workout.description)
                             .font(.body)
                             .fixedSize(horizontal: false, vertical: true)
-                            .padding(.bottom, workout.steps.isEmpty ? 0 : 8)
-                        ForEach(Array(workout.steps.enumerated()), id: \.offset) { index, step in
+                            .padding(.bottom, workout.steps.isEmpty ? 0 : Spacing.s)
+                        ForEach(Array(workout.steps.enumerated()), id: \.offset) { _, step in
                             Divider()
                             StepRow(step: step, units: units, paces: store.plan?.paces)
                         }
                     }
-                    .padding(20)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .elevatedCard(cornerRadius: 24)
                 }
+            }
 
-                if let run {
-                    TabSection("Your run") {
-                        VStack(alignment: .leading, spacing: 10) {
+            if let run {
+                PageSection("Your run") {
+                    Card {
+                        VStack(alignment: .leading, spacing: Spacing.m) {
                             RunSummaryLine(run: run, units: units)
                             if let notes = run.notes, !notes.isEmpty {
-                                Text("“\(notes)”").font(.subheadline).foregroundStyle(.muted)
+                                Text("“\(notes)”").font(.detail).foregroundStyle(.muted)
                             }
                         }
-                        .padding(20)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .elevatedCard(cornerRadius: 24)
                     }
                 }
             }
-            .padding(.horizontal, Metrics.screenMargin)
-            .padding(.top, 8)
-            .padding(.bottom, 24)
         }
-        .background { PageBackground() }
-        .safeAreaInset(edge: .bottom) {
+        .bottomActions {
             if !workout.isRest || workout.status == .completed {
                 actions(workout, run: run)
             }
         }
-        .navigationBarTitleDisplayMode(.inline)
         // A focused page: the buttons sit alone at the bottom.
         .toolbarVisibility(.hidden, for: .tabBar)
         .appSheets($sheet)
@@ -130,26 +114,19 @@ struct WorkoutDetailView: View {
 
     /// Mark as done leads; Skip and Change workout sit below it.
     private func actions(_ workout: Workout, run: Run?) -> some View {
-        VStack(spacing: 10) {
-            HStack(spacing: 10) {
+        VStack(spacing: Spacing.m) {
+            HStack(spacing: Spacing.m) {
                 PrimaryButton(workout.status == .completed ? "Edit run" : "Mark as done") {
                     sheet = .log(workout, run)
                 }
                 if workout.date == .today, workout.status != .completed {
-                    Button {
+                    CircleButton("Start run with GPS", systemImage: "figure.run") {
                         tracker.start(for: workout)
-                    } label: {
-                        Image(systemName: "figure.run")
-                            .font(.headline)
-                            .frame(width: Metrics.buttonHeight, height: Metrics.buttonHeight)
                     }
-                    .buttonStyle(.glass)
-                    .buttonBorderShape(.circle)
-                    .accessibilityLabel("Start run with GPS")
                 }
             }
             if workout.status != .completed {
-                HStack(spacing: 10) {
+                HStack(spacing: Spacing.m) {
                     if workout.status == .skipped {
                         SecondaryButton("Undo skip") {
                             Haptics.tap()
@@ -166,9 +143,6 @@ struct WorkoutDetailView: View {
                 }
             }
         }
-        .padding(.horizontal, Metrics.screenMargin)
-        .padding(.top, 8)
-        .padding(.bottom, 8)
     }
 
     /// "Today", "Tomorrow" or "Yesterday", else nil.
@@ -189,16 +163,16 @@ private struct DetailLine: View {
     var note: String?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: Spacing.xxs) {
             Text(label)
-                .font(.subheadline.weight(.medium))
+                .font(.eyebrow)
                 .foregroundStyle(.muted)
             Text(value)
-                .font(.body.weight(.semibold))
+                .font(.rowTitle)
                 .fixedSize(horizontal: false, vertical: true)
             if let note {
                 Text(note)
-                    .font(.subheadline)
+                    .font(.detail)
                     .foregroundStyle(.muted)
             }
         }
@@ -212,20 +186,16 @@ private struct StepRow: View {
     let paces: PaceZones?
 
     var body: some View {
-        HStack(alignment: .top, spacing: 14) {
-            Image(systemName: symbol)
-                .font(.system(size: 14, weight: .medium))
-                .frame(width: 32, height: 32)
-                .background(Color.wash, in: .circle)
-                .foregroundStyle(.ink)
-                .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title).font(.body.weight(.semibold))
-                if let detail { Text(detail).font(.subheadline).foregroundStyle(.muted) }
+        HStack(alignment: .top, spacing: RowMetrics.spacing) {
+            RowIcon(systemName: symbol, size: .small)
+            VStack(alignment: .leading, spacing: Spacing.xxs) {
+                Text(title).font(.rowTitle)
+                if let detail { Text(detail).font(.detail).foregroundStyle(.muted) }
             }
             Spacer(minLength: 0)
         }
-        .padding(.vertical, 14)
+        .padding(.vertical, Spacing.m)
+        .accessibilityElement(children: .combine)
     }
 
     private var symbol: String {

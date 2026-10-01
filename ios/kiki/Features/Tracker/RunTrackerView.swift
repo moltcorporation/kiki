@@ -27,20 +27,20 @@ struct RunTrackerView: View {
                     Button("Close", systemImage: "xmark") { tracker.close() }
                         .labelStyle(.iconOnly)
                         .font(.headline)
-                        .frame(width: 44, height: 44)
+                        .frame(width: Metrics.minTapTarget, height: Metrics.minTapTarget)
                         .glassEffect(.regular.interactive(), in: .circle)
                         .padding()
                 }
             }
 
-            VStack(spacing: 24) {
+            VStack(spacing: Spacing.xxl) {
                 if let title = tracker.workout?.title {
                     Text(title).font(.headline).foregroundStyle(.muted)
                 }
 
                 TimelineView(.periodic(from: .now, by: 1)) { context in
                     Text(Format.duration(Int(tracker.elapsed(at: context.date))))
-                        .font(.system(size: 64, weight: .heavy).italic().monospacedDigit())
+                        .heroMetricFont()
                         .contentTransition(.numericText())
                 }
                 .accessibilityLabel("Time")
@@ -63,10 +63,10 @@ struct RunTrackerView: View {
 
                 controls
             }
-            .padding(.horizontal, 24)
-            .padding(.top, 20)
-            .padding(.bottom, 12)
-            .background(Color.paper)
+            .padding(.horizontal, Metrics.screenMargin)
+            .padding(.top, Spacing.xl)
+            .padding(.bottom, Spacing.m)
+            .background(Color.canvas)
         }
         .ignoresSafeArea(edges: .top)
         .onAppear {
@@ -91,22 +91,15 @@ struct RunTrackerView: View {
         case .running:
             PrimaryButton("Pause") { tracker.pause() }
         case .paused:
-            HStack(spacing: 12) {
+            HStack(spacing: Spacing.m) {
                 PrimaryButton("Resume") { tracker.resume() }
-                Button {
+                SecondaryButton("Finish") {
                     if let run = tracker.finish() {
                         draft = run
                     } else {
                         confirmDiscard = true
                     }
-                } label: {
-                    Text("Finish")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity, minHeight: 56)
-                        .overlay(Capsule().stroke(Color.ink, lineWidth: 2))
-                        .foregroundStyle(.ink)
                 }
-                .buttonStyle(.haptic)
             }
         case .finished:
             ProgressView()

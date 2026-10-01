@@ -93,16 +93,14 @@ struct NameStep: View {
             canContinue: model.firstName != nil
         ) {
             TextField("First name", text: $model.answers.firstName)
-                .font(.system(size: 34, weight: .bold))
+                .font(.screenTitle)
                 .textContentType(.givenName)
                 .textInputAutocapitalization(.words)
                 .autocorrectionDisabled()
                 .submitLabel(.continue)
                 .focused($focused)
                 .onSubmit { if model.firstName != nil { model.advance() } }
-                .padding(.vertical, 18)
-                .padding(.horizontal, 20)
-                .background(Color.wash, in: .rect(cornerRadius: 20))
+                .inputField()
         }
         .onAppear { focused = model.answers.firstName.isEmpty }
     }
@@ -122,7 +120,7 @@ struct AgeStep: View {
                 model.advance()
             }
         ) {
-            AgeInput(age: age).padding(.top, 24)
+            AgeInput(age: age).padding(.top, Spacing.xxl)
         }
     }
 }
@@ -146,7 +144,7 @@ struct HeightStep: View {
                 model.advance()
             }
         ) {
-            HeightInput(heightCm: height, units: model.answers.units).padding(.top, 24)
+            HeightInput(heightCm: height, units: model.answers.units).padding(.top, Spacing.xxl)
         }
     }
 }
@@ -170,7 +168,7 @@ struct WeightStep: View {
                 model.advance()
             }
         ) {
-            WeightInput(weightKg: weight, units: model.answers.units).padding(.top, 24)
+            WeightInput(weightKg: weight, units: model.answers.units).padding(.top, Spacing.xxl)
         }
     }
 }
@@ -222,24 +220,21 @@ private struct NotificationPreview: View {
     let units: Units
 
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
+        HStack(alignment: .top, spacing: Spacing.m) {
             KikiLogo(size: 40)
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: Spacing.xxs) {
                 HStack {
                     Text("Today: Easy Run").font(.subheadline.weight(.semibold))
                     Spacer()
                     Text("7:00 AM").font(.caption).foregroundStyle(.muted)
                 }
                 Text("Easy Run · \(units == .km ? "5.0 km" : "3.0 mi"). Relaxed and conversational.")
-                    .font(.subheadline)
+                    .font(.detail)
                     .foregroundStyle(.muted)
             }
         }
-        .padding(16)
-        .background(.regularMaterial, in: .rect(cornerRadius: 22))
-        .overlay(RoundedRectangle(cornerRadius: 22).stroke(Color.primary.opacity(0.06)))
-        .shadow(color: .black.opacity(0.08), radius: 20, y: 10)
-        .padding(.vertical, 24)
+        .padding(Spacing.l)
+        .elevatedCard(cornerRadius: Radius.card)
         .accessibilityHidden(true)
     }
 }

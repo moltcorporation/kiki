@@ -22,7 +22,7 @@ struct OnboardingFlow: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .clipped()
         }
-        .background(Color.paper)
+        .background { PageBackground() }
         .animation(.snappy(duration: 0.35), value: model.current)
         .onChange(of: model.current) { _, step in
             Analytics.screen("Onboarding", ["step": step.rawValue])

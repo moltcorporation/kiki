@@ -22,7 +22,7 @@ struct SignInOptions: View {
     @State private var error: String?
 
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: Spacing.l) {
             if requiresConsent {
                 ConsentCheckbox(isOn: $agreed)
             }
@@ -135,12 +135,12 @@ struct ConsentCheckbox: View {
     private static let toggleURL = URL(string: "kiki-consent://toggle")!
 
     var body: some View {
-        HStack(alignment: .center, spacing: 4) {
+        HStack(alignment: .center, spacing: Spacing.xs) {
             Image(systemName: isOn ? "checkmark.square.fill" : "square")
                 .font(.title2)
                 .foregroundStyle(isOn ? Color.ink : Color.muted)
                 .contentTransition(.symbolEffect(.replace))
-                .frame(width: 44, height: 44)
+                .frame(width: Metrics.minTapTarget, height: Metrics.minTapTarget)
                 .contentShape(.rect)
                 .onTapGesture(perform: toggle)
 

@@ -3,38 +3,18 @@ import SwiftUI
 /// "Sign in" from the welcome screen: a bottom sheet in Kiki's style (solid
 /// white, large corners, our type) rather than the stock system look.
 struct SignInSheet: View {
-    @State private var contentHeight: CGFloat = 240
-
     var body: some View {
-        VStack(spacing: 0) {
-            // Header: centered title clear of the grabber, then a hairline.
-            Text("Welcome back!")
-                .font(.sheetTitle)
+        CompactSheet("Welcome back!") {
+            // Returning runners skip the checkbox; a brand-new account made
+            // here is asked once by `ConsentGate`.
+            SignInOptions(requiresConsent: false, title: "Sign in with Apple") {}
+            // Notice at the button (sign-in-wrap) for returning runners.
+            Text(termsNotice)
+                .font(.footnote)
+                .multilineTextAlignment(.center)
                 .frame(maxWidth: .infinity)
-                .padding(.top, 28)
-                .padding(.bottom, 18)
-            Divider()
-
-            VStack(spacing: 14) {
-                // Returning runners skip the checkbox; a brand-new account made
-                // here is asked once by `ConsentGate`.
-                SignInOptions(requiresConsent: false, title: "Sign in with Apple") {}
-                // Notice at the button (sign-in-wrap) for returning runners.
-                Text(termsNotice)
-                    .font(.footnote)
-                    .multilineTextAlignment(.center)
-                    .frame(maxWidth: .infinity)
-            }
-            .padding(24)
         }
-        // Fit the sheet to its content.
-        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { contentHeight = $0 }
         .environment(\.colorScheme, .light)
-        .presentationDetents([.height(contentHeight)])
-        .presentationCornerRadius(32)
-        .presentationBackground(Color.white)
-        // The grabber signals swipe-to-dismiss (there is no close button).
-        .presentationDragIndicator(.visible)
         .onAppear { Analytics.screen("Sign In") }
     }
 

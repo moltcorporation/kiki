@@ -13,14 +13,11 @@ struct ConsentGate: View {
     @State private var error: String?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: Spacing.m) {
             Spacer()
             KikiLogo(size: 56)
-                .padding(.bottom, 12)
-            Text("One last thing")
-                .font(.screenTitle)
-            Text("Please agree to Kiki's Terms of Service and Privacy Policy to continue.")
-                .foregroundStyle(.muted)
+                .padding(.bottom, Spacing.m)
+            PageHeader(title: "One last thing", subtitle: "Please agree to Kiki's Terms of Service and Privacy Policy to continue.")
             Spacer()
             ConsentCheckbox(isOn: $agreed)
             PrimaryButton("Continue", isLoading: isSaving) {
@@ -31,15 +28,11 @@ struct ConsentGate: View {
                 }
                 save()
             }
-            Button("Sign out") { Task { await auth.signOut() } }
-                .font(.body.weight(.semibold))
-                .foregroundStyle(.muted)
-                .frame(maxWidth: .infinity, minHeight: 44)
-                .buttonStyle(.haptic)
+            TextButton("Sign out") { Task { await auth.signOut() } }
         }
         .padding(.horizontal, Metrics.screenMargin)
-        .padding(.bottom, 8)
-        .background(Color.paper)
+        .padding(.bottom, Spacing.s)
+        .background { PageBackground() }
         .alert("Please agree to continue", isPresented: $showAgreeAlert) {
             Button("OK", role: .cancel) {}
         } message: {

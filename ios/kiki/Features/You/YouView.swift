@@ -76,34 +76,43 @@ struct YouView: View {
     private var profileCard: some View {
         HStack(spacing: RowMetrics.spacing) {
             ProfileAvatar(userID: auth.userID, name: store.profile?.firstName, size: 56)
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: Spacing.xxs) {
                 Text(store.profile?.firstName ?? "Runner")
-                    .font(.title3.weight(.semibold))
+                    .font(.cardTitle)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
                 if let since = store.memberSince {
                     Text("Joined \(since.formatted(.dateTime.month(.wide).year()))")
-                        .font(.subheadline)
+                        .font(.detail)
                         .foregroundStyle(.muted)
                 }
             }
             Spacer(minLength: 0)
         }
         .padding(.horizontal, RowMetrics.horizontalPadding)
-        .padding(.vertical, RowMetrics.verticalPadding + 2)
-        .elevatedCard(cornerRadius: 24)
+        .padding(.vertical, Spacing.l)
+        .elevatedCard()
     }
 
     // MARK: Goal
 
     @ViewBuilder
     private var goalSection: some View {
-        TabSection("Your goal") {
+        PageSection("Your goal") {
             if let plan = store.plan {
-                Button { path.append(.goal) } label: {
-                    GoalCard(plan: plan, units: store.units)
+                ListCard {
+                    Button { path.append(.goal) } label: {
+                        ListRow(
+                            icon: plan.goalKind.icon,
+                            title: Text(plan.displayName),
+                            subtitles: plan.goalDetails(units: store.units),
+                            showsChevron: true
+                        )
+                    }
+                    .buttonStyle(.haptic)
+                    .accessibilityElement(children: .combine)
+                    .accessibilityHint("Shows your goal details")
                 }
-                .buttonStyle(.haptic)
             } else {
                 PrimaryButton("Set your goal", systemImage: "flag.checkered") { startGoalEdit(.goal) }
             }
@@ -113,25 +122,25 @@ struct YouView: View {
     // MARK: Preferences
 
     private func trainingSection(_ profile: Profile) -> some View {
-        PreferenceGroup("Your training") {
-            PreferenceRow(icon: "figure.run", label: "Experience", value: profile.experience.title) {
+        ListSection("Your training") {
+            SettingsRow(icon: "figure.run", label: "Experience", value: profile.experience.title) {
                 path.append(.edit(.experience))
             }
             if profile.experience != .new {
-                PreferenceRow(icon: "chart.bar", label: "Weekly distance",
+                SettingsRow(icon: "chart.bar", label: "Weekly distance",
                               value: Format.distance(Double(profile.weeklyDistanceM), store.units, decimals: 0)) {
                     path.append(.edit(.weeklyVolume))
                 }
             }
-            PreferenceRow(icon: "calendar", label: "Run days", value: RunDaysSelector.summary(profile.runDays)) {
+            SettingsRow(icon: "calendar", label: "Run days", value: RunDaysSelector.summary(profile.runDays)) {
                 path.append(.edit(.runDays))
             }
-            PreferenceRow(icon: (profile.coachingStyle ?? .balanced).icon, label: "Coaching style",
+            SettingsRow(icon: (profile.coachingStyle ?? .balanced).icon, label: "Coaching style",
                           value: (profile.coachingStyle ?? .balanced).title) {
                 path.append(.edit(.coachingStyle))
             }
-            PreferenceRow(icon: "list.bullet", label: "Run history",
-                          value: store.runs.isEmpty ? "None yet" : "\(store.runs.count)", showsDivider: false) {
+            SettingsRow(icon: "list.bullet", label: "Run history",
+                          value: store.runs.isEmpty ? "None yet" : "\(store.runs.count)") {
                 path.append(.runs)
             }
         }
@@ -139,52 +148,51 @@ struct YouView: View {
 
     private func aboutSection(_ profile: Profile) -> some View {
         let bodyUnits = BodyUnits.resolve(bodyUnitsStored, default: store.units)
-        return PreferenceGroup("About you") {
-            PreferenceRow(icon: "person", label: "Name", value: profile.firstName ?? "Add") {
+        return ListSection("About you") {
+            SettingsRow(icon: "person", label: "Name", value: profile.firstName ?? "Add") {
                 path.append(.edit(.name))
             }
-            PreferenceRow(icon: "birthday.cake", label: "Age", value: profile.age.map(String.init) ?? "Add") {
+            SettingsRow(icon: "birthday.cake", label: "Age", value: profile.age.map(String.init) ?? "Add") {
                 path.append(.edit(.age))
             }
-            PreferenceRow(icon: "ruler", label: "Height", value: profile.heightCm.map { Format.height($0, bodyUnits) } ?? "Add") {
+            SettingsRow(icon: "ruler", label: "Height", value: profile.heightCm.map { Format.height($0, bodyUnits) } ?? "Add") {
                 path.append(.edit(.height))
             }
-            PreferenceRow(icon: "scalemass", label: "Weight", value: profile.weightKg.map { Format.weight($0, bodyUnits) } ?? "Add",
-                          showsDivider: false) {
+            SettingsRow(icon: "scalemass", label: "Weight", value: profile.weightKg.map { Format.weight($0, bodyUnits) } ?? "Add") {
                 path.append(.edit(.weight))
             }
         }
     }
 
     private var appSection: some View {
-        PreferenceGroup("App") {
-            PreferenceRow(icon: "ruler", label: "Units", value: store.units.title) {
+        ListSection("App") {
+            SettingsRow(icon: "ruler", label: "Units", value: store.units.title) {
                 path.append(.edit(.units))
             }
-            PreferenceToggleRow(icon: "bell", label: "Run day reminders", isOn: $remindersEnabled)
+            SettingsToggleRow(icon: "bell", label: "Run day reminders", isOn: $remindersEnabled)
                 .onChange(of: remindersEnabled) { _, enabled in
                     Task { await updateReminders(enabled) }
                 }
-            PreferenceRow(icon: "creditcard", label: "Subscription") { showCustomerCenter = true }
-            PreferenceRow(icon: "arrow.clockwise", label: "Restore purchases") {
+            SettingsRow(icon: "creditcard", label: "Subscription") { showCustomerCenter = true }
+            SettingsRow(icon: "arrow.clockwise", label: "Restore purchases") {
                 Task {
                     let found = (try? await subscriptions.restore()) ?? false
                     message = found ? "Your subscription is active." : "No active subscription found for this Apple ID."
                 }
             }
-            PreferenceRow(icon: "star", label: "Rate Kiki") { requestReview() }
-            PreferenceRow(icon: "envelope", label: "Contact support") {
+            SettingsRow(icon: "star", label: "Rate Kiki") { requestReview() }
+            SettingsRow(icon: "envelope", label: "Contact support") {
                 openURL(URL(string: "mailto:\(Config.supportEmail)")!)
             }
-            PreferenceRow(icon: "hand.raised", label: "Privacy Policy") { openURL(Config.privacyURL) }
-            PreferenceRow(icon: "doc.text", label: "Terms of Service", showsDivider: false) { openURL(Config.termsURL) }
+            SettingsRow(icon: "hand.raised", label: "Privacy Policy") { openURL(Config.privacyURL) }
+            SettingsRow(icon: "doc.text", label: "Terms of Service") { openURL(Config.termsURL) }
         }
     }
 
     private var accountSection: some View {
-        PreferenceGroup("Account") {
-            PreferenceRow(icon: "rectangle.portrait.and.arrow.right", label: "Sign out") { confirmSignOut = true }
-            PreferenceRow(icon: "trash", label: "Delete account", role: .destructive, showsDivider: false) {
+        ListSection("Account") {
+            SettingsRow(icon: "rectangle.portrait.and.arrow.right", label: "Sign out") { confirmSignOut = true }
+            SettingsRow(icon: "trash", label: "Delete account", role: .destructive) {
                 confirmDelete = true
             }
             .disabled(isDeleting)
@@ -192,7 +200,7 @@ struct YouView: View {
     }
 
     private var footer: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: Spacing.xs) {
             if let email = auth.email { Text(email) }
             Text("Kiki \(Bundle.main.appVersion)")
             Text("Not medical advice. Check with a professional before starting a new training program.")
@@ -244,39 +252,6 @@ struct YouView: View {
                 message = (error as? LocalizedError)?.errorDescription ?? "Couldn't delete your account. Please try again."
             }
         }
-    }
-}
-
-/// The current goal in a standard card.
-private struct GoalCard: View {
-    let plan: Plan
-    let units: Units
-
-    var body: some View {
-        // The same row anatomy as every settings row (icon column, 14pt
-        // gap, chevron), with a semibold title and gray detail lines.
-        HStack(alignment: .center, spacing: RowMetrics.spacing) {
-            RowIcon(systemName: plan.goalKind.icon)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(plan.displayName)
-                    .font(.body.weight(.semibold))
-                    .multilineTextAlignment(.leading)
-                ForEach(plan.goalDetails(units: units), id: \.self) { line in
-                    Text(line)
-                        .font(.subheadline)
-                        .foregroundStyle(.muted)
-                }
-            }
-            Spacer(minLength: 8)
-            RowChevron()
-        }
-        .foregroundStyle(.ink)
-        .padding(.horizontal, RowMetrics.horizontalPadding)
-        .padding(.vertical, RowMetrics.verticalPadding + 2)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .elevatedCard(cornerRadius: 24)
-        .accessibilityElement(children: .combine)
-        .accessibilityHint("Shows your goal details")
     }
 }
 

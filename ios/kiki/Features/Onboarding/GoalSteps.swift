@@ -57,10 +57,7 @@ private struct CustomDistanceSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        VStack(spacing: 28) {
-            Text("Race distance")
-                .font(.title2.weight(.bold))
-                .frame(maxWidth: .infinity, alignment: .leading)
+        CompactSheet("Race distance") {
             if units == .mi {
                 RulerPicker(
                     value: Binding(get: { max(1, Int((km / 1.609344).rounded())) }, set: { km = Double($0) * 1.609344 }),
@@ -74,10 +71,8 @@ private struct CustomDistanceSheet: View {
                 ) { "\($0) km" }
             }
             PrimaryButton("Done") { dismiss() }
+                .padding(.top, Spacing.s)
         }
-        .padding(24)
-        .presentationDetents([.height(380)])
-        .presentationDragIndicator(.visible)
     }
 }
 
@@ -109,7 +104,7 @@ struct RaceDateStep: View {
                 model.advance()
             }
         ) {
-            VStack(alignment: .leading, spacing: 24) {
+            VStack(alignment: .leading, spacing: Spacing.xxl) {
                 DatePicker(
                     "Race date",
                     selection: Binding(get: { date.date }, set: { model.answers.raceDate = Day($0) }),
@@ -123,21 +118,15 @@ struct RaceDateStep: View {
                 // below the calendar from jumping when the month changes.
                 .frame(height: 340, alignment: .top)
                 // The calendar has its own top inset; pull it up to the title.
-                .padding(.top, -12)
+                .padding(.top, -Spacing.m)
                 .onChange(of: model.answers.raceDate) { Haptics.select() }
 
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Race name (optional)")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.muted)
+                LabeledField(label: "Race name (optional)") {
                     TextField("e.g. Chicago Marathon", text: $model.answers.raceName)
                         .font(.title3.weight(.semibold))
                         .textInputAutocapitalization(.words)
                         .autocorrectionDisabled()
                         .submitLabel(.done)
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 16)
-                        .background(Color.wash, in: .rect(cornerRadius: 20))
                 }
             }
         }
@@ -185,16 +174,17 @@ struct GoalTimeStep: View {
                 model.advance()
             }
         ) {
-            DurationWheel(seconds: time, showsHours: model.answers.raceDistance != .fiveK)
-            if time.wrappedValue > 0 {
-                Text("That's about \(Format.pace(Double(time.wrappedValue) / (meters / 1000), model.answers.units)) pace")
+            VStack(spacing: Spacing.l) {
+                DurationWheel(seconds: time, showsHours: model.answers.raceDistance != .fiveK)
+                if time.wrappedValue > 0 {
+                    Text("That's about \(Format.pace(Double(time.wrappedValue) / (meters / 1000), model.answers.units)) pace")
                     .font(.headline)
                     .foregroundStyle(.muted)
                     .frame(maxWidth: .infinity)
                     .contentTransition(.numericText())
                     .animation(.snappy, value: time.wrappedValue)
-                GoalTimeFeedback(seconds: time.wrappedValue, meters: meters)
-                    .padding(.top, 16)
+                    GoalTimeFeedback(seconds: time.wrappedValue, meters: meters)
+                }
             }
         }
     }
