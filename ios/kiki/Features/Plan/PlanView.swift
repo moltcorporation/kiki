@@ -44,9 +44,9 @@ struct PlanView: View {
     }
 }
 
-/// The top of the Plan tab: three numbers, side by side. Distance run so
-/// far (it feels like an accomplishment), weeks completed, and average
-/// pace across the plan's runs.
+/// The top of the Plan tab, dark like a scoreboard: three numbers side by
+/// side, each over its label (distance run so far, weeks to go, average
+/// pace), and a bar showing how far through the plan they are.
 struct PlanProgressCard: View {
     @Environment(TrainingStore.self) private var store
     let plan: Plan
@@ -59,21 +59,32 @@ struct PlanProgressCard: View {
         let timedM = timedRuns.reduce(0) { $0 + $1.distanceM }
         let timedS = Double(timedRuns.reduce(0) { $0 + $1.durationS })
         let averagePace = timedM > 0 ? timedS / (timedM / 1000) : nil
+        // Same count as the goal ("10 weeks to go").
+        let weeksToGo = max(0, Day.today.days(until: plan.raceDate) / 7)
+
+        // How far through the plan, the same measure as the goal card's bar.
         let total = max(store.totalWeeks, 1)
-        // Weeks fully behind the runner (all of them once the plan is over).
-        let weeksDone = Day.today > plan.raceDate ? total : max((store.currentWeekNumber ?? 1) - 1, 0)
+        let week = min(store.currentWeekNumber ?? (Day.today > plan.raceDate ? total : 0), total)
 
         Card(padding: Spacing.l) {
-            HStack(spacing: 0) {
-                Stat(value: Format.distanceNumber(distanceM, units), suffix: nil,
-                     label: units == .mi ? "Miles run" : "Km run")
-                divider
-                Stat(value: "\(min(weeksDone, total))", suffix: "/\(total)", label: "Weeks completed")
-                divider
-                Stat(value: averagePace.map { Format.pace($0, units, withUnit: false) } ?? "–:––",
-                     suffix: "/\(units.rawValue)", label: "Avg pace")
+            VStack(spacing: Spacing.l) {
+                HStack(spacing: 0) {
+                    Stat(value: Format.distanceNumber(distanceM, units), label: units == .mi ? "Miles run" : "Km run")
+                    divider
+                    Stat(value: "\(weeksToGo)", label: weeksToGo == 1 ? "Week to go" : "Weeks to go")
+                    divider
+                    Stat(value: averagePace.map { Format.pace($0, units, withUnit: false) } ?? "–:––",
+                         label: "Avg. pace /\(units.rawValue)")
+                }
+                ProgressView(value: Double(week), total: Double(total))
+                    .tint(.ink)
+                    .accessibilityLabel("Plan progress")
+                    .accessibilityValue("Week \(max(week, 1)) of \(total)")
             }
         }
+        // Dark, so the stats read as the plan's scoreboard (the tab's one
+        // dark card).
+        .invertedColorScheme()
     }
 
     private var divider: some View {
@@ -82,24 +93,17 @@ struct PlanProgressCard: View {
             .frame(width: 1, height: 40)
     }
 
-    /// A big number (with an optional quieter suffix) over its label.
+    /// A big number over its label.
     private struct Stat: View {
         let value: String
-        let suffix: String?
         let label: LocalizedStringKey
 
         var body: some View {
             VStack(spacing: Spacing.xxs) {
-                HStack(alignment: .firstTextBaseline, spacing: Spacing.xxs) {
-                    Text(value).font(.metric(.title2))
-                    if let suffix {
-                        Text(suffix)
-                            .font(.footnote.weight(.semibold))
-                            .foregroundStyle(.muted)
-                    }
-                }
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
+                Text(value)
+                    .font(.metric(.title2))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
                 Text(label)
                     .font(.caption.weight(.medium))
                     .foregroundStyle(.muted)
