@@ -45,7 +45,7 @@ struct PlanView: View {
 }
 
 /// The top of the Plan tab: progress and goal together. A ring that fills
-/// as the plan goes by (weeks to go inside), beside the goal and its date,
+/// as the plan goes by (the current week inside), beside the goal and its date,
 /// then a hairline and the two stats that matter most: distance run and
 /// average pace.
 struct ProgressCard: View {
@@ -59,15 +59,13 @@ struct ProgressCard: View {
         let timed = runs.filter { $0.durationS > 0 && $0.distanceM > 0 }
         let timedM = timed.reduce(0) { $0 + $1.distanceM }
         let timedS = Double(timed.reduce(0) { $0 + $1.durationS })
-        // Same count as the goal ("10 weeks to go").
-        let weeksToGo = max(0, Day.today.days(until: plan.raceDate) / 7)
         // How far through the plan: the same measure as the goal card's bar.
         let total = max(store.totalWeeks, 1)
         let week = min(store.currentWeekNumber ?? (Day.today > plan.raceDate ? total : 0), total)
 
         Card(padding: Spacing.l) {
             HStack(spacing: Spacing.l) {
-                PlanRing(progress: Double(week) / Double(total), weeksToGo: weeksToGo)
+                PlanRing(week: max(week, 1), total: total)
 
                 VStack(alignment: .leading, spacing: Spacing.m) {
                     VStack(alignment: .leading, spacing: Spacing.xxs) {
@@ -118,41 +116,38 @@ struct ProgressCard: View {
     }
 }
 
-/// A black ring filling on a light track as the plan goes by, the weeks to
-/// go inside it and its label underneath (like a Whoop ring).
+/// A black ring filling on a light track as the plan goes by, with the
+/// current week inside ("1/12").
 private struct PlanRing: View {
-    let progress: Double
-    let weeksToGo: Int
+    let week: Int
+    let total: Int
 
-    private let size: CGFloat = 72
+    private let size: CGFloat = 76
     private let lineWidth: CGFloat = 8
 
     var body: some View {
-        VStack(spacing: Spacing.s) {
-            ZStack {
-                Circle()
-                    .stroke(Color.track, lineWidth: lineWidth)
-                Circle()
-                    .trim(from: 0, to: min(max(progress, 0), 1))
-                    .stroke(Color.ink, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
-                    .rotationEffect(.degrees(-90))
-                    .animation(.smooth, value: progress)
-                Text("\(weeksToGo)")
+        ZStack {
+            Circle()
+                .stroke(Color.track, lineWidth: lineWidth)
+            Circle()
+                .trim(from: 0, to: CGFloat(week) / CGFloat(max(total, 1)))
+                .stroke(Color.ink, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+                .animation(.smooth, value: week)
+            HStack(alignment: .firstTextBaseline, spacing: 1) {
+                Text("\(week)")
                     .font(.metric(.title2))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.6)
-                    .padding(.horizontal, lineWidth + Spacing.xs)
+                Text("/\(total)")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(.muted)
             }
-            .frame(width: size, height: size)
-
-            Text(weeksToGo == 1 ? "Week to go" : "Weeks to go")
-                .font(.caption.weight(.medium))
-                .foregroundStyle(.muted)
-                .lineLimit(1)
-                .fixedSize()
+            .lineLimit(1)
+            .minimumScaleFactor(0.6)
+            .padding(.horizontal, lineWidth + Spacing.xs)
         }
+        .frame(width: size, height: size)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Plan progress")
-        .accessibilityValue(weeksToGo == 1 ? "1 week to go" : "\(weeksToGo) weeks to go")
+        .accessibilityValue("Week \(week) of \(total)")
     }
 }
