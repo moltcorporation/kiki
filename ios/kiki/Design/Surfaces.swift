@@ -33,8 +33,8 @@ struct PageBackground: View {
     }
 }
 
-/// The splash's asphalt texture with a soft volt-green glow that drifts
-/// slowly across and back, so the card feels alive and energetic. Still under Reduce Motion.
+/// The splash's asphalt texture with a soft white glow that drifts slowly
+/// across and back, so the card feels alive. Still under Reduce Motion.
 /// Used only behind Home's goal card.
 struct AsphaltBackground: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -51,7 +51,7 @@ struct AsphaltBackground: View {
                     .frame(width: size.width, height: size.height)
                     .clipped()
                 RadialGradient(
-                    colors: [Color.glow.opacity(0.55), Color.glow.opacity(0.14), .clear],
+                    colors: [Color.glow.opacity(0.4), Color.glow.opacity(0.1), .clear],
                     center: UnitPoint(x: -0.1 + 1.2 * phase, y: 0.1),
                     startRadius: 0,
                     endRadius: max(size.width, size.height) * 0.75
@@ -111,29 +111,17 @@ struct Card<Content: View>: View {
     }
 }
 
-/// For screens without a top bar: content dissolves as it scrolls under
-/// the status bar. Solid page color behind the clock and Dynamic Island,
-/// then a soft fade below, so rows never collide with them.
+/// For screens without a top bar: fades content out under the status bar as
+/// it scrolls, so rows never collide with the clock.
 struct StatusBarFade: ViewModifier {
     var color: Color = .canvas
-    /// How far below the status bar the fade runs.
-    private let fade: CGFloat = Spacing.xxl
 
     func body(content: Content) -> some View {
         content.overlay(alignment: .top) {
             GeometryReader { proxy in
-                let top = proxy.safeAreaInsets.top
-                LinearGradient(
-                    stops: [
-                        .init(color: color, location: 0),
-                        .init(color: color, location: top / (top + fade)),
-                        .init(color: color.opacity(0), location: 1),
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .frame(height: top + fade)
-                .offset(y: -top)
+                LinearGradient(colors: [color, color.opacity(0)], startPoint: .top, endPoint: .bottom)
+                    .frame(height: proxy.safeAreaInsets.top + Spacing.l)
+                    .offset(y: -proxy.safeAreaInsets.top)
             }
             .allowsHitTesting(false)
         }
