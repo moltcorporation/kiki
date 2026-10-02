@@ -38,7 +38,7 @@ private struct DayRow: View {
 
     /// Every day is the same height, rest days included, so the hairlines
     /// fall evenly (and rest days stay a full-size drop target).
-    static let height: CGFloat = 60
+    static let height: CGFloat = 54
 
     var body: some View {
         let row = HStack(spacing: Spacing.m) {
@@ -136,27 +136,27 @@ private struct WorkoutEvent: View {
 
     var body: some View {
         let isToday = workout.date == .today
-        HStack(spacing: Spacing.m) {
+        // One line: status, title, and the amount on the right.
+        HStack(spacing: Spacing.s + Spacing.xxs) {
             StatusCircle(status: workout.status, isToday: isToday)
-            VStack(alignment: .leading, spacing: Spacing.xxs) {
-                Text(workout.title)
-                    .font(.subheadline.weight(.semibold))
-                    // Done and skipped are struck through, so finished days read at a glance.
-                    .strikethrough(workout.status != .planned)
-                    .foregroundStyle(workout.status == .planned ? Color.ink : Color.muted)
-                    .lineLimit(1)
-                Text(subtitle)
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(.muted)
-                    .lineLimit(1)
-            }
+            Text(workout.title)
+                .font(.subheadline.weight(.semibold))
+                // Done and skipped are struck through, so finished days read at a glance.
+                .strikethrough(workout.status != .planned)
+                .foregroundStyle(workout.status == .planned ? Color.ink : Color.muted)
+                .lineLimit(1)
             Spacer(minLength: Spacing.s)
+            Text(amount)
+                .font(.subheadline)
+                .foregroundStyle(.muted)
+                .monospacedDigit()
+                .lineLimit(1)
             if showsChevron {
                 RowChevron()
             }
         }
         .padding(.horizontal, Spacing.m)
-        .frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
+        .frame(maxWidth: .infinity, minHeight: 40, alignment: .leading)
         // Today's workout: white with a crisp ink outline, like a calendar's
         // today marker. Other days sit on a soft gray.
         .background(isToday ? Color.surface : Color.wash, in: .rect(cornerRadius: Radius.inner))
@@ -170,12 +170,14 @@ private struct WorkoutEvent: View {
         .accessibilityValue(workout.status == .completed ? "Done" : workout.status == .skipped ? "Skipped" : "")
     }
 
-    /// "2.0 mi · Easy", or "Skipped".
-    private var subtitle: String {
+    /// "2 mi", "1.5 mi", "30 min", or "Skipped".
+    private var amount: String {
         if workout.status == .skipped { return "Skipped" }
-        let amount = workout.distanceM.map { Format.distance(Double($0), units) }
-            ?? workout.durationS.map { Format.minutes($0) }
-        return [amount, workout.type.effort].compactMap { $0 }.joined(separator: " · ")
+        if let meters = workout.distanceM {
+            let number = Format.distanceNumber(Double(meters), units)
+            return "\(number.hasSuffix(".0") ? String(number.dropLast(2)) : number) \(units.rawValue)"
+        }
+        return workout.durationS.map { Format.minutes($0) } ?? ""
     }
 }
 
@@ -202,7 +204,7 @@ private struct StatusCircle: View {
                 Circle().strokeBorder(isToday ? Color.ink : Color.ink.opacity(0.25), lineWidth: isToday ? 2 : 1.5)
             }
         }
-        .frame(width: 22, height: 22)
+        .frame(width: 20, height: 20)
         .accessibilityHidden(true)
     }
 }
