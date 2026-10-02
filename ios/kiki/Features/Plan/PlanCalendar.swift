@@ -31,7 +31,13 @@ struct PlanCalendar: View {
                 .padding(.top, Spacing.m)
                 .padding(.bottom, Spacing.l)
                 if let workout = byDay[selected] {
-                    SelectedDay(workout: workout, units: units)
+                    // A straight-topped strip: a hairline, then the day on
+                    // the page color; only the card's bottom corners round it.
+                    VStack(spacing: 0) {
+                        Rectangle().fill(Color.hairline).frame(height: 1)
+                        SelectedDay(workout: workout, units: units)
+                    }
+                    .background(Color.canvas)
                 }
             }
             .frame(maxWidth: .infinity)
@@ -143,7 +149,7 @@ private struct SelectedDay: View {
             content
         } else {
             NavigationLink(value: workout) { content }
-                .buttonStyle(.haptic)
+                .buttonStyle(.plain)
         }
     }
 
@@ -170,9 +176,8 @@ private struct SelectedDay: View {
         }
         .foregroundStyle(.ink)
         .padding(.horizontal, Metrics.cardPadding)
-        .padding(.vertical, Spacing.m)
+        .padding(.vertical, Spacing.l)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.wash)
         .contentShape(.rect)
         .accessibilityElement(children: .combine)
     }
