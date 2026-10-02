@@ -53,7 +53,7 @@ extension View {
             case .log(let workout, let run):
                 LogRunView(workout: workout, existing: run)
             case .adjust:
-                AdjustPlanView()
+                AdjustMenuSheet()
             }
         }
     }

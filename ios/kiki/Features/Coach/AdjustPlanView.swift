@@ -9,6 +9,9 @@ struct AdjustPlanView: View {
     var initialReason: AdjustReason?
     /// Prefilled note, e.g. describing a training change made in the Profile tab.
     var initialMessage: String?
+    /// Send right away (a quick option from `AdjustMenuSheet`) instead of
+    /// showing the input first.
+    var submitImmediately = false
 
     @State private var reason: AdjustReason?
     @State private var message = ""
@@ -46,6 +49,7 @@ struct AdjustPlanView: View {
             reason = reason ?? initialReason
             if message.isEmpty, let initialMessage { message = initialMessage }
             Analytics.screen("Adjust Plan")
+            if submitImmediately, case .input = phase, reason != nil { submit() }
         }
     }
 
