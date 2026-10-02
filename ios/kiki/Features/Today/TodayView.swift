@@ -129,7 +129,7 @@ private struct GoalProgressCard: View {
                 // The date, and the target time for time goals.
                 Text([Plan.goalDate(timeline.endDate), plan.goalTimeLabel].compactMap { $0 }.joined(separator: " · "))
                     .font(.subheadline.weight(.medium))
-                    .foregroundStyle(.muted)
+                    .foregroundStyle(.ink.opacity(0.7))
             }
 
             VStack(alignment: .leading, spacing: Spacing.m) {
@@ -139,7 +139,7 @@ private struct GoalProgressCard: View {
                     Spacer()
                     Text("Week \(timeline.week) of \(timeline.totalWeeks)")
                         .font(.subheadline.weight(.medium))
-                        .foregroundStyle(.muted)
+                        .foregroundStyle(.ink.opacity(0.7))
                 }
                 ProgressView(value: Double(timeline.week), total: Double(timeline.totalWeeks))
                     .tint(.ink)
