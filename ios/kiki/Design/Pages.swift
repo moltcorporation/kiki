@@ -22,17 +22,21 @@ struct TabPage<Content: View>: View {
     /// Home's top bar: the small Kiki wordmark on the left and the eyebrow
     /// (the date) on the right, in the row above the title.
     var showsWordmark = false
+    /// Buttons on the right of the row above the title (`HeaderButton`s),
+    /// where a navigation bar's buttons would sit. They scroll with the page.
+    var accessory: AnyView?
     @ViewBuilder let content: Content
 
-    init(_ title: TabTitle.Kind, eyebrow: String? = nil, showsWordmark: Bool = false, @ViewBuilder content: () -> Content) {
+    init(_ title: TabTitle.Kind, eyebrow: String? = nil, showsWordmark: Bool = false, accessory: AnyView? = nil, @ViewBuilder content: () -> Content) {
         self.title = title
         self.eyebrow = eyebrow
         self.showsWordmark = showsWordmark
+        self.accessory = accessory
         self.content = content()
     }
 
-    init(_ title: LocalizedStringKey, eyebrow: String? = nil, showsWordmark: Bool = false, @ViewBuilder content: () -> Content) {
-        self.init(.text(title), eyebrow: eyebrow, showsWordmark: showsWordmark, content: content)
+    init(_ title: LocalizedStringKey, eyebrow: String? = nil, showsWordmark: Bool = false, accessory: AnyView? = nil, @ViewBuilder content: () -> Content) {
+        self.init(.text(title), eyebrow: eyebrow, showsWordmark: showsWordmark, accessory: accessory, content: content)
     }
 
     var body: some View {
@@ -70,6 +74,13 @@ struct TabPage<Content: View>: View {
                                 .font(.eyebrow)
                                 .foregroundStyle(.muted)
                         }
+                    }
+                    .frame(height: Metrics.navigationBarHeight)
+                    .padding(.horizontal, Metrics.screenMargin)
+                } else if let accessory {
+                    HStack(spacing: Spacing.s) {
+                        Spacer()
+                        accessory
                     }
                     .frame(height: Metrics.navigationBarHeight)
                     .padding(.horizontal, Metrics.screenMargin)

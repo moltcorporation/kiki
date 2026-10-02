@@ -178,3 +178,31 @@ struct BackButton: View {
         .accessibilityLabel("Back")
     }
 }
+
+/// A round glass icon button for a page's header row (`TabPage(accessory:)`),
+/// like a navigation bar button. The whole circle is the tap target.
+struct HeaderButton: View {
+    let systemImage: String
+    let label: LocalizedStringKey
+    let action: () -> Void
+
+    init(_ label: LocalizedStringKey, systemImage: String, action: @escaping () -> Void) {
+        self.label = label
+        self.systemImage = systemImage
+        self.action = action
+    }
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: systemImage)
+                .font(.body.weight(.medium))
+                .foregroundStyle(.ink)
+                .contentTransition(.symbolEffect(.replace))
+                .frame(width: Metrics.minTapTarget, height: Metrics.minTapTarget)
+                .contentShape(.circle)
+        }
+        .buttonStyle(.haptic)
+        .glassEffect(.regular.interactive(), in: .circle)
+        .accessibilityLabel(label)
+    }
+}

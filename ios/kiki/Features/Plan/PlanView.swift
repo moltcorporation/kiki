@@ -11,6 +11,10 @@ struct PlanView: View {
     @State private var celebrations = 0
     /// Shown briefly after a drop until moving workouts is wired up.
     @State private var moveNotice = false
+    /// The list is the default every time; the calendar is for runners who
+    /// prefer one.
+    @State private var showsCalendar = false
+    @State private var showsShare = false
 
     /// A workout was dropped on another day. The UI is ready; saving the
     /// move needs the API, so for now this only says it's coming.
@@ -35,10 +39,25 @@ struct PlanView: View {
         }
     }
 
-    /// The week's planned distance ("6.5 mi").
+    /// The week's dates and planned distance ("Oct 5 – 11 · 6.5 mi"), so
+    /// weeks months ahead are easy to place.
     private func weekDetail(_ workouts: [Workout], units: Units) -> String {
         let meters = workouts.filter { !$0.isRest }.compactMap(\.distanceM).reduce(0, +)
-        return Format.distance(Double(meters), units)
+        let days = workouts.map(\.date)
+        guard let first = days.min(), let last = days.max() else { return Format.distance(Double(meters), units) }
+        return "\(PlanPDF.weekRange(first, last)) · \(Format.distance(Double(meters), units))"
+    }
+
+    private var headerButtons: AnyView? {
+        guard store.plan != nil else { return nil }
+        return AnyView(HStack(spacing: Spacing.s) {
+            HeaderButton(showsCalendar ? "Show as list" : "Show as calendar",
+                         systemImage: showsCalendar ? "list.bullet" : "calendar") {
+                withAnimation(.snappy) { showsCalendar.toggle() }
+                Analytics.track("plan_view_toggled", ["view": showsCalendar ? "calendar" : "list"])
+            }
+            HeaderButton("Share plan", systemImage: "square.and.arrow.up") { showsShare = true }
+        })
     }
 
     /// Weeks entirely before this one, shown collapsed under "Completed".
@@ -53,10 +72,14 @@ struct PlanView: View {
         let pastNumbers = Set(past.map(\.week))
         NavigationStack(path: $path) {
             Group {
-                TabPage("Your plan") {
+                TabPage("Your plan", accessory: headerButtons) {
                     if let plan = store.plan {
                         ProgressCard(plan: plan, units: units)
                     }
+                    if showsCalendar {
+                        PlanCalendar(workouts: store.workouts, units: units)
+                            .transition(.opacity)
+                    } else {
                     if !past.isEmpty {
                         CompletedWeeks(weeks: past, units: units)
                     }
@@ -73,6 +96,7 @@ struct PlanView: View {
                                 Haptics.success()
                                 celebrations += 1
                             }
+                    }
                     }
                 }
                 .refreshable { await store.refresh() }
@@ -94,6 +118,11 @@ struct PlanView: View {
             }
         }
         .animation(.snappy, value: moveNotice)
+        .sheet(isPresented: $showsShare) {
+            if let plan = store.plan {
+                SharePlanSheet(plan: plan, workouts: store.workouts, units: store.units)
+            }
+        }
         .onAppear { Analytics.screen("Plan") }
     }
 }
