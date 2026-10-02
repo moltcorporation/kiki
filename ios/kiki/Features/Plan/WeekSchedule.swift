@@ -2,10 +2,9 @@ import SwiftUI
 
 /// One week of the plan as a schedule, like a calendar's list view: every
 /// day is an equal-height row split by hairlines, the date on the left and
-/// the day's workout as a simple event block (accent bar, title, amount).
-/// Done workouts lose the block and are struck through; rest days are just
-/// the word. Only the block is interactive: tap to open the workout, and
-/// (with `onMove`) press and hold to drag an upcoming workout to another day.
+/// the day's workout as a tile (status circle, title, "2.0 mi · Easy", and a
+/// grip when it can be dragged). Today's tile is tinted; done workouts get a
+/// filled check; rest days are just the word. Only the tile is interactive.
 struct WeekSchedule: View {
     let workouts: [Workout]
     let units: Units
@@ -35,7 +34,7 @@ private struct DayRow: View {
 
     @State private var isTargeted = false
 
-    static let height: CGFloat = 60
+    static let height: CGFloat = 72
 
     var body: some View {
         let row = HStack(spacing: Spacing.m) {
@@ -78,7 +77,7 @@ private struct DayRow: View {
                 .accessibilityLabel("\(workout.date.date.formatted(.dateTime.weekday(.wide))), rest")
         } else if isNavigable {
             let link = NavigationLink(value: workout) {
-                WorkoutEvent(workout: workout, units: units)
+                WorkoutEvent(workout: workout, units: units, showsGrip: onMove != nil && workout.status == .planned)
                     .contentShape(.rect(cornerRadius: Radius.inner))
             }
             .buttonStyle(.haptic)
@@ -97,22 +96,23 @@ private struct DayRow: View {
     }
 }
 
-/// The date column: weekday over the day number. Today's number sits in an
-/// ink circle, like a calendar.
+/// The date column: weekday over the day number. Past days are gray;
+/// today's number sits in an ink circle, like a calendar.
 private struct DayLabel: View {
     let day: Day
 
     var body: some View {
         let isToday = day == .today
-        VStack(spacing: Spacing.xs) {
-            Text(Format.weekday(day, style: .abbreviated).uppercased())
-                .font(.caption2.weight(.semibold))
-                .foregroundStyle(isToday ? Color.ink : Color.muted)
+        let isPast = day < .today
+        VStack(spacing: Spacing.xxs) {
+            Text(Format.weekday(day, style: .abbreviated))
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(isPast ? Color.muted : Color.ink)
             Text("\(day.day)")
-                .font(.callout.weight(.semibold))
+                .font(.title3.weight(.bold))
                 .monospacedDigit()
-                .foregroundStyle(isToday ? Color.paper : Color.ink)
-                .frame(width: 26, height: 26)
+                .foregroundStyle(isToday ? Color.paper : isPast ? Color.muted : Color.ink)
+                .frame(width: 30, height: 30)
                 .background(isToday ? Color.ink : Color.clear, in: .circle)
         }
         .frame(width: 40)
@@ -121,46 +121,78 @@ private struct DayLabel: View {
     }
 }
 
-/// A workout as a calendar event: a gray block with an ink accent bar, the
-/// title, and how much on the right. Done: no block, gray, struck through.
-/// Skipped: the same, with "Skipped" in place of the amount.
+/// A workout tile: a status circle (empty to do, filled check when done),
+/// the title over "2.0 mi · Easy", and a grip when it can be dragged.
+/// Today's tile is tinted so it stands out.
 private struct WorkoutEvent: View {
     let workout: Workout
     let units: Units
+    var showsGrip = false
 
     var body: some View {
-        let isPlanned = workout.status == .planned
-        HStack(spacing: Spacing.s) {
-            switch workout.status {
-            case .planned:
-                Capsule()
-                    .fill(Color.ink)
-                    .frame(width: 3, height: 20)
-            case .completed, .skipped:
-                EmptyView()
+        let isToday = workout.date == .today
+        HStack(spacing: Spacing.m) {
+            StatusCircle(status: workout.status, isToday: isToday)
+            VStack(alignment: .leading, spacing: Spacing.xxs) {
+                Text(workout.title)
+                    .font(.subheadline.weight(.semibold))
+                    .strikethrough(workout.status == .skipped)
+                    .foregroundStyle(workout.status == .skipped ? Color.muted : Color.ink)
+                    .lineLimit(1)
+                Text(subtitle)
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(.muted)
+                    .lineLimit(1)
             }
-            Text(workout.title)
-                .font(.subheadline.weight(isPlanned ? .semibold : .regular))
-                .strikethrough(!isPlanned)
-                .lineLimit(1)
             Spacer(minLength: Spacing.s)
-            Text(workout.status == .skipped ? "Skipped" : amount ?? "")
-                .font(.subheadline)
-                .foregroundStyle(.muted)
-                .monospacedDigit()
-                .lineLimit(1)
+            if showsGrip {
+                Image(systemName: "line.3.horizontal")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(.tertiary)
+                    .accessibilityHidden(true)
+            }
         }
-        .foregroundStyle(isPlanned ? Color.ink : Color.muted)
-        .padding(.horizontal, isPlanned ? Spacing.s : 0)
-        .frame(maxWidth: .infinity, minHeight: 40, alignment: .leading)
-        .background(isPlanned ? Color.wash : Color.clear, in: .rect(cornerRadius: Radius.inner))
+        .padding(.horizontal, Spacing.m)
+        .frame(maxWidth: .infinity, minHeight: 52, alignment: .leading)
+        .background(isToday && workout.status == .planned ? Color.ink.opacity(0.09) : Color.wash,
+                    in: .rect(cornerRadius: Radius.inner))
+        .accessibilityElement(children: .combine)
         .accessibilityValue(workout.status == .completed ? "Done" : workout.status == .skipped ? "Skipped" : "")
     }
 
-    /// Just how much, since the title already says what kind of run.
-    private var amount: String? {
-        if let meters = workout.distanceM { return Format.distance(Double(meters), units) }
-        if let seconds = workout.durationS { return Format.minutes(seconds) }
-        return nil
+    /// "2.0 mi · Easy", or "Skipped".
+    private var subtitle: String {
+        if workout.status == .skipped { return "Skipped" }
+        let amount = workout.distanceM.map { Format.distance(Double($0), units) }
+            ?? workout.durationS.map { Format.minutes($0) }
+        return [amount, workout.type.effort].compactMap { $0 }.joined(separator: " · ")
+    }
+}
+
+/// Empty ring to do (ink today), a filled ink check when done, a dash when
+/// skipped.
+private struct StatusCircle: View {
+    let status: Workout.Status
+    let isToday: Bool
+
+    var body: some View {
+        ZStack {
+            switch status {
+            case .completed:
+                Circle().fill(Color.ink)
+                Image(systemName: "checkmark")
+                    .font(.caption2.weight(.heavy))
+                    .foregroundStyle(.paper)
+            case .skipped:
+                Circle().strokeBorder(Color.track, lineWidth: 1.5)
+                Image(systemName: "minus")
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(.muted)
+            case .planned:
+                Circle().strokeBorder(isToday ? Color.ink : Color.ink.opacity(0.25), lineWidth: isToday ? 2 : 1.5)
+            }
+        }
+        .frame(width: 22, height: 22)
+        .accessibilityHidden(true)
     }
 }
