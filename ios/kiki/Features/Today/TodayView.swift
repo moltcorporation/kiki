@@ -38,7 +38,7 @@ struct TodayView: View {
                     MessageCard(icon: "sparkles", title: "Building your new plan…", message: "This usually takes under a minute.")
                 }
 
-                PageSection(dayPage == 0 ? "Today" : "Tomorrow", pages: (2, dayPage)) {
+                PageSection(dayPage == 0 ? "Today" : "Tomorrow") {
                     SwipePager(count: 2, index: $dayPage) { page in
                         dayCard(Day.today.adding(days: page), units: units)
                     }
@@ -50,8 +50,7 @@ struct TodayView: View {
                     PageSection(
                         weekPage == 0 ? "This week" : "Next week",
                         actionTitle: "See plan",
-                        action: onViewPlan,
-                        pages: weekCount > 1 ? (weekCount, weekPage) : nil
+                        action: onViewPlan
                     ) {
                         SwipePager(count: weekCount, index: $weekPage) { page in
                             ThisWeekCard(units: units, week: page == 0 ? .today : nextWeek) { path.append($0) }
