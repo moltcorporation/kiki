@@ -13,7 +13,7 @@ import SwiftUI
 /// (no floating bar), the same spacing below it, the page background, and a
 /// fade under the status bar. Plan and Profile use a 34pt title at Apple's
 /// large-title position (`TabPage("Your plan")`); Home uses the Kiki
-/// wordmark in the same size and place (`TabPage(.wordmark)`).
+/// wordmark, centered at the top like a logo (`TabPage(.wordmark)`).
 struct TabPage<Content: View>: View {
     let title: TabTitle.Kind
     @ViewBuilder let content: Content
@@ -57,8 +57,8 @@ extension View {
     }
 }
 
-/// A tab's title, 34pt and aligned left: the Kiki wordmark in the logo's
-/// black italic (Home), or a bold title (Plan, Profile).
+/// A tab's title: the Kiki wordmark (Home), 28pt and centered at the top
+/// like a logo, or a 34pt bold title aligned left (Plan, Profile).
 struct TabTitle: View {
     enum Kind {
         /// The Kiki wordmark (Home).
@@ -66,8 +66,14 @@ struct TabTitle: View {
         /// A plain title (Plan, Profile).
         case text(LocalizedStringKey)
 
-        /// Every title sits where Apple's large titles do.
-        var topInset: CGFloat { Metrics.largeTitleTopInset }
+        /// Titles sit where Apple's large titles do; the wordmark sits at
+        /// the top, like a logo.
+        var topInset: CGFloat {
+            switch self {
+            case .wordmark: Metrics.topInset
+            case .text: Metrics.largeTitleTopInset
+            }
+        }
     }
 
     let kind: Kind
@@ -77,7 +83,7 @@ struct TabTitle: View {
         case .wordmark:
             Text("Kiki")
                 .font(.wordmark)
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(maxWidth: .infinity)
                 .accessibilityAddTraits(.isHeader)
         case .text(let text):
             Text(text)

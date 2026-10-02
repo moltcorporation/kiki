@@ -21,8 +21,8 @@ extension Font {
         .system(style, weight: .black).italic()
     }
 
-    /// The Kiki wordmark as Home's title (34pt, the page-title size).
-    static let wordmark = Font.display(.largeTitle)
+    /// The Kiki wordmark atop Home (28pt, centered like a logo).
+    static let wordmark = Font.display(.title)
 
     /// Big numbers (distances, paces, times).
     static func metric(_ style: Font.TextStyle = .title) -> Font {
