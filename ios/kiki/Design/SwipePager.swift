@@ -14,9 +14,6 @@ struct SwipePager<Page: View>: View {
     @State private var position: CGFloat = 0
     @State private var scrollID: Int?
 
-    /// Room for card shadows inside the clipped scroll area.
-    private let shadowRoom: CGFloat = Spacing.l
-
     var body: some View {
         ScrollView(.horizontal) {
             HStack(alignment: .top, spacing: 0) {
@@ -25,24 +22,30 @@ struct SwipePager<Page: View>: View {
                         .fixedSize(horizontal: false, vertical: true)
                         .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { heights[i] = $0 }
                         .padding(.horizontal, Metrics.screenMargin)
-                        .padding(.vertical, shadowRoom)
                         .containerRelativeFrame(.horizontal)
                         .id(i)
                 }
             }
             .scrollTargetLayout()
+            // Pin the pages to the top at exactly the pager's height, so a
+            // horizontal scroll view never centers them over the title.
+            .frame(height: height, alignment: .top)
         }
         .scrollTargetBehavior(.paging)
         .scrollIndicators(.hidden)
+        .scrollEdgeEffectHidden()
+        // Never clip: cards keep their full soft shadows, like every other
+        // card on the page (clipped shadows read as a lighter band). The
+        // pages are a full screen wide, so neighbors stay off screen.
+        .scrollClipDisabled()
         .scrollPosition(id: $scrollID)
         .onScrollGeometryChange(for: CGFloat.self) { geometry in
             geometry.contentOffset.x / max(geometry.containerSize.width, 1)
         } action: { _, new in
             position = min(max(new, 0), CGFloat(count - 1))
         }
-        .frame(height: height + shadowRoom * 2)
+        .frame(height: height)
         .padding(.horizontal, -Metrics.screenMargin)
-        .padding(.vertical, -shadowRoom)
         .onAppear { scrollID = index }
         .onChange(of: scrollID) { _, new in
             if let new, new != index {

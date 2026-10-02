@@ -144,10 +144,12 @@ private struct DayRow: View {
     @ViewBuilder
     private var content: some View {
         if workout.isRest {
+            // Same size as a workout tile, so drop outlines line up.
             Text("Rest")
                 .font(.subheadline)
                 .foregroundStyle(.muted)
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(maxWidth: .infinity, minHeight: 40, alignment: .leading)
+                .contentShape(.rect)
                 .accessibilityLabel("\(workout.date.date.formatted(.dateTime.weekday(.wide))), rest")
         } else if isNavigable {
             let link = NavigationLink(value: workout) {
