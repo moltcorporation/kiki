@@ -147,7 +147,7 @@ private struct GoalProgressCard: View {
                         .foregroundStyle(.ink.opacity(0.7))
                 }
                 ProgressView(value: Double(timeline.week), total: Double(timeline.totalWeeks))
-                    .tint(.ink)
+                    .tint(Color.highlight)
                     .accessibilityHidden(true)
             }
         }

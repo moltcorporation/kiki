@@ -102,7 +102,7 @@ struct WorkoutDetailView: View {
             }
         case .planned:
             if workout.date == .today {
-                PrimaryButton("Start run", systemImage: "play.fill") { tracker.start(for: workout) }
+                PrimaryButton("Start run", systemImage: "play.fill", isHighlighted: true) { tracker.start(for: workout) }
                 HStack(spacing: 0) {
                     textAction("Mark done", systemImage: "checkmark") { sheet = .log(workout, run) }
                     Rectangle().fill(Color.hairline).frame(width: 1, height: Spacing.l)

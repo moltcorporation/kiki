@@ -189,10 +189,10 @@ private struct StatusCircle: View {
         ZStack {
             switch status {
             case .completed:
-                Circle().fill(Color.ink)
+                Circle().fill(Color.highlight)
                 Image(systemName: "checkmark")
                     .font(.caption2.weight(.heavy))
-                    .foregroundStyle(.paper)
+                    .foregroundStyle(Color.onHighlight)
             case .skipped:
                 Circle().strokeBorder(Color.track, lineWidth: 1.5)
                 Image(systemName: "minus")

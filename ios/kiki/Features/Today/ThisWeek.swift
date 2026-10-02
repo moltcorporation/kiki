@@ -104,11 +104,11 @@ private struct DayColumn: View {
         ZStack {
             switch state {
             case .done:
-                // Just a check: only today is solid black.
-                Circle().fill(Color.wash)
+                // An accent check: only today is solid black.
+                Circle().fill(Color.highlight)
                 Image(systemName: "checkmark")
                     .font(.subheadline.weight(.bold))
-                    .foregroundStyle(.ink)
+                    .foregroundStyle(Color.onHighlight)
             case .today:
                 Circle().fill(Color.ink)
                 Text("\(day.day)")

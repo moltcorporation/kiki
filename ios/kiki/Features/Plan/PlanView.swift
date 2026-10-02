@@ -308,11 +308,11 @@ private struct CompletedWeekRow: View {
         let allDone = done == runs.count && !runs.isEmpty
         HStack(spacing: Spacing.m) {
             ZStack {
-                Circle().fill(allDone ? Color.ink : Color.wash)
+                Circle().fill(allDone ? Color.highlight : Color.wash)
                 if allDone {
                     Image(systemName: "checkmark")
                         .font(.footnote.weight(.bold))
-                        .foregroundStyle(.paper)
+                        .foregroundStyle(Color.onHighlight)
                 } else {
                     Text("\(done)/\(runs.count)")
                         .font(.caption2.weight(.bold))
