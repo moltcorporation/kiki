@@ -19,12 +19,11 @@ struct TodayView: View {
 
         NavigationStack(path: $path) {
             TabPage(.wordmark) {
-                // The goal card leads with a greeting, then the goal, with the
-                // plan actions in its footer.
+                // The goal: Home's header, with the plan actions in its footer.
                 if let plan = store.plan {
                     GoalProgressCard(
                         plan: plan,
-                        greeting: greeting,
+                        units: units,
                         onOpen: { path.append(HomeRoute.goal) },
                         onAdjust: { sheet = .adjust },
                         onViewPlan: onViewPlan
@@ -63,13 +62,6 @@ struct TodayView: View {
         .onAppear { Analytics.screen("Home") }
     }
 
-    /// "Good evening, Stuart!", by time of day.
-    private var greeting: String {
-        let hour = Calendar.current.component(.hour, from: .now)
-        let part = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening"
-        return store.profile?.firstName.map { "\(part), \($0)!" } ?? "\(part)!"
-    }
-
     /// The next several days after today (rest days included, so the
     /// runner sees the shape of the week).
     private var upcoming: [Workout] {
@@ -77,13 +69,13 @@ struct TodayView: View {
     }
 }
 
-/// Home's header: today's date and a greeting, then the countdown and
-/// progress on the asphalt (tap for the goal details), with the plan
+/// Home's header: the goal, its date, the countdown and progress on the
+/// asphalt (tap for the goal details), with the plan
 /// actions in its footer.
 private struct GoalProgressCard: View {
     @Environment(TrainingStore.self) private var store
     let plan: Plan
-    let greeting: String
+    let units: Units
     let onOpen: () -> Void
     let onAdjust: () -> Void
     let onViewPlan: () -> Void
@@ -127,13 +119,17 @@ private struct GoalProgressCard: View {
 
         return VStack(alignment: .leading, spacing: Spacing.xl) {
             VStack(alignment: .leading, spacing: Spacing.xs) {
-                Text(Date.now, format: .dateTime.weekday(.wide).month(.abbreviated).day())
+                Text("Your goal")
                     .font(.eyebrow)
                     .foregroundStyle(.muted)
-                Text(greeting)
+                Text(plan.goalHeadline(units: units))
                     .font(.heroTitle)
-                    .lineLimit(1)
+                    .lineLimit(2)
                     .minimumScaleFactor(0.8)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text(Plan.goalDate(timeline.endDate))
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(.muted)
             }
 
             VStack(alignment: .leading, spacing: Spacing.m) {
@@ -170,6 +166,26 @@ private struct GoalProgressCard: View {
 }
 
 extension Plan {
+    /// What the runner is working toward, in plain words: "Finish the
+    /// Chicago Marathon", "10K in 45:00", "Run 30 minutes non-stop".
+    func goalHeadline(units: Units) -> String {
+        let distance = distanceLabel(units: units)
+        switch goalKind {
+        case .race:
+            if goalType == .time, let time = goalTimeS {
+                return "\(raceName ?? distance) in \(Format.duration(time))"
+            }
+            return "Finish the \(raceName ?? distance)"
+        case .faster:
+            if let time = goalTimeS { return "\(distance) in \(Format.duration(time))" }
+            return "A faster \(distance)"
+        case .start:
+            return "Run 30 minutes non-stop"
+        case .fit:
+            return "Run consistently"
+        }
+    }
+
     /// A goal's date: "December 16", with the year
     /// only when it isn't this year ("March 7, 2027").
     static func goalDate(_ day: Day) -> String {
