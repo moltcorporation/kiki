@@ -19,7 +19,7 @@ struct TodayView: View {
         let units = store.units
 
         NavigationStack(path: $path) {
-            TabPage(LocalizedStringKey(greeting), eyebrow: Date.now.formatted(.dateTime.weekday(.wide).month(.abbreviated).day())) {
+            TabPage(LocalizedStringKey(greeting), eyebrow: Date.now.formatted(.dateTime.weekday(.wide).month(.abbreviated).day()), showsWordmark: true) {
                 // The goal: Home's header, with the plan actions in its footer.
                 if let plan = store.plan {
                     GoalProgressCard(
@@ -42,10 +42,14 @@ struct TodayView: View {
                             run: store.run(for: workout),
                             units: units,
                             paces: store.plan?.paces,
-                            weekRuns: store.workouts(inWeekOf: .today).filter { !$0.isRest }.sorted { $0.date < $1.date },
-                            name: store.profile?.firstName,
                             onOpen: { path.append(workout) },
-                            onStart: { tracker.start(for: workout) }
+                            onStart: { tracker.start(for: workout) },
+                            onLog: { sheet = .log(workout, store.run(for: workout)) },
+                            onAdjust: { sheet = .adjust },
+                            onSkip: {
+                                Haptics.success()
+                                store.setStatus(.skipped, for: workout)
+                            }
                         )
                     } else {
                         OutsidePlanCard(day: .today, plan: store.plan)
@@ -199,83 +203,62 @@ extension Plan {
     }
 }
 
-/// Today's workout at a glance: where it falls in the week, what it is,
-/// how far and how long (or what they ran, once logged), a play button to
-/// start it, and a short note from Kiki. Tapping the card opens the workout.
+/// Today's workout: the title (with a ••• menu), how far and how long (or
+/// what they ran, once logged), and Start run / Mark done. Rest days get a
+/// short note instead.
 struct TodayCard: View {
     let workout: Workout
     let run: Run?
     let units: Units
     let paces: PaceZones?
-    /// This week's runs in order, for "Run 2 of 3 this week".
-    let weekRuns: [Workout]
-    let name: String?
     let onOpen: () -> Void
     let onStart: () -> Void
+    let onLog: () -> Void
+    let onAdjust: () -> Void
+    let onSkip: () -> Void
 
-    private var canStart: Bool { !workout.isRest && run == nil && workout.status == .planned }
+    private var isDone: Bool { run != nil || workout.status == .completed }
+    private var isPlannedRun: Bool { !workout.isRest && !isDone && workout.status == .planned }
 
     var body: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: Spacing.m) {
+        VStack(alignment: .leading, spacing: Spacing.l) {
+            HStack(alignment: .firstTextBaseline) {
                 Button(action: onOpen) {
-                    summary
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .contentShape(.rect)
+                    Text(workout.isRest ? "Rest day" : workout.title)
+                        .font(.cardTitle)
+                        .strikethrough(workout.status == .skipped)
+                        .multilineTextAlignment(.leading)
                 }
                 .buttonStyle(.haptic)
                 .accessibilityHint("Shows the workout")
-
-                if canStart {
-                    Button(action: onStart) {
-                        Image(systemName: "play.fill")
-                            .font(.title3)
-                            .foregroundStyle(.paper)
-                            .frame(width: 56, height: 56)
-                            .background(Color.ink, in: .circle)
-                            .contentShape(.circle)
+                Spacer(minLength: Spacing.s)
+                Menu {
+                    Button("View workout", systemImage: "doc.text", action: onOpen)
+                    if !workout.isRest {
+                        Button("Adjust today", systemImage: "sparkles", action: onAdjust)
                     }
-                    .buttonStyle(.haptic)
-                    .accessibilityLabel("Start run")
+                    if isPlannedRun {
+                        Button("Skip today", systemImage: "forward", action: onSkip)
+                    }
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .font(.body.weight(.semibold))
+                        .frame(width: Metrics.minTapTarget, height: 24)
+                        .contentShape(.rect)
                 }
+                .accessibilityLabel("More")
             }
-            .padding(Metrics.cardPadding)
 
-            Rectangle().fill(Color.hairline).frame(height: 1)
-
-            // A short note from Kiki.
-            HStack(spacing: Spacing.m) {
-                KikiLogo(size: 24)
-                Text(coachNote)
-                    .font(.subheadline)
+            if workout.isRest {
+                Text("Rest is training too. Recovery is when your body gets stronger.")
+                    .font(.detail)
+                    .foregroundStyle(.muted)
                     .fixedSize(horizontal: false, vertical: true)
-                Spacer(minLength: 0)
-            }
-            .padding(.horizontal, Metrics.cardPadding)
-            .padding(.vertical, Spacing.m + Spacing.xs)
-            .accessibilityElement(children: .combine)
-        }
-        .foregroundStyle(.ink)
-        .elevatedCard()
-    }
-
-    private var summary: some View {
-        VStack(alignment: .leading, spacing: Spacing.xs) {
-            Text(eyebrow)
-                .font(.eyebrow)
-                .foregroundStyle(.muted)
-            Text(workout.isRest ? "Rest day" : workout.title)
-                .font(.cardTitle)
-                .lineLimit(2)
-
-            if !workout.isRest {
-                HStack(alignment: .lastTextBaseline, spacing: Spacing.xl) {
+            } else {
+                HStack(alignment: .firstTextBaseline, spacing: Spacing.l) {
                     if let run {
                         Figure(value: Format.distanceNumber(run.distanceM, units), unit: units.rawValue)
                         Figure(value: "\(Int((Double(run.durationS) / 60).rounded()))", unit: "min")
-                        if let pace = run.pace {
-                            Detail(value: Format.pace(pace, units, withUnit: false), label: "/\(units.rawValue) pace")
-                        }
                     } else {
                         if let meters = workout.distanceM {
                             Figure(value: Format.distanceNumber(Double(meters), units), unit: units.rawValue)
@@ -283,77 +266,63 @@ struct TodayCard: View {
                         if let minutes = plannedMinutes {
                             Figure(value: "\(minutes)", unit: "min")
                         }
-                        if let pace = targetPace {
-                            Detail(value: Format.pace(pace, units, withUnit: false), label: "/\(units.rawValue) pace")
-                        }
+                    }
+                    if workout.status == .skipped {
+                        Text("Skipped").font(.subheadline.weight(.semibold)).foregroundStyle(.muted)
                     }
                 }
-                .padding(.top, Spacing.xs)
+                .accessibilityElement(children: .combine)
+
+                if isPlannedRun {
+                    HStack(spacing: Spacing.m) {
+                        PrimaryButton("Start run", systemImage: "play.fill", action: onStart)
+                        Button(action: onLog) {
+                            Label("Mark done", systemImage: "checkmark")
+                                .font(.button)
+                                .foregroundStyle(.ink)
+                                .frame(maxWidth: .infinity, minHeight: Metrics.compactButtonHeight)
+                                .background(Color.wash, in: .capsule)
+                                .contentShape(.capsule)
+                        }
+                        .buttonStyle(.haptic)
+                    }
+                    .controlSize(.small)
+                } else if isDone {
+                    Button(action: onLog) {
+                        Label("Done · Edit run", systemImage: "checkmark")
+                            .font(.button)
+                            .foregroundStyle(.ink)
+                            .frame(maxWidth: .infinity, minHeight: Metrics.compactButtonHeight)
+                            .background(Color.wash, in: .capsule)
+                            .contentShape(.capsule)
+                    }
+                    .buttonStyle(.haptic)
+                }
             }
         }
-        .accessibilityElement(children: .combine)
+        .foregroundStyle(.ink)
+        .padding(Metrics.cardPadding)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .elevatedCard()
     }
 
-    /// "Run 2 of 3 this week", "Done · Run 1 of 3", or "Recovery".
-    private var eyebrow: String {
-        if workout.isRest { return "Recovery" }
-        guard let index = weekRuns.firstIndex(where: { $0.id == workout.id }) else { return workout.type.label }
-        let position = "Run \(index + 1) of \(weekRuns.count)"
-        return run != nil || workout.status == .completed ? "Done · \(position)" : "\(position) this week"
-    }
-
-    /// The average of the type's pace range, in seconds per km.
-    private var targetPace: Double? {
-        guard let zone = workout.type.paceZone, let range = paces?[zone] else { return nil }
-        return Double(range.min + range.max) / 2
-    }
-
-    /// Planned time, or distance at the target pace.
+    /// Planned time, or distance at the type's target pace.
     private var plannedMinutes: Int? {
         if let seconds = workout.durationS { return Int((Double(seconds) / 60).rounded()) }
-        guard let meters = workout.distanceM, let pace = targetPace else { return nil }
+        guard let meters = workout.distanceM, let zone = workout.type.paceZone, let range = paces?[zone] else { return nil }
+        let pace = Double(range.min + range.max) / 2
         return Int((Double(meters) / 1000 * pace / 60).rounded())
     }
 
-    /// A short coach line. Canned for now (by workout type and time of day);
-    /// the AI coach can write these later.
-    private var coachNote: String {
-        let who = name.map { ", \($0)" } ?? ""
-        let when = Calendar.current.component(.hour, from: .now) >= 17 ? "tonight" : "today"
-        if workout.isRest { return "Rest is training too\(who). Enjoy the day off." }
-        if run != nil || workout.status == .completed { return "Nice work\(who). Recovery starts now." }
-        switch workout.type.paceZone {
-        case .easy, .recovery: return "Keep it conversational \(when)\(who)."
-        case .long: return "Settle in and keep it steady\(who)."
-        case .tempo: return "Comfortably hard \(when)\(who). You've got this."
-        case .interval: return "Push the reps, recover between\(who)."
-        case .race: return "Trust your training\(who)."
-        case nil: return "Enjoy it \(when)\(who)."
-        }
-    }
-
-    /// A bold number with its unit below ("2.0" / "mi").
+    /// A bold number with a small unit after it ("2.0 mi").
     private struct Figure: View {
         let value: String
         let unit: String
 
         var body: some View {
-            VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .firstTextBaseline, spacing: Spacing.xxs) {
                 Text(value).font(.metric(.title2))
-                Text(unit).font(.caption.weight(.medium)).foregroundStyle(.muted)
-            }
-        }
-    }
-
-    /// A smaller value with its label below ("11:56" / "/mi pace").
-    private struct Detail: View {
-        let value: String
-        let label: String
-
-        var body: some View {
-            VStack(alignment: .leading, spacing: 0) {
-                Text(value).font(.subheadline.weight(.semibold)).monospacedDigit()
-                Text(label).font(.caption.weight(.medium)).foregroundStyle(.muted)
+                Text(unit).font(.subheadline.weight(.semibold)).foregroundStyle(.muted)
             }
         }
     }

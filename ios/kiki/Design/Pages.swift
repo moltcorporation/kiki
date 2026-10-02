@@ -19,23 +19,39 @@ struct TabPage<Content: View>: View {
     /// A small gray line above the title (Home's date). It starts where
     /// other tabs' titles start, so every tab's header begins at one height.
     var eyebrow: String?
+    /// Shows the small Kiki wordmark on the left of the eyebrow row (Home).
+    var showsWordmark = false
     @ViewBuilder let content: Content
 
-    init(_ title: TabTitle.Kind, eyebrow: String? = nil, @ViewBuilder content: () -> Content) {
+    init(_ title: TabTitle.Kind, eyebrow: String? = nil, showsWordmark: Bool = false, @ViewBuilder content: () -> Content) {
         self.title = title
         self.eyebrow = eyebrow
+        self.showsWordmark = showsWordmark
         self.content = content()
     }
 
-    init(_ title: LocalizedStringKey, eyebrow: String? = nil, @ViewBuilder content: () -> Content) {
-        self.init(.text(title), eyebrow: eyebrow, content: content)
+    init(_ title: LocalizedStringKey, eyebrow: String? = nil, showsWordmark: Bool = false, @ViewBuilder content: () -> Content) {
+        self.init(.text(title), eyebrow: eyebrow, showsWordmark: showsWordmark, content: content)
     }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                VStack(alignment: .leading, spacing: Spacing.xxs) {
-                    if let eyebrow {
+                VStack(alignment: .leading, spacing: showsWordmark ? Spacing.m : Spacing.xxs) {
+                    if showsWordmark {
+                        // Brand on the left, the date on the right.
+                        HStack(alignment: .firstTextBaseline) {
+                            Text("Kiki")
+                                .font(.display(.title3))
+                                .accessibilityHidden(true)
+                            Spacer()
+                            if let eyebrow {
+                                Text(eyebrow)
+                                    .font(.eyebrow)
+                                    .foregroundStyle(.muted)
+                            }
+                        }
+                    } else if let eyebrow {
                         Text(eyebrow)
                             .font(.eyebrow)
                             .foregroundStyle(.muted)
