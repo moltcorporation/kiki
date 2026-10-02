@@ -100,19 +100,11 @@ struct YouView: View {
     private var goalSection: some View {
         PageSection("Your goal") {
             if let plan = store.plan {
-                ListCard {
-                    Button { path.append(Route.goal) } label: {
-                        ListRow(
-                            icon: plan.goalKind.icon,
-                            title: Text(plan.displayName),
-                            subtitles: plan.goalDetails(units: store.units),
-                            showsChevron: true
-                        )
-                    }
-                    .buttonStyle(.haptic)
-                    .accessibilityElement(children: .combine)
-                    .accessibilityHint("Shows your goal details")
+                Button { path.append(Route.goal) } label: {
+                    ProfileGoalCard(plan: plan, units: store.units, timeline: PlanTimeline(plan: plan, store: store))
                 }
+                .buttonStyle(.haptic)
+                .accessibilityHint("Shows your goal details")
             } else {
                 PrimaryButton("Set your goal", systemImage: "flag.checkered") { startGoalEdit(.goal) }
             }
@@ -256,5 +248,95 @@ extension Bundle {
         let version = infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
         let build = infoDictionary?["CFBundleVersion"] as? String ?? "1"
         return "\(version) (\(build))"
+    }
+}
+
+/// The goal on the Profile tab: an ink badge, the goal and its distance and
+/// date, then two facts under a hairline (the target and the time left).
+private struct ProfileGoalCard: View {
+    let plan: Plan
+    let units: Units
+    let timeline: PlanTimeline
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: RowMetrics.spacing) {
+                Image(systemName: "flag")
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(.paper)
+                    .frame(width: 40, height: 40)
+                    .background(Color.ink, in: .rect(cornerRadius: Radius.inner - 2))
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: Spacing.xxs) {
+                    Text(plan.displayName).font(.rowTitle)
+                    Text(subtitle).font(.detail).foregroundStyle(.muted)
+                }
+                Spacer(minLength: Spacing.s)
+                RowChevron()
+            }
+            .padding(.bottom, Spacing.m)
+
+            Rectangle().fill(Color.hairline).frame(height: 1)
+
+            HStack(alignment: .top, spacing: Spacing.l) {
+                Fact(label: "Goal", value: goalValue)
+                Fact(label: "Time left", value: timeLeft)
+            }
+            .padding(.top, Spacing.m)
+        }
+        .foregroundStyle(.ink)
+        .padding(RowMetrics.horizontalPadding)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .elevatedCard()
+        .contentShape(.rect(cornerRadius: Radius.card))
+        .accessibilityElement(children: .combine)
+    }
+
+    /// "26.2 mi · Wed, Dec 16" (the date alone for goals without a distance).
+    private var subtitle: String {
+        let meters = plan.raceDistanceM ?? plan.raceDistance?.meters
+        let distance = meters.map { Format.distance(Double($0), units) }
+        let isThisYear = Calendar.current.isDate(timeline.endDate.date, equalTo: .now, toGranularity: .year)
+        let date = isThisYear
+            ? timeline.endDate.date.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day())
+            : timeline.endDate.date.formatted(.dateTime.month(.abbreviated).day().year())
+        return [distance, date].compactMap { $0 }.joined(separator: " · ")
+    }
+
+    /// The target: a time, or what finishing means for this goal.
+    private var goalValue: String {
+        if (plan.goalType == .time || plan.goalKind == .faster), let time = plan.goalTimeS {
+            return Format.duration(time)
+        }
+        switch plan.goalKind {
+        case .race, .faster: return "Finish strong"
+        case .start: return "Run 30 min"
+        case .fit: return "Run consistently"
+        }
+    }
+
+    /// "11 weeks", "5 days", "Today", or "Done".
+    private var timeLeft: String {
+        switch timeline.phase {
+        case .finished: return "Done"
+        case .goalDay: return "Today"
+        case .underway:
+            let days = timeline.daysLeft
+            if days < 14 { return days == 1 ? "1 day" : "\(days) days" }
+            return "\(days / 7) weeks"
+        }
+    }
+
+    private struct Fact: View {
+        let label: LocalizedStringKey
+        let value: String
+
+        var body: some View {
+            VStack(alignment: .leading, spacing: Spacing.xxs) {
+                Text(label).font(.caption.weight(.medium)).foregroundStyle(.muted)
+                Text(value).font(.subheadline.weight(.semibold))
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
     }
 }
