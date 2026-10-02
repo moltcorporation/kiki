@@ -32,6 +32,9 @@ struct AdjustSheet: View {
     @State private var phase: Phase = .options
     @State private var message = ""
     @State private var height: CGFloat = 420
+    /// The options screen's height: the text box screen keeps it, so the
+    /// sheet doesn't resize and the buttons stay in the same place.
+    @State private var optionsHeight: CGFloat?
     @FocusState private var messageFocused: Bool
 
     private enum Phase: Equatable {
@@ -53,18 +56,29 @@ struct AdjustSheet: View {
     var body: some View {
         ScrollView {
             content
+                // Each screen crossfades with a soft blur while the sheet
+                // eases to its new height on the same curve.
+                .id(phaseKey)
+                // The old screen fades out quickly, then the new one fades in,
+                // so they never overlap.
+                .transition(.asymmetric(
+                    insertion: .opacity.animation(.smooth(duration: 0.3).delay(0.12)),
+                    removal: .opacity.animation(.easeOut(duration: 0.12))
+                ))
                 .padding(.horizontal, Metrics.screenMargin)
                 .padding(.top, Spacing.xxxl)
                 .padding(.bottom, Spacing.l)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height = $0 }
+                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { new in
+                    if phase == .options { optionsHeight = new }
+                    withAnimation(Self.transition) { height = new }
+                }
         }
         .scrollBounceBehavior(.basedOnSize)
         .presentationDetents([.height(min(height, 680))])
         .presentationDragIndicator(phase == .working ? .hidden : .visible)
         .presentationBackground(Color.surface)
         .interactiveDismissDisabled(phase == .working)
-        .animation(.smooth, value: phase)
         .onAppear {
             Analytics.screen("Adjust", ["scope": workout == nil ? "plan" : "day"])
             if let autoSend { send(autoSend) }
@@ -79,6 +93,22 @@ struct AdjustSheet: View {
         case .working: working
         case .done(let adjustment): done(adjustment)
         case .failed(let error, let request): failed(error, request)
+        }
+    }
+
+    private static let transition = Animation.smooth(duration: 0.4)
+
+    private func go(to next: Phase) {
+        withAnimation(Self.transition) { phase = next }
+    }
+
+    private var phaseKey: String {
+        switch phase {
+        case .options: "options"
+        case .writing: "writing"
+        case .working: "working"
+        case .done: "done"
+        case .failed: "failed"
         }
     }
 
@@ -194,6 +224,8 @@ struct AdjustSheet: View {
                 TextField(placeholder(reason), text: $message, axis: .vertical)
                     .lineLimit(3...6)
                     .focused($messageFocused)
+                    // Grows to fill the sheet's height.
+                    .frame(maxHeight: .infinity, alignment: .topLeading)
                     .inputField()
                 Footnote("If something hurts and it's sharp, getting worse, or lasts more than a few days, please see a medical professional.")
             }
@@ -201,14 +233,20 @@ struct AdjustSheet: View {
             HStack(spacing: Spacing.m) {
                 SecondaryButton("Back") {
                     messageFocused = false
-                    phase = .options
+                    go(to: .options)
                 }
                 PrimaryButton("Send", isEnabled: !trimmedMessage.isEmpty) {
                     send(.init(reason: reason, message: trimmedMessage))
                 }
             }
         }
-        .onAppear { messageFocused = true }
+        // Same height as the options screen (minus its padding).
+        .frame(minHeight: max((optionsHeight ?? 0) - Spacing.xxxl - Spacing.l, 0), alignment: .top)
+        // The keyboard comes up once the switch has settled.
+        .task {
+            try? await Task.sleep(for: .seconds(0.45))
+            messageFocused = true
+        }
     }
 
     private var trimmedMessage: String { message.trimmingCharacters(in: .whitespacesAndNewlines) }
@@ -280,12 +318,12 @@ struct AdjustSheet: View {
 
     private func write(_ reason: AdjustReason) {
         message = ""
-        phase = .writing(reason)
+        go(to: .writing(reason))
     }
 
     private func send(_ request: Request) {
         messageFocused = false
-        phase = .working
+        go(to: .working)
         Analytics.track("adjust_quick_option", ["option": request.reason.rawValue, "scope": workout == nil ? "plan" : "day"])
         Task {
             do {
@@ -295,11 +333,11 @@ struct AdjustSheet: View {
                     targetDate: workout?.date
                 )
                 Haptics.success()
-                phase = .done(adjustment)
+                go(to: .done(adjustment))
             } catch {
                 Haptics.error()
                 if case APIError.subscriptionRequired = error { await subscriptions.refresh() }
-                phase = .failed((error as? LocalizedError)?.errorDescription ?? "Please try again.", request)
+                go(to: .failed((error as? LocalizedError)?.errorDescription ?? "Please try again.", request))
             }
         }
     }
