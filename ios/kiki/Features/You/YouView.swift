@@ -82,9 +82,13 @@ struct YouView: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
                 if let since = store.memberSince {
-                    Text("Joined \(since.formatted(.dateTime.month(.wide).year()))")
+                    // Short month so it fits one line ("Sep 2026"); shrinks a
+                    // touch on narrow phones rather than wrapping.
+                    Text("Running with Kiki since \(since.formatted(.dateTime.month(.abbreviated).year()))")
                         .font(.detail)
                         .foregroundStyle(.muted)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
                 }
             }
             Spacer(minLength: 0)
