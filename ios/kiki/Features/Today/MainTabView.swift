@@ -123,7 +123,7 @@ extension View {
 }
 
 /// The run button over the tab bar's middle slot: a black circle with a
-/// Volt play triangle. Placed where the tab bar is (`TabBarFrameReader`)
+/// white play triangle. Placed where the tab bar is (`TabBarFrameReader`)
 /// and hidden with it on pushed screens.
 private struct RunTabButton: View {
     let isHidden: Bool
@@ -137,11 +137,11 @@ private struct RunTabButton: View {
                 let origin = proxy.frame(in: .global).origin
                 Button(action: action) {
                     Image(systemName: "play.fill")
-                        .font(.system(.body, weight: .bold))
-                        .foregroundStyle(Color.highlight)
+                        .font(.system(.subheadline, weight: .bold))
+                        .foregroundStyle(.white)
                         // Nudged right so the triangle looks centered.
                         .offset(x: 1.5)
-                        .frame(width: 50, height: 50)
+                        .frame(width: 44, height: 44)
                         .background(Color.onHighlight, in: .circle)
                         .contentShape(.circle)
                 }
