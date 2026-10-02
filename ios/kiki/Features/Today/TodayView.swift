@@ -24,7 +24,6 @@ struct TodayView: View {
                 if let plan = store.plan {
                     GoalProgressCard(
                         plan: plan,
-                        units: units,
                         greeting: greeting,
                         onOpen: { path.append(HomeRoute.goal) },
                         onAdjust: { sheet = .adjust },
@@ -64,11 +63,11 @@ struct TodayView: View {
         .onAppear { Analytics.screen("Home") }
     }
 
-    /// "Good evening, Stuart", by time of day.
+    /// "Good evening, Stuart!", by time of day.
     private var greeting: String {
         let hour = Calendar.current.component(.hour, from: .now)
         let part = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening"
-        return store.profile?.firstName.map { "\(part), \($0)" } ?? part
+        return store.profile?.firstName.map { "\(part), \($0)!" } ?? "\(part)!"
     }
 
     /// The next several days after today (rest days included, so the
@@ -78,13 +77,12 @@ struct TodayView: View {
     }
 }
 
-/// Home's header: a greeting, the goal and its date, the countdown and
+/// Home's header: today's date, a greeting, the goal, the countdown and
 /// progress on the asphalt (tap for the goal details), with the plan
 /// actions in its footer.
 private struct GoalProgressCard: View {
     @Environment(TrainingStore.self) private var store
     let plan: Plan
-    let units: Units
     let greeting: String
     let onOpen: () -> Void
     let onAdjust: () -> Void
@@ -129,11 +127,14 @@ private struct GoalProgressCard: View {
 
         return VStack(alignment: .leading, spacing: Spacing.xl) {
             VStack(alignment: .leading, spacing: Spacing.xs) {
+                Text(Date.now, format: .dateTime.weekday(.wide).month(.abbreviated).day())
+                    .font(.eyebrow)
+                    .foregroundStyle(.muted)
                 Text(greeting)
                     .font(.heroTitle)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
-                Text("\(plan.goalHeadline(units: units)) · \(Plan.goalDate(timeline.endDate))")
+                Text("Your goal: \(plan.displayName)")
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(.muted)
                     .fixedSize(horizontal: false, vertical: true)
@@ -173,27 +174,7 @@ private struct GoalProgressCard: View {
 }
 
 extension Plan {
-    /// What the runner is working toward, in plain words: "Finish the
-    /// Chicago Marathon", "10K in 45:00", "Run 30 minutes non-stop".
-    func goalHeadline(units: Units) -> String {
-        let distance = distanceLabel(units: units)
-        switch goalKind {
-        case .race:
-            if goalType == .time, let time = goalTimeS {
-                return "\(raceName ?? distance) in \(Format.duration(time))"
-            }
-            return "Finish the \(raceName ?? distance)"
-        case .faster:
-            if let time = goalTimeS { return "\(distance) in \(Format.duration(time))" }
-            return "A faster \(distance)"
-        case .start:
-            return "Run 30 minutes non-stop"
-        case .fit:
-            return "Run consistently"
-        }
-    }
-
-    /// The goal's date, under the headline: "December 16", with the year
+    /// A goal's date: "December 16", with the year
     /// only when it isn't this year ("March 7, 2027").
     static func goalDate(_ day: Day) -> String {
         let isThisYear = Calendar.current.isDate(day.date, equalTo: .now, toGranularity: .year)
