@@ -32,9 +32,9 @@ struct AdjustSheet: View {
     @State private var phase: Phase = .options
     @State private var message = ""
     @State private var height: CGFloat = 420
-    /// The options screen's height: the text box screen keeps it, so the
-    /// sheet doesn't resize and the buttons stay in the same place.
-    @State private var optionsHeight: CGFloat?
+    /// Screens fade out, swap while hidden (so the sheet resizes while
+    /// empty), then fade back in.
+    @State private var isContentVisible = true
     @FocusState private var messageFocused: Bool
 
     private enum Phase: Equatable {
@@ -58,21 +58,13 @@ struct AdjustSheet: View {
             content
                 // Each screen crossfades with a soft blur while the sheet
                 // eases to its new height on the same curve.
-                .id(phaseKey)
-                // The old screen fades out quickly, then the new one fades in,
-                // so they never overlap.
-                .transition(.asymmetric(
-                    insertion: .opacity.animation(.smooth(duration: 0.3).delay(0.12)),
-                    removal: .opacity.animation(.easeOut(duration: 0.12))
-                ))
+                .opacity(isContentVisible ? 1 : 0)
+                .offset(y: isContentVisible ? 0 : 6)
                 .padding(.horizontal, Metrics.screenMargin)
                 .padding(.top, Spacing.xxxl)
                 .padding(.bottom, Spacing.l)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { new in
-                    if phase == .options { optionsHeight = new }
-                    withAnimation(Self.transition) { height = new }
-                }
+                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height = $0 }
         }
         .scrollBounceBehavior(.basedOnSize)
         .presentationDetents([.height(min(height, 680))])
@@ -96,10 +88,14 @@ struct AdjustSheet: View {
         }
     }
 
-    private static let transition = Animation.smooth(duration: 0.4)
-
     private func go(to next: Phase) {
-        withAnimation(Self.transition) { phase = next }
+        withAnimation(.easeOut(duration: 0.12)) { isContentVisible = false }
+        Task {
+            try? await Task.sleep(for: .seconds(0.12))
+            phase = next
+            try? await Task.sleep(for: .seconds(0.05))
+            withAnimation(.smooth(duration: 0.28)) { isContentVisible = true }
+        }
     }
 
     private var phaseKey: String {
@@ -224,8 +220,6 @@ struct AdjustSheet: View {
                 TextField(placeholder(reason), text: $message, axis: .vertical)
                     .lineLimit(3...6)
                     .focused($messageFocused)
-                    // Grows to fill the sheet's height.
-                    .frame(maxHeight: .infinity, alignment: .topLeading)
                     .inputField()
                 Footnote("If something hurts and it's sharp, getting worse, or lasts more than a few days, please see a medical professional.")
             }
@@ -240,11 +234,9 @@ struct AdjustSheet: View {
                 }
             }
         }
-        // Same height as the options screen (minus its padding).
-        .frame(minHeight: max((optionsHeight ?? 0) - Spacing.xxxl - Spacing.l, 0), alignment: .top)
         // The keyboard comes up once the switch has settled.
         .task {
-            try? await Task.sleep(for: .seconds(0.45))
+            try? await Task.sleep(for: .seconds(0.4))
             messageFocused = true
         }
     }
