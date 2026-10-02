@@ -100,8 +100,7 @@ struct PlanView: View {
 
 /// The top of the Plan tab: progress and goal together. A ring that fills
 /// day by day through the plan (days to go inside), beside the goal and its date,
-/// then a hairline and the two stats that matter most: distance run and
-/// average pace.
+/// then a hairline and two stats: distance run and the longest run.
 struct ProgressCard: View {
     @Environment(TrainingStore.self) private var store
     let plan: Plan
@@ -110,9 +109,7 @@ struct ProgressCard: View {
     var body: some View {
         let runs = store.runs.filter { Day($0.startedAt) >= plan.startDate && Day($0.startedAt) <= plan.raceDate }
         let distanceM = runs.reduce(0) { $0 + $1.distanceM }
-        let timed = runs.filter { $0.durationS > 0 && $0.distanceM > 0 }
-        let timedM = timed.reduce(0) { $0 + $1.distanceM }
-        let timedS = Double(timed.reduce(0) { $0 + $1.durationS })
+        let longestM = runs.map(\.distanceM).max() ?? 0
         let timeline = PlanTimeline(plan: plan, store: store)
 
         Card(padding: Spacing.l) {
@@ -136,8 +133,7 @@ struct ProgressCard: View {
                     HStack(spacing: Spacing.m) {
                         Stat(value: Format.distanceNumber(distanceM, units), label: units == .mi ? "Miles run" : "Km run")
                         Rectangle().fill(Color.hairline).frame(width: 1, height: 32)
-                        Stat(value: timedM > 0 ? Format.pace(timedS / (timedM / 1000), units, withUnit: false) : "–:––",
-                             label: "Avg. pace /\(units.rawValue)")
+                        Stat(value: Format.distanceNumber(longestM, units), label: "Longest run")
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -179,7 +175,7 @@ private struct PlanRing: View {
 
     var body: some View {
         ZStack {
-            HighlightProgressRing(progress: timeline.progress, lineWidth: lineWidth)
+            ProgressRing(progress: timeline.progress, lineWidth: lineWidth)
             Group {
                 switch timeline.phase {
                 case .underway:

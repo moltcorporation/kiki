@@ -42,7 +42,7 @@ struct ThisWeekCard: View {
                             .monospacedDigit()
                     }
                     // The bar follows the label beside it: runs done out of runs planned.
-                    HighlightProgressBar(progress: runs.isEmpty ? 0 : Double(runsDone) / Double(runs.count))
+                    ProgressBar(progress: runs.isEmpty ? 0 : Double(runsDone) / Double(runs.count))
                 }
                 .accessibilityElement(children: .combine)
             }

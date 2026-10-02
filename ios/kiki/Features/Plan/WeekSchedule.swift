@@ -140,7 +140,7 @@ private struct WorkoutEvent: View {
         HStack(spacing: Spacing.s + Spacing.xxs) {
             StatusCircle(status: workout.status, isToday: isToday)
             Text(workout.title)
-                .font(.subheadline.weight(.semibold))
+                .font(.subheadline.weight(.medium))
                 // Done and skipped are struck through, so finished days read at a glance.
                 .strikethrough(workout.status != .planned)
                 .foregroundStyle(workout.status == .planned ? Color.ink : Color.muted)

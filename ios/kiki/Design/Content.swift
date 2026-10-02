@@ -151,17 +151,19 @@ struct CardActions: View {
     }
 }
 
-/// A progress bar: a volt fill on the soft near-black `highlightTrack`
-/// (volt needs a dark track to be seen; see `Color.highlightTrack`).
-struct HighlightProgressBar: View {
+/// A progress bar: black on a light gray track by default. `isHighlighted`
+/// makes it Volt on the soft near-black `highlightTrack` (Volt needs a dark
+/// track to be seen); for now only the goal card uses that.
+struct ProgressBar: View {
     let progress: Double
+    var isHighlighted = false
 
     var body: some View {
         GeometryReader { proxy in
             ZStack(alignment: .leading) {
-                Capsule().fill(Color.highlightTrack)
+                Capsule().fill(isHighlighted ? Color.highlightTrack : Color.track)
                 Capsule()
-                    .fill(Color.highlight)
+                    .fill(isHighlighted ? Color.highlight : Color.ink)
                     .frame(width: max(0, min(progress, 1)) * proxy.size.width)
             }
         }
@@ -171,17 +173,19 @@ struct HighlightProgressBar: View {
     }
 }
 
-/// A progress ring: a volt arc on the same soft near-black track.
-struct HighlightProgressRing: View {
+/// A progress ring: black on a light gray track by default, or Volt on the
+/// soft near-black track when highlighted.
+struct ProgressRing: View {
     let progress: Double
     var lineWidth: CGFloat = 8
+    var isHighlighted = false
 
     var body: some View {
         ZStack {
-            Circle().stroke(Color.highlightTrack, lineWidth: lineWidth)
+            Circle().stroke(isHighlighted ? Color.highlightTrack : Color.track, lineWidth: lineWidth)
             Circle()
                 .trim(from: 0, to: max(0, min(progress, 1)))
-                .stroke(Color.highlight, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+                .stroke(isHighlighted ? Color.highlight : Color.ink, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
                 .rotationEffect(.degrees(-90))
                 .animation(.smooth, value: progress)
         }

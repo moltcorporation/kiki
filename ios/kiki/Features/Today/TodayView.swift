@@ -146,7 +146,7 @@ private struct GoalProgressCard: View {
                         .font(.subheadline.weight(.medium))
                         .foregroundStyle(.ink.opacity(0.7))
                 }
-                HighlightProgressBar(progress: Double(timeline.week) / Double(timeline.totalWeeks))
+                ProgressBar(progress: Double(timeline.week) / Double(timeline.totalWeeks), isHighlighted: true)
             }
         }
         .foregroundStyle(.ink)
