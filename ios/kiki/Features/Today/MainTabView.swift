@@ -46,6 +46,7 @@ struct MainTabView: View {
             }
         }
         .onChange(of: tab) { Haptics.select() }
+        .background(RunButtonCatcher { startRun() })
         .fullScreenCover(isPresented: $tracker.isPresented) {
             RunTrackerView()
         }
@@ -128,5 +129,60 @@ extension View {
                 AdjustMenuSheet()
             }
         }
+    }
+}
+
+/// Catches taps on the tab bar's run button before the tab bar sees them,
+/// so its selection highlight never slides over to it: a clear control laid
+/// over the middle tab item, inside the tab bar (so it hides with it).
+private struct RunButtonCatcher: UIViewRepresentable {
+    let action: () -> Void
+
+    func makeUIView(context: Context) -> UIView {
+        let view = UIView()
+        view.isUserInteractionEnabled = false
+        return view
+    }
+
+    func updateUIView(_ view: UIView, context: Context) {
+        let action = action
+        DispatchQueue.main.async {
+            guard let tabBar = Self.tabBar(in: view.window?.rootViewController) else { return }
+            if let catcher = tabBar.subviews.compactMap({ $0 as? CatcherControl }).first {
+                catcher.action = action
+                return
+            }
+            let catcher = CatcherControl()
+            catcher.action = action
+            catcher.isAccessibilityElement = false
+            catcher.translatesAutoresizingMaskIntoConstraints = false
+            tabBar.addSubview(catcher)
+            NSLayoutConstraint.activate([
+                catcher.centerXAnchor.constraint(equalTo: tabBar.centerXAnchor),
+                catcher.topAnchor.constraint(equalTo: tabBar.topAnchor),
+                catcher.bottomAnchor.constraint(equalTo: tabBar.safeAreaLayoutGuide.bottomAnchor),
+                catcher.widthAnchor.constraint(equalToConstant: 64),
+            ])
+        }
+    }
+
+    private static func tabBar(in controller: UIViewController?) -> UITabBar? {
+        guard let controller else { return nil }
+        if let tabs = controller as? UITabBarController { return tabs.tabBar }
+        for child in controller.children {
+            if let found = tabBar(in: child) { return found }
+        }
+        return tabBar(in: controller.presentedViewController)
+    }
+
+    final class CatcherControl: UIControl {
+        var action: (() -> Void)?
+
+        override init(frame: CGRect) {
+            super.init(frame: frame)
+            addAction(UIAction { [weak self] _ in self?.action?() }, for: .touchUpInside)
+        }
+
+        required init?(coder: NSCoder) { fatalError() }
     }
 }
