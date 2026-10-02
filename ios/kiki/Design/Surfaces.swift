@@ -111,17 +111,29 @@ struct Card<Content: View>: View {
     }
 }
 
-/// For screens without a top bar: fades content out under the status bar as
-/// it scrolls, so rows never collide with the clock.
+/// For screens without a top bar: content dissolves as it scrolls under
+/// the status bar. Solid page color behind the clock and Dynamic Island,
+/// then a soft fade below, so rows never collide with them.
 struct StatusBarFade: ViewModifier {
     var color: Color = .canvas
+    /// How far below the status bar the fade runs.
+    private let fade: CGFloat = Spacing.xxl
 
     func body(content: Content) -> some View {
         content.overlay(alignment: .top) {
             GeometryReader { proxy in
-                LinearGradient(colors: [color, color.opacity(0)], startPoint: .top, endPoint: .bottom)
-                    .frame(height: proxy.safeAreaInsets.top + Spacing.l)
-                    .offset(y: -proxy.safeAreaInsets.top)
+                let top = proxy.safeAreaInsets.top
+                LinearGradient(
+                    stops: [
+                        .init(color: color, location: 0),
+                        .init(color: color, location: top / (top + fade)),
+                        .init(color: color.opacity(0), location: 1),
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .frame(height: top + fade)
+                .offset(y: -top)
             }
             .allowsHitTesting(false)
         }

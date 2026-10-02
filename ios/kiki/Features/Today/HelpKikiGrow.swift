@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// The end of Home: "Help Kiki grow", a row of compact tiles that scrolls
-/// sideways (share feedback, leave a review, invite a friend).
+/// sideways (share feedback, invite a friend, leave a review).
 struct HelpKikiGrowSection: View {
     @Environment(\.openURL) private var openURL
     @State private var showFeedback = false
@@ -18,13 +18,6 @@ struct HelpKikiGrowSection: View {
                     }
                     .buttonStyle(.haptic)
 
-                    Button {
-                        Analytics.track("help_kiki_grow_tapped", ["item": "review"])
-                        openURL(Config.writeReviewURL)
-                    } label: {
-                        GrowTile(icon: "star", title: "Leave a review", subtitle: "On the App Store")
-                    }
-                    .buttonStyle(.haptic)
                     ShareLink(
                         item: Config.appStoreURL,
                         message: Text("I'm training with Kiki, an AI running coach that builds your plan around your goal. Try it:")
@@ -36,6 +29,13 @@ struct HelpKikiGrowSection: View {
                         Analytics.track("help_kiki_grow_tapped", ["item": "invite"])
                     })
 
+                    Button {
+                        Analytics.track("help_kiki_grow_tapped", ["item": "review"])
+                        openURL(Config.writeReviewURL)
+                    } label: {
+                        GrowTile(icon: "star", title: "Leave a review", subtitle: "On the App Store")
+                    }
+                    .buttonStyle(.haptic)
                 }
             }
             // Scroll edge to edge, starting on the page margin.
