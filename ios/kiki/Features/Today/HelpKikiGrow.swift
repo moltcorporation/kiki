@@ -55,22 +55,21 @@ private struct GrowTile: View {
     let title: LocalizedStringKey
     let subtitle: LocalizedStringKey
 
-    static let width: CGFloat = 148
+    static let width: CGFloat = 160
     static let height: CGFloat = 124
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             RowIcon(systemName: icon)
             Spacer(minLength: Spacing.s)
+            // No shrink-to-fit, so every tile's text is the same size.
             Text(title)
                 .font(.rowTitle)
                 .lineLimit(1)
-                .minimumScaleFactor(0.8)
             Text(subtitle)
                 .font(.detail)
                 .foregroundStyle(.muted)
                 .lineLimit(1)
-                .minimumScaleFactor(0.8)
                 .padding(.top, Spacing.xxs)
         }
         .foregroundStyle(.ink)
