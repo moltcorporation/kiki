@@ -80,7 +80,7 @@ private struct DayRow: View {
                 .accessibilityLabel("\(workout.date.date.formatted(.dateTime.weekday(.wide))), rest")
         } else if isNavigable {
             let link = NavigationLink(value: workout) {
-                WorkoutEvent(workout: workout, units: units, showsGrip: onMove != nil && workout.status == .planned)
+                WorkoutEvent(workout: workout, units: units, showsGrip: onMove != nil && workout.status == .planned, showsChevron: true)
                     .contentShape(.rect(cornerRadius: Radius.inner))
             }
             .buttonStyle(.haptic)
@@ -130,6 +130,8 @@ private struct WorkoutEvent: View {
     let workout: Workout
     let units: Units
     var showsGrip = false
+    /// A chevron when tapping the tile opens the workout.
+    var showsChevron = false
 
     var body: some View {
         let isToday = workout.date == .today
@@ -148,11 +150,16 @@ private struct WorkoutEvent: View {
                     .lineLimit(1)
             }
             Spacer(minLength: Spacing.s)
-            if showsGrip {
-                Image(systemName: "line.3.horizontal")
-                    .font(.footnote.weight(.semibold))
-                    .foregroundStyle(.tertiary)
-                    .accessibilityHidden(true)
+            HStack(spacing: Spacing.m) {
+                if showsGrip {
+                    Image(systemName: "line.3.horizontal")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(.tertiary)
+                        .accessibilityHidden(true)
+                }
+                if showsChevron {
+                    RowChevron()
+                }
             }
         }
         .padding(.horizontal, Spacing.m)
