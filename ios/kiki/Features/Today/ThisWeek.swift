@@ -6,12 +6,14 @@ import SwiftUI
 struct ThisWeekCard: View {
     @Environment(TrainingStore.self) private var store
     let units: Units
+    /// Any day in the week to show (this week by default).
+    var week: Day = .today
     let onOpen: (Workout) -> Void
 
     var body: some View {
-        let monday = Day.today.mondayOfWeek
+        let monday = week.mondayOfWeek
         let days = (0..<7).map { monday.adding(days: $0) }
-        let workouts = store.workouts(inWeekOf: .today)
+        let workouts = store.workouts(inWeekOf: week)
         let runs = workouts.filter { !$0.isRest }
         let plannedM = Double(runs.compactMap(\.distanceM).reduce(0, +))
         let doneM = store.runs

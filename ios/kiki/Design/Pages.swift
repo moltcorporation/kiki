@@ -307,6 +307,8 @@ struct PageSection<Content: View>: View {
     /// An optional link on the right of the title ("See plan").
     var actionTitle: LocalizedStringKey?
     var action: (() -> Void)?
+    /// Page dots beside the title when the content swipes (`SwipePager`).
+    var pages: (count: Int, index: Int)?
     @ViewBuilder let content: Content
 
     init(
@@ -315,6 +317,7 @@ struct PageSection<Content: View>: View {
         detail: String? = nil,
         actionTitle: LocalizedStringKey? = nil,
         action: (() -> Void)? = nil,
+        pages: (count: Int, index: Int)? = nil,
         @ViewBuilder content: () -> Content
     ) {
         self.title = title
@@ -322,6 +325,7 @@ struct PageSection<Content: View>: View {
         self.detail = detail
         self.actionTitle = actionTitle
         self.action = action
+        self.pages = pages
         self.content = content()
     }
 
@@ -341,6 +345,13 @@ struct PageSection<Content: View>: View {
                 }
                 .accessibilityElement(children: .combine)
                 .accessibilityAddTraits(.isHeader)
+                .contentTransition(.opacity)
+                .animation(.smooth, value: title)
+                if let pages {
+                    PageDots(count: pages.count, index: pages.index)
+                        .padding(.leading, Spacing.xs)
+                        .alignmentGuide(.lastTextBaseline) { $0[VerticalAlignment.center] + 4 }
+                }
                 Spacer()
                 if let detail {
                     Text(detail)

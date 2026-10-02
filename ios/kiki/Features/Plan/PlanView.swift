@@ -6,7 +6,7 @@ import SwiftUI
 /// no scrolling to find it.
 struct PlanView: View {
     @Environment(TrainingStore.self) private var store
-    @State private var path: [Workout] = []
+    @State private var path = NavigationPath()
     /// Fires the confetti when the finish line scrolls into view.
     @State private var celebrations = 0
     /// Shown briefly after a drop until moving workouts is wired up.
@@ -76,7 +76,7 @@ struct PlanView: View {
             Group {
                 TabPage("Your plan", accessory: headerButtons) {
                     if let plan = store.plan {
-                        ProgressCard(plan: plan, units: units)
+                        ProgressCard(plan: plan, units: units, onGoal: { path.append(PlanRoute.goal) })
                     }
                     if showsCalendar {
                         PlanCalendar(workouts: store.workouts, units: units)
@@ -106,6 +106,7 @@ struct PlanView: View {
 
             }
             .navigationDestination(for: Workout.self) { WorkoutDetailView(workoutID: $0.id) }
+            .navigationDestination(for: PlanRoute.self) { _ in GoalDetailView() }
         }
         .overlay { ConfettiBurst(trigger: celebrations).ignoresSafeArea() }
         .overlay(alignment: .bottom) {
@@ -132,10 +133,16 @@ struct PlanView: View {
 /// The top of the Plan tab: progress and goal together. A ring that fills
 /// day by day through the plan (days to go inside), beside the goal and its date,
 /// then a hairline and two stats: distance run and the longest run.
+private enum PlanRoute: Hashable { case goal }
+
 struct ProgressCard: View {
     @Environment(TrainingStore.self) private var store
     let plan: Plan
     let units: Units
+    /// Opens "Your goal" (tap the goal's name).
+    var onGoal: () -> Void = {}
+
+    @State private var stat: StatSheet.Kind?
 
     var body: some View {
         let runs = store.runs.filter { Day($0.startedAt) >= plan.startDate && Day($0.startedAt) <= plan.raceDate }
@@ -148,27 +155,46 @@ struct ProgressCard: View {
                 PlanRing(timeline: timeline)
 
                 VStack(alignment: .leading, spacing: Spacing.m) {
-                    VStack(alignment: .leading, spacing: Spacing.xxs) {
-                        Text(plan.displayName)
-                            .font(.rowTitle)
-                            .lineLimit(2)
-                            .fixedSize(horizontal: false, vertical: true)
-                        Text(Plan.goalDate(timeline.endDate))
-                            .font(.detail)
-                            .foregroundStyle(.muted)
+                    Button(action: onGoal) {
+                        HStack(spacing: Spacing.xs) {
+                            VStack(alignment: .leading, spacing: Spacing.xxs) {
+                                Text(plan.displayName)
+                                    .font(.rowTitle)
+                                    .lineLimit(2)
+                                    .fixedSize(horizontal: false, vertical: true)
+                                Text(Plan.goalDate(timeline.endDate))
+                                    .font(.detail)
+                                    .foregroundStyle(.muted)
+                            }
+                            Spacer(minLength: 0)
+                            RowChevron()
+                        }
+                        .foregroundStyle(.ink)
+                        .contentShape(.rect)
                     }
+                    .buttonStyle(.haptic)
                     .accessibilityElement(children: .combine)
+                    .accessibilityHint("Shows your goal")
 
                     Rectangle().fill(Color.hairline).frame(height: 1)
 
                     HStack(spacing: Spacing.m) {
-                        Stat(value: Format.distanceNumber(distanceM, units), label: units == .mi ? "Miles run" : "Km run")
+                        Button { stat = .distance } label: {
+                            Stat(value: Format.distanceNumber(distanceM, units), label: units == .mi ? "Miles run" : "Km run")
+                        }
+                        .buttonStyle(.haptic)
                         Rectangle().fill(Color.hairline).frame(width: 1, height: 32)
-                        Stat(value: Format.distanceNumber(longestM, units), unit: units.rawValue, label: "Longest run")
+                        Button { stat = .longest } label: {
+                            Stat(value: Format.distanceNumber(longestM, units), unit: units.rawValue, label: "Longest run")
+                        }
+                        .buttonStyle(.haptic)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
+        }
+        .sheet(item: $stat) { kind in
+            StatSheet(kind: kind, runs: runs, units: units, since: plan.startDate)
         }
     }
 
@@ -192,7 +218,86 @@ struct ProgressCard: View {
                     .minimumScaleFactor(0.8)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+            .foregroundStyle(.ink)
+            .contentShape(.rect)
             .accessibilityElement(children: .combine)
+            .accessibilityHint("Explains this number")
+        }
+    }
+}
+
+/// Tap a stat on the progress card: the number, what it means, and one
+/// useful detail, in a small sheet.
+private struct StatSheet: View {
+    enum Kind: String, Identifiable {
+        case distance, longest
+        var id: String { rawValue }
+    }
+
+    let kind: Kind
+    let runs: [Run]
+    let units: Units
+    let since: Day
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var height: CGFloat = 320
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Spacing.xl) {
+            VStack(alignment: .leading, spacing: Spacing.xs) {
+                Text(title)
+                    .font(.eyebrow)
+                    .foregroundStyle(.muted)
+                (Text(value) + Text(" \(units.rawValue)").font(.title3.weight(.semibold)))
+                    .font(.metric(.largeTitle))
+                Text(detail)
+                    .font(.detail)
+                    .foregroundStyle(.muted)
+            }
+            .accessibilityElement(children: .combine)
+            Text(explanation)
+                .font(.body)
+                .fixedSize(horizontal: false, vertical: true)
+            SecondaryButton("Done") { dismiss() }
+        }
+        .padding(.horizontal, Metrics.screenMargin)
+        .padding(.top, Spacing.xxxl)
+        .padding(.bottom, Spacing.l)
+        .fixedSize(horizontal: false, vertical: true)
+        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height = $0 }
+        .presentationDetents([.height(height)])
+        .presentationDragIndicator(.visible)
+        .presentationBackground(Color.surface)
+    }
+
+    private var longest: Run? { runs.max { $0.distanceM < $1.distanceM } }
+
+    private var title: LocalizedStringKey {
+        kind == .distance ? (units == .mi ? "Miles run" : "Kilometers run") : "Longest run"
+    }
+
+    private var value: String {
+        switch kind {
+        case .distance: Format.distanceNumber(runs.reduce(0) { $0 + $1.distanceM }, units)
+        case .longest: Format.distanceNumber(longest?.distanceM ?? 0, units)
+        }
+    }
+
+    private var detail: String {
+        switch kind {
+        case .distance:
+            "\(runs.count) \(runs.count == 1 ? "run" : "runs") since \(Format.shortDate(since))"
+        case .longest:
+            longest.map { "\(Format.weekday(Day($0.startedAt), style: .abbreviated)), \(Format.shortDate(Day($0.startedAt)))" } ?? "No runs yet"
+        }
+    }
+
+    private var explanation: String {
+        switch kind {
+        case .distance:
+            "Every run you've logged or synced since your plan began, added up. Consistent weeks are what build your fitness."
+        case .longest:
+            "Your longest single run in this plan. Your weekly long run builds it up, step by step."
         }
     }
 }
@@ -338,8 +443,8 @@ private struct CompletedWeeks: View {
     }
 }
 
-/// A completed stretch: a Volt check when every run was done (else
-/// "2/3"), the title over its dates, runs done, and a chevron.
+/// A completed stretch: a Volt check (always: it's in the past), the title
+/// over its dates, runs done, and a chevron.
 private struct SummaryRow: View {
     let title: String
     let workouts: [Workout]
@@ -348,22 +453,14 @@ private struct SummaryRow: View {
     var body: some View {
         let runs = workouts.filter { !$0.isRest }
         let done = runs.filter { $0.status == .completed }.count
-        // The multi-week summary always shows a check: it's the finished
-        // stretch. Single weeks show a check only when every run was done.
-        let weeks = Set(workouts.map(\.week)).count
-        let allDone = weeks > 1 || (done == runs.count && !runs.isEmpty)
         HStack(spacing: Spacing.m) {
+            // Past weeks are done, skipped runs and all: you can't go back
+            // and run them, so never show them as unfinished.
             ZStack {
-                Circle().fill(allDone ? Color.highlight : Color.wash)
-                if allDone {
-                    Image(systemName: "checkmark")
-                        .font(.footnote.weight(.bold))
-                        .foregroundStyle(Color.onHighlight)
-                } else {
-                    Text("\(done)/\(runs.count)")
-                        .font(.caption2.weight(.bold))
-                        .monospacedDigit()
-                }
+                Circle().fill(Color.highlight)
+                Image(systemName: "checkmark")
+                    .font(.footnote.weight(.bold))
+                    .foregroundStyle(Color.onHighlight)
             }
             .frame(width: 34, height: 34)
             .accessibilityHidden(true)

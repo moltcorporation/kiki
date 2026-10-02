@@ -9,6 +9,10 @@ struct TodayView: View {
     var onViewPlan: () -> Void = {}
 
     @State private var sheet: AppSheet?
+    /// 0 = today, 1 = tomorrow.
+    @State private var dayPage = 0
+    /// 0 = this week, 1 = next week.
+    @State private var weekPage = 0
     /// Holds `Workout`s and `HomeRoute`s.
     @State private var path = NavigationPath()
 
@@ -34,28 +38,26 @@ struct TodayView: View {
                     MessageCard(icon: "sparkles", title: "Building your new plan…", message: "This usually takes under a minute.")
                 }
 
-                PageSection("Today") {
-                    if let workout = store.workouts.first(where: { $0.date == .today }) {
-                        TodayCard(
-                            workout: workout,
-                            run: store.run(for: workout),
-                            units: units,
-                            paces: store.plan?.paces,
-                            onOpen: { path.append(workout) },
-                            onLog: { sheet = .log(workout, store.run(for: workout)) },
-                            onAdjust: { sheet = .adjustDay(workout) }
-                        )
-                    } else {
-                        OutsidePlanCard(day: .today, plan: store.plan)
+                PageSection(dayPage == 0 ? "Today" : "Tomorrow", pages: (2, dayPage)) {
+                    SwipePager(count: 2, index: $dayPage) { page in
+                        dayCard(Day.today.adding(days: page), units: units)
                     }
                 }
 
+                let nextWeek = Day.today.mondayOfWeek.adding(days: 7)
+                let weekCount = store.workouts(inWeekOf: nextWeek).isEmpty ? 1 : 2
                 if !store.workouts(inWeekOf: .today).isEmpty {
-                    PageSection("This week", actionTitle: "See plan", action: onViewPlan) {
-                        ThisWeekCard(units: units) { path.append($0) }
+                    PageSection(
+                        weekPage == 0 ? "This week" : "Next week",
+                        actionTitle: "See plan",
+                        action: onViewPlan,
+                        pages: weekCount > 1 ? (weekCount, weekPage) : nil
+                    ) {
+                        SwipePager(count: weekCount, index: $weekPage) { page in
+                            ThisWeekCard(units: units, week: page == 0 ? .today : nextWeek) { path.append($0) }
+                        }
                     }
                 }
-
 
                 GetSetUpSection()
 
@@ -69,7 +71,38 @@ struct TodayView: View {
             .appSheets($sheet)
             .overlay(alignment: .bottom) { OfflineBanner() }
         }
-        .onAppear { Analytics.screen("Home") }
+        .onAppear {
+            Analytics.screen("Home")
+            // Today's done: lead with tomorrow.
+            if isTodayDone { dayPage = 1 }
+        }
+        .onChange(of: isTodayDone) { _, done in
+            if done { withAnimation(.smooth) { dayPage = 1 } }
+        }
+    }
+
+    /// Today's run is logged or marked done (rest days never count).
+    private var isTodayDone: Bool {
+        guard let workout = store.workouts.first(where: { $0.date == .today }), !workout.isRest else { return false }
+        return workout.status == .completed || store.run(for: workout) != nil
+    }
+
+    /// One day's card: its workout, or a note when it's outside the plan.
+    @ViewBuilder
+    private func dayCard(_ day: Day, units: Units) -> some View {
+        if let workout = store.workouts.first(where: { $0.date == day }) {
+            TodayCard(
+                workout: workout,
+                run: store.run(for: workout),
+                units: units,
+                paces: store.plan?.paces,
+                onOpen: { path.append(workout) },
+                onLog: { sheet = .log(workout, store.run(for: workout)) },
+                onAdjust: { sheet = .adjustDay(workout) }
+            )
+        } else {
+            OutsidePlanCard(day: day, plan: store.plan)
+        }
     }
 
     /// "Good evening,\nStuart!" by time of day, on two lines so it always

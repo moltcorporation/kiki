@@ -51,12 +51,19 @@ struct MainTabView: View {
         // The run button sits over the empty middle tab, outside the tab bar,
         // so the bar never sees the touch and its glass highlight stays put.
         .overlay {
-            RunTabButton(isHidden: tabBar.isHidden, action: startRun)
+            RunTabButton(isHidden: tabBar.isHidden, state: tracker.state, action: startRun)
         }
         .environment(\.tabBarState, tabBar)
         .onChange(of: tab) { Haptics.select() }
-        .fullScreenCover(isPresented: $tracker.isPresented) {
+        // A sheet, so a run in progress can be swiped down to use the rest
+        // of the app (it keeps recording; the floating pill brings it back).
+        .sheet(isPresented: $tracker.isPresented, onDismiss: {
+            // Swiped away before starting: stop warming up GPS.
+            if tracker.state == .ready { tracker.close() }
+        }) {
             RunTrackerView()
+                .presentationDragIndicator(.visible)
+                .interactiveDismissDisabled(tracker.state == .finished)
         }
         .task {
             await store.refresh()
@@ -87,10 +94,27 @@ extension MainTabView {
         return image.withRenderingMode(.alwaysTemplate)
     }
 
-    /// Starts a run: linked to today's workout if there's one still to do,
-    /// otherwise a free run (rest days, extra runs).
+    /// The middle button. With no run going: opens the tracker, linked to
+    /// today's workout if there's one still to do, otherwise a free run
+    /// (rest days, extra runs). During a run it shows pause (or play when
+    /// paused): it pauses or resumes and brings the tracker back.
     func startRun() {
         Haptics.tap()
+        switch tracker.state {
+        case .running:
+            tracker.pause()
+            tracker.isPresented = true
+            return
+        case .paused:
+            tracker.resume()
+            tracker.isPresented = true
+            return
+        case .finished:
+            tracker.isPresented = true
+            return
+        case .ready:
+            break
+        }
         let today = store.workouts.first { $0.date == .today && !$0.isRest && $0.status == .planned }
         tracker.start(for: today)
     }
@@ -131,36 +155,113 @@ extension View {
 /// and hidden with it on pushed screens.
 private struct RunTabButton: View {
     let isHidden: Bool
+    let state: RunTracker.State
     let action: () -> Void
     @State private var tabBarFrame: CGRect?
     private static let glassOffset: CGFloat = 11
+
+    private var symbol: String { state == .running ? "pause.fill" : "play.fill" }
+
+    private var label: String {
+        switch state {
+        case .ready: "Start a run"
+        case .running: "Pause run"
+        case .paused: "Resume run"
+        case .finished: "Finish run"
+        }
+    }
 
     var body: some View {
         GeometryReader { proxy in
             if let frame = tabBarFrame {
                 let origin = proxy.frame(in: .global).origin
+                let center = CGPoint(x: frame.midX - origin.x, y: frame.midY - origin.y - Self.glassOffset)
                 Button(action: action) {
-                    Image(systemName: "play.fill")
+                    Image(systemName: symbol)
                         .font(.system(.subheadline, weight: .bold))
                         .foregroundStyle(Color.highlight)
+                        .contentTransition(.symbolEffect(.replace))
                         // Nudged right so the triangle looks centered.
-                        .offset(x: 1.5)
+                        .offset(x: state == .running ? 0 : 1.5)
                         .frame(width: 44, height: 44)
                         .background(Color.onHighlight, in: .circle)
                         .contentShape(.circle)
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("Start a run")
+                .accessibilityLabel(label)
                 // The bar's frame runs into the home indicator area; its
                 // visible glass is centered a little higher.
-                .position(x: frame.midX - origin.x, y: frame.midY - origin.y - Self.glassOffset)
+                .position(center)
                 .opacity(isHidden ? 0 : 1)
                 .allowsHitTesting(!isHidden)
                 .accessibilityHidden(isHidden)
+
+                // A run in progress: a pill above the bar, on the right.
+                ActiveRunPill()
+                    .frame(width: max(frame.width - Metrics.screenMargin * 2, 0), alignment: .trailing)
+                    .position(x: frame.midX - origin.x,
+                              y: frame.minY - origin.y - Self.glassOffset - Spacing.s - 25)
+                    .opacity(isHidden ? 0 : 1)
+                    .allowsHitTesting(!isHidden)
+                    .accessibilityHidden(isHidden)
             }
         }
         .ignoresSafeArea()
         .background(TabBarFrameReader { tabBarFrame = $0 })
+    }
+}
+
+/// While a run is going and the tracker is swiped away: the time and
+/// distance in a black pill with a Volt dot (pulsing while recording).
+/// Tap it to go back to the run.
+private struct ActiveRunPill: View {
+    @Environment(RunTracker.self) private var tracker
+    @Environment(TrainingStore.self) private var store
+
+    private var isVisible: Bool {
+        !tracker.isPresented && (tracker.state == .running || tracker.state == .paused)
+    }
+
+    var body: some View {
+        if isVisible {
+            Button {
+                Haptics.tap()
+                tracker.isPresented = true
+            } label: {
+                TimelineView(.periodic(from: .now, by: 1)) { context in
+                    HStack(spacing: Spacing.s + Spacing.xxs) {
+                        Circle()
+                            .fill(Color.highlight)
+                            .frame(width: 10, height: 10)
+                            .opacity(tracker.state == .paused ? 0.4 : 1)
+                            .symbolEffect(.pulse, isActive: tracker.state == .running)
+                        VStack(alignment: .leading, spacing: 0) {
+                            Text(tracker.state == .paused ? "Paused" : "Running")
+                                .font(.caption2.weight(.semibold))
+                                .foregroundStyle(.white.opacity(0.65))
+                            Text(Format.duration(Int(tracker.elapsed(at: context.date))))
+                                .font(.body.weight(.bold))
+                                .monospacedDigit()
+                        }
+                        Text(Format.distance(tracker.distanceM, store.units, decimals: 2))
+                            .font(.subheadline.weight(.medium))
+                            .foregroundStyle(.white.opacity(0.75))
+                            .monospacedDigit()
+                    }
+                    .lineLimit(1)
+                    .foregroundStyle(.white)
+                    .padding(.leading, Spacing.l)
+                    .padding(.trailing, Spacing.l + Spacing.xxs)
+                    .frame(height: 50)
+                    .background(Color.onHighlight, in: .capsule)
+                    .shadow(color: .black.opacity(0.2), radius: 10, y: 4)
+                }
+            }
+            .buttonStyle(.haptic)
+            .fixedSize()
+            .accessibilityLabel(tracker.state == .paused ? "Run paused. Open run" : "Run in progress. Open run")
+            .transition(.scale(scale: 0.8).combined(with: .opacity))
+        }
     }
 }
 

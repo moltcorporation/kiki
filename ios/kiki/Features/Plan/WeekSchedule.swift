@@ -136,14 +136,15 @@ private struct WorkoutEvent: View {
 
     var body: some View {
         let isToday = workout.date == .today
+        let status = displayStatus
         // One line: status, title, and the amount on the right.
         HStack(spacing: Spacing.s + Spacing.xxs) {
-            StatusCircle(status: workout.status, isToday: isToday)
+            StatusCircle(status: status, isToday: isToday)
             Text(workout.title)
                 .font(.subheadline.weight(.medium))
                 // Done and skipped are struck through, so finished days read at a glance.
-                .strikethrough(workout.status != .planned)
-                .foregroundStyle(workout.status == .planned ? Color.ink : Color.muted)
+                .strikethrough(status != .planned)
+                .foregroundStyle(status == .planned ? Color.ink : Color.muted)
                 .lineLimit(1)
             Spacer(minLength: Spacing.s)
             Text(amount)
@@ -167,12 +168,19 @@ private struct WorkoutEvent: View {
             }
         }
         .accessibilityElement(children: .combine)
-        .accessibilityValue(workout.status == .completed ? "Done" : workout.status == .skipped ? "Skipped" : "")
+        .accessibilityValue(status == .completed ? "Done" : workout.status == .skipped ? "Skipped" : status == .skipped ? "Missed" : "")
+    }
+
+    /// A past run that was never logged reads as missed (a dash), not as a
+    /// to-do: it can't be run anymore.
+    private var displayStatus: Workout.Status {
+        workout.status == .planned && workout.date < .today ? .skipped : workout.status
     }
 
     /// "2 mi", "1.5 mi", "30 min", or "Skipped".
     private var amount: String {
         if workout.status == .skipped { return "Skipped" }
+        if displayStatus == .skipped { return "Missed" }
         if let meters = workout.distanceM {
             let number = Format.distanceNumber(Double(meters), units)
             return "\(number.hasSuffix(".0") ? String(number.dropLast(2)) : number) \(units.rawValue)"
