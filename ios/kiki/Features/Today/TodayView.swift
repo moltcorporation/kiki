@@ -51,6 +51,8 @@ struct TodayView: View {
                     }
                 }
 
+                WhatsNewSection()
+
             }
             .refreshable { await store.refresh() }
             .hidesTabBar(!path.isEmpty)
