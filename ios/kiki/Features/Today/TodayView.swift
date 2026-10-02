@@ -19,21 +19,18 @@ struct TodayView: View {
 
         NavigationStack(path: $path) {
             TabPage(.wordmark) {
-                // The day and a greeting, then the goal (with the plan
-                // actions in its footer).
-                VStack(alignment: .leading, spacing: Metrics.sectionHeaderSpacing) {
-                    DayGreeting(name: store.profile?.firstName)
-                    if let plan = store.plan {
-                        GoalProgressCard(
-                            plan: plan,
-                            units: units,
-                            onOpen: { path.append(HomeRoute.goal) },
-                            onAdjust: { sheet = .adjust },
-                            onViewPlan: onViewPlan
-                        )
-                    }
+                // The goal card leads with a greeting, then the goal, with the
+                // plan actions in its footer.
+                if let plan = store.plan {
+                    GoalProgressCard(
+                        plan: plan,
+                        units: units,
+                        greeting: greeting,
+                        onOpen: { path.append(HomeRoute.goal) },
+                        onAdjust: { sheet = .adjust },
+                        onViewPlan: onViewPlan
+                    )
                 }
-                .padding(.top, Spacing.s)
 
                 if let pending = store.pendingPlan, pending.status == .generating {
                     MessageCard(icon: "sparkles", title: "Building your new plan…", message: "This usually takes under a minute.")
@@ -67,6 +64,13 @@ struct TodayView: View {
         .onAppear { Analytics.screen("Home") }
     }
 
+    /// "Good evening, Stuart", by time of day.
+    private var greeting: String {
+        let hour = Calendar.current.component(.hour, from: .now)
+        let part = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening"
+        return store.profile?.firstName.map { "\(part), \($0)" } ?? part
+    }
+
     /// The next several days after today (rest days included, so the
     /// runner sees the shape of the week).
     private var upcoming: [Workout] {
@@ -74,39 +78,14 @@ struct TodayView: View {
     }
 }
 
-/// Above the goal card: today's date, small and gray, over a greeting for
-/// the time of day ("Thursday, Oct 1" / "Good evening, Stuart").
-private struct DayGreeting: View {
-    let name: String?
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.xxs) {
-            Text(Date.now, format: .dateTime.weekday(.wide).month(.abbreviated).day())
-                .font(.eyebrow)
-                .foregroundStyle(.muted)
-            Text(greeting)
-                .font(.system(.title2, weight: .semibold))
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
-                .accessibilityAddTraits(.isHeader)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .accessibilityElement(children: .combine)
-    }
-
-    private var greeting: String {
-        let hour = Calendar.current.component(.hour, from: .now)
-        let part = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening"
-        return name.map { "\(part), \($0)" } ?? part
-    }
-}
-
-/// Home's header: the goal countdown and progress on the asphalt (tap for
-/// the goal details), with the plan actions in its footer.
+/// Home's header: a greeting, the goal and its date, the countdown and
+/// progress on the asphalt (tap for the goal details), with the plan
+/// actions in its footer.
 private struct GoalProgressCard: View {
     @Environment(TrainingStore.self) private var store
     let plan: Plan
     let units: Units
+    let greeting: String
     let onOpen: () -> Void
     let onAdjust: () -> Void
     let onViewPlan: () -> Void
@@ -150,14 +129,14 @@ private struct GoalProgressCard: View {
 
         return VStack(alignment: .leading, spacing: Spacing.xl) {
             VStack(alignment: .leading, spacing: Spacing.xs) {
-                Text(plan.goalHeadline(units: units))
+                Text(greeting)
                     .font(.heroTitle)
-                    .lineLimit(2)
+                    .lineLimit(1)
                     .minimumScaleFactor(0.8)
-                    .fixedSize(horizontal: false, vertical: true)
-                Text(Plan.goalDate(timeline.endDate))
+                Text("\(plan.goalHeadline(units: units)) · \(Plan.goalDate(timeline.endDate))")
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(.muted)
+                    .fixedSize(horizontal: false, vertical: true)
             }
 
             VStack(alignment: .leading, spacing: Spacing.m) {
