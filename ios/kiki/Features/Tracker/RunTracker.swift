@@ -261,7 +261,7 @@ final class RunTracker {
     // MARK: Recovery
 
     /// Everything needed to pick a run back up after the app closes.
-    private struct Snapshot: Codable {
+    private nonisolated struct Snapshot: Codable {
         var workout: Workout?
         var paused: Bool
         var startedAt: Date
