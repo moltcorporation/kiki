@@ -97,7 +97,7 @@ private struct GoalProgressCard: View {
             .accessibilityHint("Shows your goal details")
 
             CardActions(
-                .init("Adjust with Kiki", systemImage: "sparkles", perform: onAdjust),
+                .init("Adjust plan", systemImage: "sparkles", perform: onAdjust),
                 .init("View schedule", systemImage: "calendar", perform: onViewPlan)
             )
         }
