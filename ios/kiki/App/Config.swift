@@ -25,5 +25,9 @@ enum Config {
 
     static let appsFlyerDevKey = "q7DRdHdcBM2St39UQBXhfK"
     static let appleAppID = "6817469393"
+    /// Kiki on the App Store, for sharing.
+    static let appStoreURL = URL(string: "https://apps.apple.com/app/id\(appleAppID)")!
+    /// Opens the App Store app straight to "Write a Review".
+    static let writeReviewURL = URL(string: "itms-apps://apps.apple.com/app/id\(appleAppID)?action=write-review")!
 
 }

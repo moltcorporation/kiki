@@ -51,7 +51,7 @@ struct TodayView: View {
                     }
                 }
 
-                WhatsNewSection()
+                HelpKikiGrowSection()
 
             }
             .refreshable { await store.refresh() }
