@@ -124,6 +124,8 @@ private struct GoalProgressCard: View {
                     .lineLimit(2)
                     .minimumScaleFactor(0.8)
                     .fixedSize(horizontal: false, vertical: true)
+                    // Clear of the watermark.
+                    .padding(.trailing, 56)
                 Text(Plan.goalDate(timeline.endDate))
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(.muted)
@@ -146,6 +148,14 @@ private struct GoalProgressCard: View {
         .foregroundStyle(.ink)
         .padding(Metrics.cardPadding)
         .frame(maxWidth: .infinity, alignment: .topLeading)
+        // A faint runner in the corner, like a watermark.
+        .overlay(alignment: .topTrailing) {
+            Image(systemName: "figure.run")
+                .font(.system(size: 52, weight: .bold))
+                .foregroundStyle(.ink.opacity(0.12))
+                .padding(Metrics.cardPadding)
+                .accessibilityHidden(true)
+        }
         .contentShape(.rect)
     }
 
