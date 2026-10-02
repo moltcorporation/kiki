@@ -22,22 +22,10 @@ struct PlanView: View {
         }
     }
 
-    /// "Sep 28 – Oct 4 · 1 of 3 runs" for this week and past ones, and
-    /// "Oct 5 – 11 · 6.5 mi" for weeks ahead.
+    /// The week's planned distance ("6.5 mi").
     private func weekDetail(_ workouts: [Workout], units: Units) -> String {
-        guard let first = workouts.map(\.date).min() else { return "" }
-        let monday = first.mondayOfWeek
-        let sunday = monday.adding(days: 6)
-        let sameMonth = Calendar.current.isDate(monday.date, equalTo: sunday.date, toGranularity: .month)
-        let range = "\(monday.date.formatted(.dateTime.month(.abbreviated).day())) – "
-            + (sameMonth ? "\(sunday.day)" : sunday.date.formatted(.dateTime.month(.abbreviated).day()))
-        let runs = workouts.filter { !$0.isRest }
-        if monday <= .today {
-            let done = runs.filter { $0.status == .completed }.count
-            return "\(range) · \(done) of \(runs.count) runs"
-        }
-        let meters = runs.compactMap(\.distanceM).reduce(0, +)
-        return "\(range) · \(Format.distance(Double(meters), units))"
+        let meters = workouts.filter { !$0.isRest }.compactMap(\.distanceM).reduce(0, +)
+        return Format.distance(Double(meters), units)
     }
 
     var body: some View {

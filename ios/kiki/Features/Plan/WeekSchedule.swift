@@ -15,7 +15,7 @@ struct WeekSchedule: View {
     var onMove: ((_ workoutID: UUID, _ day: Day) -> Void)?
 
     var body: some View {
-        ListCard(dividerInset: RowMetrics.horizontalPadding, verticalPadding: Spacing.s) {
+        ListCard(dividerInset: Spacing.m, verticalPadding: Spacing.xs) {
             ForEach(workouts.sorted { $0.date < $1.date }) { workout in
                 DayRow(workout: workout, units: units, isNavigable: isNavigable, onMove: onMove)
             }
@@ -34,7 +34,9 @@ private struct DayRow: View {
 
     @State private var isTargeted = false
 
-    static let height: CGFloat = 72
+    /// Every day is the same height, rest days included, so the hairlines
+    /// fall evenly (and rest days stay a full-size drop target).
+    static let height: CGFloat = 60
 
     var body: some View {
         let row = HStack(spacing: Spacing.m) {
@@ -49,7 +51,8 @@ private struct DayRow: View {
                 }
                 .animation(.snappy(duration: 0.15), value: isTargeted)
         }
-        .padding(.horizontal, RowMetrics.horizontalPadding)
+        .padding(.leading, Spacing.m)
+        .padding(.trailing, RowMetrics.horizontalPadding)
         .frame(height: Self.height)
 
         if let onMove {
@@ -73,7 +76,7 @@ private struct DayRow: View {
             Text("Rest")
                 .font(.subheadline)
                 .foregroundStyle(.muted)
-                .frame(maxWidth: .infinity, minHeight: 40, alignment: .leading)
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .accessibilityLabel("\(workout.date.date.formatted(.dateTime.weekday(.wide))), rest")
         } else if isNavigable {
             let link = NavigationLink(value: workout) {
@@ -109,13 +112,13 @@ private struct DayLabel: View {
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(isPast ? Color.muted : Color.ink)
             Text("\(day.day)")
-                .font(.title3.weight(.bold))
+                .font(.body.weight(.bold))
                 .monospacedDigit()
                 .foregroundStyle(isToday ? Color.paper : isPast ? Color.muted : Color.ink)
-                .frame(width: 30, height: 30)
+                .frame(width: 26, height: 26)
                 .background(isToday ? Color.ink : Color.clear, in: .circle)
         }
-        .frame(width: 40)
+        .frame(width: 36)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(day.date.formatted(.dateTime.weekday(.wide).month(.wide).day()))
     }
@@ -153,7 +156,7 @@ private struct WorkoutEvent: View {
             }
         }
         .padding(.horizontal, Spacing.m)
-        .frame(maxWidth: .infinity, minHeight: 52, alignment: .leading)
+        .frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
         .background(isToday && workout.status == .planned ? Color.ink.opacity(0.09) : Color.wash,
                     in: .rect(cornerRadius: Radius.inner))
         .accessibilityElement(children: .combine)
