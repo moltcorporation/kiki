@@ -98,7 +98,7 @@ private struct GoalProgressCard: View {
 
             CardActions(
                 .init("Adjust with Kiki", systemImage: "sparkles", perform: onAdjust),
-                .init("Full schedule", systemImage: "calendar", perform: onViewPlan)
+                .init("View schedule", systemImage: "calendar", perform: onViewPlan)
             )
         }
         // Always dark: white type on the asphalt, in light and dark mode.

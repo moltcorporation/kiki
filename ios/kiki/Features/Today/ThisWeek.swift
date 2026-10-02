@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// Home's "This week": the seven days at a glance (done, today, upcoming,
-/// rest) and how far through the week's distance and runs the runner is.
+/// Home's "This week": the seven days at a glance (today solid black,
+/// done days a check, upcoming runs outlined, rest days gray) and how far through the week's distance and runs the runner is.
 /// Tapping a day opens its workout.
 struct ThisWeekCard: View {
     @Environment(TrainingStore.self) private var store
@@ -104,16 +104,13 @@ private struct DayColumn: View {
         ZStack {
             switch state {
             case .done:
-                Circle().fill(Color.ink)
+                // Just a check: only today is solid black.
+                Circle().fill(Color.wash)
                 Image(systemName: "checkmark")
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(.paper)
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(.ink)
             case .today:
                 Circle().fill(Color.ink)
-                // A ring around today, so it stands apart from done days.
-                Circle()
-                    .strokeBorder(Color.ink, lineWidth: 1.5)
-                    .padding(-4)
                 Text("\(day.day)")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.paper)
