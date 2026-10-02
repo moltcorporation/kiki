@@ -43,7 +43,11 @@ struct MainTabView: View {
             Tab(value: .run, role: .search) {
                 Color.clear
             } label: {
-                Label("Start a run", systemImage: "play.fill")
+                Label {
+                    Text("Start a run")
+                } icon: {
+                    Image(uiImage: Self.runIcon)
+                }
             }
         }
         .onChange(of: tab) { Haptics.select() }
@@ -71,13 +75,31 @@ extension MainTabView {
     }
 
     static func tabIcon(_ symbol: String, filled: Bool) -> UIImage {
-        let configuration = UIImage.SymbolConfiguration(pointSize: 15, weight: .regular)
+        let configuration = UIImage.SymbolConfiguration(pointSize: 14, weight: .regular)
         let image = (filled ? UIImage(systemName: symbol + ".fill", withConfiguration: configuration) : nil)
             ?? UIImage(systemName: symbol, withConfiguration: configuration)
             ?? UIImage()
         // Template, so the tab bar still tints selected and unselected.
         return image.withRenderingMode(.alwaysTemplate)
     }
+
+    /// The run button: a Volt play triangle on a black circle that fills
+    /// iOS's floating glass circle, drawn in its own colors so the tab bar
+    /// doesn't tint it.
+    static let runIcon: UIImage = {
+        let size = CGSize(width: 60, height: 60)
+        let image = UIGraphicsImageRenderer(size: size).image { _ in
+            UIColor(Color.onHighlight).setFill()
+            UIBezierPath(ovalIn: CGRect(origin: .zero, size: size)).fill()
+            let play = UIImage(systemName: "play.fill", withConfiguration: UIImage.SymbolConfiguration(pointSize: 13, weight: .bold))?
+                .withTintColor(UIColor(Color.highlight), renderingMode: .alwaysOriginal)
+            if let play {
+                // Nudged right so the triangle looks centered.
+                play.draw(at: CGPoint(x: (size.width - play.size.width) / 2 + 1.5, y: (size.height - play.size.height) / 2))
+            }
+        }
+        return image.withRenderingMode(.alwaysOriginal)
+    }()
 
     /// Starts a run: linked to today's workout if there's one still to do,
     /// otherwise a free run (rest days, extra runs).
