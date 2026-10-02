@@ -284,13 +284,14 @@ final class TrainingStore {
 
     // MARK: Coach adjustments
 
-    func requestAdjustment(reason: AdjustReason, message: String?) async throws -> Adjustment {
-        struct Body: Encodable { let id: UUID; let reason: AdjustReason; let message: String?; let today: Day }
+    /// Asks the coach to adjust one day (`targetDate`) or the whole plan.
+    func requestAdjustment(reason: AdjustReason, message: String?, targetDate: Day? = nil) async throws -> Adjustment {
+        struct Body: Encodable { let id: UUID; let reason: AdjustReason; let message: String?; let targetDate: Day?; let today: Day }
         struct Response: Decodable { let adjustment: Adjustment }
         await flush()
         let id = UUID()
-        let started: Response = try await api.post("api/adjustments", Body(id: id, reason: reason, message: message, today: .today))
-        Analytics.track("adjustment_requested", ["reason": reason.rawValue])
+        let started: Response = try await api.post("api/adjustments", Body(id: id, reason: reason, message: message, targetDate: targetDate, today: .today))
+        Analytics.track("adjustment_requested", ["reason": reason.rawValue, "scope": targetDate == nil ? "plan" : "day"])
 
         var adjustment = started.adjustment
         let deadline = Date.now.addingTimeInterval(180)

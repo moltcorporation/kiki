@@ -43,6 +43,15 @@ export const WORKOUT_TYPES = [
 ] as const;
 export type WorkoutType = (typeof WORKOUT_TYPES)[number];
 
+/** The only workout types the coach writes (plus rest). The others stay
+ * valid so older plans still load. */
+export const PLAN_WORKOUT_TYPES = ["easy", "long", "tempo", "intervals"] as const;
+export type PlanWorkoutType = (typeof PLAN_WORKOUT_TYPES)[number];
+
+/** Training phase of a week, stored for a future UI. */
+export const PHASES = ["base", "build", "peak", "taper"] as const;
+export type Phase = (typeof PHASES)[number];
+
 export const FEELINGS = ["great", "good", "okay", "tired", "pain"] as const;
 export type Feeling = (typeof FEELINGS)[number];
 
@@ -52,20 +61,16 @@ export type RunSource = (typeof RUN_SOURCES)[number];
 export const PACE_ZONES = ["easy", "long", "tempo", "interval", "race", "recovery"] as const;
 export type PaceZone = (typeof PACE_ZONES)[number];
 
-/** Seconds per km. */
-export const paceRangeSchema = z.object({
-  min: z.number().int().describe("Faster end of the range, seconds per km"),
-  max: z.number().int().describe("Slower end of the range, seconds per km"),
-});
-export type PaceRange = z.infer<typeof paceRangeSchema>;
+/** One recommended target pace per effort, in seconds per km. */
+const targetPace = z.number().int().describe("Target pace, seconds per km");
 
 export const paceZonesSchema = z.object({
-  easy: paceRangeSchema,
-  long: paceRangeSchema,
-  tempo: paceRangeSchema,
-  interval: paceRangeSchema,
-  race: paceRangeSchema,
-  recovery: paceRangeSchema,
+  easy: targetPace,
+  long: targetPace,
+  tempo: targetPace,
+  interval: targetPace,
+  race: targetPace,
+  recovery: targetPace,
 });
 export type PaceZones = z.infer<typeof paceZonesSchema>;
 
@@ -169,6 +174,8 @@ export const adjustmentInputSchema = z.object({
   id: z.uuid(),
   reason: z.enum(ADJUSTMENT_REASONS),
   message: z.string().trim().max(1000).nullish(),
+  /** Set when adjusting one day's workout; absent for the whole plan. */
+  targetDate: isoDate.nullish(),
   /** The runner's local date, so "today" is unambiguous. */
   today: isoDate,
 });

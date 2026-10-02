@@ -17,6 +17,7 @@ export async function loadRunner(userId: string): Promise<RunnerContext> {
     experience: p.experience,
     coachingStyle: p.coachingStyle,
     weeklyDistanceM: p.weeklyDistanceM,
+    longestRunM: p.longestRunM,
     runDays: [...p.runDays].sort(),
     longRunDay: p.longRunDay,
   };

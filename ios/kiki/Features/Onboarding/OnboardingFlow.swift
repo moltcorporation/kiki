@@ -41,6 +41,7 @@ struct OnboardingFlow: View {
         case .timeframe: TimeframeStep()
         case .experience: ExperienceStep()
         case .weeklyVolume: WeeklyVolumeStep()
+        case .longestRun: LongestRunStep()
         case .runDays: RunDaysStep()
         case .coachingStyle: CoachingStyleStep()
         case .goalCheck: GoalCheckStep()

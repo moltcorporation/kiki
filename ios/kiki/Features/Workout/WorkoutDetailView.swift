@@ -10,7 +10,6 @@ struct WorkoutDetailView: View {
     let workoutID: UUID
 
     @State private var sheet: AppSheet?
-    @State private var showAdjustOptions = false
 
     var body: some View {
         if let workout = store.workouts.first(where: { $0.id == workoutID }) {
@@ -78,13 +77,6 @@ struct WorkoutDetailView: View {
             }
         }
         .appSheets($sheet)
-        .confirmationDialog("Adjust or skip", isPresented: $showAdjustOptions, titleVisibility: .hidden) {
-            Button("Skip this workout") {
-                Haptics.success()
-                store.setStatus(.skipped, for: workout)
-            }
-            Button("Adjust with Kiki") { sheet = .adjust }
-        }
         .onAppear { Analytics.screen("Workout Detail", ["type": workout.type.rawValue]) }
     }
 
@@ -106,11 +98,11 @@ struct WorkoutDetailView: View {
                 HStack(spacing: 0) {
                     textAction("Mark done", systemImage: "checkmark") { sheet = .log(workout, run) }
                     Rectangle().fill(Color.hairline).frame(width: 1, height: Spacing.l)
-                    textAction("Adjust or skip", systemImage: "slider.horizontal.3") { showAdjustOptions = true }
+                    textAction("Adjust or skip", systemImage: "slider.horizontal.3") { sheet = .adjustDay(workout) }
                 }
             } else {
                 PrimaryButton("Mark done", systemImage: "checkmark") { sheet = .log(workout, run) }
-                textAction("Adjust or skip", systemImage: "slider.horizontal.3") { showAdjustOptions = true }
+                textAction("Adjust or skip", systemImage: "slider.horizontal.3") { sheet = .adjustDay(workout) }
             }
         }
     }
@@ -277,7 +269,8 @@ private struct StepRow: View {
         .accessibilityElement(children: .combine)
     }
 
-    private var isWalk: Bool { workout.type == .runWalk && step.kind == .recovery }
+    /// Walk breaks: the recovery in a run/walk easy run.
+    private var isWalk: Bool { [.runWalk, .easy].contains(workout.type) && step.kind == .recovery }
 
     private var title: String {
         switch step.kind {
@@ -298,12 +291,13 @@ private struct StepRow: View {
     /// notes), so every workout reads the same way.
     private var detail: String? {
         if isWalk { return "Catch your breath" }
+        if step.kind == .recovery { return "Easy jog or walk" }
         if workout.type == .runWalk {
             if step.kind == .warmup { return "Brisk walk" }
             if step.kind == .cooldown { return "Easy walk" }
         }
         guard let zone = step.pace ?? defaultZone else { return nil }
-        let pace = (paces?[zone]).map { Format.paceRange($0, units) }
+        let pace = (paces?[zone]).map { Format.targetPace($0, units) }
         return [zone.feel, pace].compactMap { $0 }.joined(separator: " · ")
     }
 
@@ -362,7 +356,7 @@ extension Workout {
     /// Planned time in minutes, or the distance at the type's target pace.
     func plannedMinutes(paces: PaceZones?) -> Int? {
         if let seconds = durationS { return Int((Double(seconds) / 60).rounded()) }
-        guard let meters = distanceM, let zone = type.paceZone, let range = paces?[zone] else { return nil }
-        return Int((Double(meters) / 1000 * Double(range.min + range.max) / 2 / 60).rounded())
+        guard let meters = distanceM, let zone = type.paceZone, let target = paces?[zone] else { return nil }
+        return Int((Double(meters) / 1000 * Double(target) / 60).rounded())
     }
 }

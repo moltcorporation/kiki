@@ -145,7 +145,7 @@ struct LogRunView: View {
                 Text("Your tracked run won't be saved.")
             }
             .sheet(isPresented: $showAdjust, onDismiss: { dismiss() }) {
-                AdjustPlanView(initialReason: followUp)
+                AdjustSheet(scope: .plan, autoSend: followUp.map { .init(reason: $0) })
             }
         }
         .onAppear(perform: prefill)
@@ -171,7 +171,7 @@ struct LogRunView: View {
             notes = source.notes ?? ""
         } else if let workout {
             if let d = workout.distanceM { distance = Format.distanceNumber(Double(d), units, decimals: 1) }
-            let pace = workout.type.paceZone.flatMap { store.plan?.paces?[$0] }.map { Double($0.min + $0.max) / 2 }
+            let pace = workout.type.paceZone.flatMap { store.plan?.paces?[$0] }.map(Double.init)
             if let s = workout.durationS {
                 durationS = s
             } else if let d = workout.distanceM, let pace {

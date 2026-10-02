@@ -39,7 +39,8 @@ async function loadContext(adjustmentId: string, today: string): Promise<Adjustm
     db
       .select()
       .from(workout)
-      .where(and(eq(workout.planId, planRow.id), gte(workout.date, addDays(today, -7))))
+      // The last three weeks show how training has gone; the rest is upcoming.
+      .where(and(eq(workout.planId, planRow.id), gte(workout.date, addDays(today, -21))))
       .orderBy(asc(workout.date)),
     db
       .select()
@@ -53,6 +54,7 @@ async function loadContext(adjustmentId: string, today: string): Promise<Adjustm
     runner,
     goal: toGoalContext(planRow),
     today,
+    targetDate: adj.targetDate,
     planSummary: planRow.summary,
     paces: planRow.paces,
     workouts: workouts.map((w) => ({
@@ -64,6 +66,7 @@ async function loadContext(adjustmentId: string, today: string): Promise<Adjustm
       distanceM: w.distanceM,
       durationS: w.durationS,
       steps: w.steps,
+      phase: w.phase,
       status: w.status,
     })),
     recentRuns: recentRuns.map((r) => ({

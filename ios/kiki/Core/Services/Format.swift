@@ -38,8 +38,9 @@ enum Format {
         return withUnit ? "\(value) /\(units.rawValue)" : value
     }
 
-    static func paceRange(_ range: PaceRange, _ units: Units) -> String {
-        "\(pace(Double(range.min), units, withUnit: false))–\(pace(Double(range.max), units))"
+    /// A recommended pace: "aim for 9:30 /mi".
+    static func targetPace(_ secondsPerKm: Int, _ units: Units) -> String {
+        "aim for \(pace(Double(secondsPerKm), units))"
     }
 
     /// "178 cm" or "5′ 10″" (imperial follows the distance unit).

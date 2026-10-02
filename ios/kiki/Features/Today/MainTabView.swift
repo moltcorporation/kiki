@@ -99,12 +99,14 @@ extension MainTabView {
 /// Sheets that can be opened from any tab.
 enum AppSheet: Identifiable {
     case log(Workout?, Run?)
-    case adjust
+    case adjustDay(Workout)
+    case adjustPlan
 
     var id: String {
         switch self {
         case .log(let workout, let run): "log-\(workout?.id.uuidString ?? "")-\(run?.id.uuidString ?? "")"
-        case .adjust: "adjust"
+        case .adjustDay(let workout): "adjust-\(workout.id.uuidString)"
+        case .adjustPlan: "adjust-plan"
         }
     }
 }
@@ -115,8 +117,10 @@ extension View {
             switch item {
             case .log(let workout, let run):
                 LogRunView(workout: workout, existing: run)
-            case .adjust:
-                AdjustMenuSheet()
+            case .adjustDay(let workout):
+                AdjustSheet(scope: .day(workout))
+            case .adjustPlan:
+                AdjustSheet(scope: .plan)
             }
         }
     }

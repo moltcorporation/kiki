@@ -25,7 +25,7 @@ struct TodayView: View {
                         plan: plan,
                         units: units,
                         onOpen: { path.append(HomeRoute.goal) },
-                        onAdjust: { sheet = .adjust },
+                        onAdjust: { sheet = .adjustPlan },
                         onViewPlan: onViewPlan
                     )
                 }
@@ -43,7 +43,7 @@ struct TodayView: View {
                             paces: store.plan?.paces,
                             onOpen: { path.append(workout) },
                             onLog: { sheet = .log(workout, store.run(for: workout)) },
-                            onAdjust: { sheet = .adjust }
+                            onAdjust: { sheet = .adjustDay(workout) }
                         )
                     } else {
                         OutsidePlanCard(day: .today, plan: store.plan)
@@ -257,10 +257,7 @@ struct TodayCard: View {
 
     /// Planned time, or distance at the type's target pace.
     private var plannedMinutes: Int? {
-        if let seconds = workout.durationS { return Int((Double(seconds) / 60).rounded()) }
-        guard let meters = workout.distanceM, let zone = workout.type.paceZone, let range = paces?[zone] else { return nil }
-        let pace = Double(range.min + range.max) / 2
-        return Int((Double(meters) / 1000 * pace / 60).rounded())
+        workout.plannedMinutes(paces: paces)
     }
 }
 

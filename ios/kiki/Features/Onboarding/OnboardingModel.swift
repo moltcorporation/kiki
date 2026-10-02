@@ -20,7 +20,7 @@ final class OnboardingModel {
         // Goal
         case goal, units, distance, raceDate, raceGoal, goalTime, timeframe
         // Running
-        case experience, weeklyVolume, runDays, coachingStyle, goalCheck
+        case experience, weeklyVolume, longestRun, runDays, coachingStyle, goalCheck
         // About you
         case name, health, age, height, weight, flexibility, referral, notifications, summary
         // Plan
@@ -43,6 +43,8 @@ final class OnboardingModel {
         var weeks = 8
         var experience: Experience?
         var weeklyDistanceM: Int?
+        /// Longest run in the last few weeks (runners who aren't new).
+        var longestRunM: Int?
         var runDays: Set<Int> = []
         var coachingStyle: CoachingStyle?
         var firstName = ""
@@ -123,6 +125,7 @@ final class OnboardingModel {
         answers.units = profile.units
         answers.experience = profile.experience
         answers.weeklyDistanceM = profile.weeklyDistanceM
+        answers.longestRunM = profile.longestRunM
         answers.runDays = Set(profile.runDays)
         answers.coachingStyle = profile.coachingStyle ?? .balanced
         answers.firstName = profile.firstName ?? ""
@@ -156,7 +159,8 @@ final class OnboardingModel {
 
         if mode == .full {
             steps.append(.experience)
-            if let experience = answers.experience, experience != .new { steps.append(.weeklyVolume) }
+            // Runners who already run: where they are now, so the plan picks up from there.
+            if let experience = answers.experience, experience != .new { steps += [.weeklyVolume, .longestRun] }
             steps += [.runDays, .coachingStyle]
         }
         steps.append(.goalCheck)
@@ -258,7 +262,7 @@ final class OnboardingModel {
     /// of its group that still applies, then returns to the summary.
     private static let groups: [Set<Step>] = [
         [.goal, .distance, .raceDate, .raceGoal, .goalTime, .timeframe],
-        [.experience, .weeklyVolume],
+        [.experience, .weeklyVolume, .longestRun],
     ]
 
     /// True while revisiting a question from the summary.
@@ -312,7 +316,7 @@ final class OnboardingModel {
             coachingStyle: answers.coachingStyle ?? .balanced,
             experience: experience,
             weeklyDistanceM: experience == .new ? 0 : (answers.weeklyDistanceM ?? 0),
-            longestRunM: experience.typicalLongestRunM,
+            longestRunM: experience == .new ? 0 : (answers.longestRunM ?? experience.typicalLongestRunM),
             runDays: answers.runDays.sorted(),
             longRunDay: Questions.longRunDay(for: answers.runDays),
             extras: answers.referralSource.map { ["referralSource": $0] }

@@ -205,20 +205,35 @@ nonisolated struct Profile: Codable, Equatable, Sendable {
     var extras: [String: String]?
 }
 
-nonisolated struct PaceRange: Codable, Hashable, Sendable {
-    let min: Int
-    let max: Int
-}
-
+/// One recommended target pace per effort, in seconds per km.
 nonisolated struct PaceZones: Codable, Hashable, Sendable {
-    let easy: PaceRange
-    let long: PaceRange
-    let tempo: PaceRange
-    let interval: PaceRange
-    let race: PaceRange
-    let recovery: PaceRange
+    let easy: Int
+    let long: Int
+    let tempo: Int
+    let interval: Int
+    let race: Int
+    let recovery: Int
 
-    subscript(zone: PaceZone) -> PaceRange {
+    private enum CodingKeys: String, CodingKey { case easy, long, tempo, interval, race, recovery }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        func target(_ key: CodingKeys) throws -> Int {
+            if let value = try? container.decode(Int.self, forKey: key) { return value }
+            // Older plans stored a range; use its middle.
+            struct Range: Decodable { let min: Int; let max: Int }
+            let range = try container.decode(Range.self, forKey: key)
+            return (range.min + range.max) / 2
+        }
+        easy = try target(.easy)
+        long = try target(.long)
+        tempo = try target(.tempo)
+        interval = try target(.interval)
+        race = try target(.race)
+        recovery = try target(.recovery)
+    }
+
+    subscript(zone: PaceZone) -> Int {
         switch zone {
         case .easy: easy
         case .long: long
@@ -296,6 +311,8 @@ nonisolated struct Workout: Codable, Identifiable, Hashable, Sendable {
     var durationS: Int?
     var steps: [WorkoutStep]
     var status: Status
+    /// Training phase of the week (base, build, peak, taper); not shown yet.
+    var phase: String?
 
     var isRest: Bool { type == .rest }
 }
@@ -325,7 +342,7 @@ nonisolated struct Run: Codable, Identifiable, Hashable, Sendable {
     var pace: Double? { distanceM > 50 ? Double(durationS) / (distanceM / 1000) : nil }
 }
 
-nonisolated struct Adjustment: Codable, Identifiable, Sendable {
+nonisolated struct Adjustment: Codable, Identifiable, Hashable, Sendable {
     nonisolated enum Status: String, Codable, Sendable { case pending, applied, failed }
 
     let id: UUID

@@ -2,13 +2,14 @@ import SwiftUI
 
 /// A profile answer editable from the Profile tab.
 enum ProfileField: Hashable {
-    case experience, weeklyVolume, runDays, coachingStyle, units
+    case experience, weeklyVolume, longestRun, runDays, coachingStyle, units
     case name, age, height, weight
 
     var title: String {
         switch self {
         case .experience: "Experience"
         case .weeklyVolume: "Weekly distance"
+        case .longestRun: "Longest recent run"
         case .runDays: "Run days"
         case .coachingStyle: "Coaching style"
         case .units: "Units"
@@ -23,7 +24,7 @@ enum ProfileField: Hashable {
     /// to update the plan.
     var affectsPlan: Bool {
         switch self {
-        case .experience, .weeklyVolume, .runDays, .coachingStyle: true
+        case .experience, .weeklyVolume, .longestRun, .runDays, .coachingStyle: true
         case .units, .name, .age, .height, .weight: false
         }
     }
@@ -55,7 +56,7 @@ struct ProfileFieldEditor: View {
             }
         }
         .sheet(item: $planNote, onDismiss: { dismiss() }) { note in
-            AdjustPlanView(initialReason: field == .runDays ? .schedule : .other, initialMessage: note.text)
+            AdjustSheet(scope: .plan, autoSend: .init(reason: field == .runDays ? .schedule : .other, message: note.text))
         }
         .alert(error ?? "", isPresented: .constant(error != nil)) {
             Button("OK") { error = nil }
@@ -77,6 +78,10 @@ struct ProfileFieldEditor: View {
         case .weeklyVolume:
             ChoiceList(options: Questions.weeklyVolume(units: units), selection: closestVolume(profile.wrappedValue.weeklyDistanceM, units)) {
                 profile.wrappedValue.weeklyDistanceM = $0
+            }
+        case .longestRun:
+            ChoiceList(options: Questions.longestRun(units: units), selection: closest(profile.wrappedValue.longestRunM, in: Questions.longestRun(units: units))) {
+                profile.wrappedValue.longestRunM = $0
             }
         case .runDays:
             RunDaysSelector(days: Binding(
@@ -135,16 +140,25 @@ struct ProfileFieldEditor: View {
 
     /// The weekly-volume option nearest the saved value.
     private func closestVolume(_ meters: Int, _ units: Units) -> Int? {
+        closest(meters, in: Questions.weeklyVolume(units: units))
+    }
+
+    /// The option nearest a saved value.
+    private func closest(_ meters: Int, in options: [ChoiceList<Int>.Option]) -> Int? {
         guard meters > 0 else { return nil }
-        return Questions.weeklyVolume(units: units).map(\.value).min { abs($0 - meters) < abs($1 - meters) }
+        return options.map(\.value).min { abs($0 - meters) < abs($1 - meters) }
     }
 
     private func save() {
         guard var profile = draft, canSave, let original = store.profile else { return }
         switch field {
         case .experience:
-            profile.longestRunM = profile.experience.typicalLongestRunM
-            if profile.experience == .new { profile.weeklyDistanceM = 0 }
+            if profile.experience == .new {
+                profile.weeklyDistanceM = 0
+                profile.longestRunM = 0
+            } else if original.experience == .new {
+                profile.longestRunM = profile.experience.typicalLongestRunM
+            }
         case .runDays:
             profile.longRunDay = Questions.longRunDay(for: Set(profile.runDays))
         case .name:
@@ -185,6 +199,8 @@ struct ProfileFieldEditor: View {
             "I'd now describe my running as \(new.experience.title.lowercased())."
         case .weeklyVolume where old.weeklyDistanceM != new.weeklyDistanceM:
             "I now run about \(Format.distance(Double(new.weeklyDistanceM), new.units, decimals: 0)) a week."
+        case .longestRun where old.longestRunM != new.longestRunM:
+            "My longest recent run is about \(Format.distance(Double(new.longestRunM), new.units, decimals: 0))."
         case .runDays where old.runDays != new.runDays:
             "I can now run on \(RunDaysSelector.summary(new.runDays))."
         case .coachingStyle where old.coachingStyle != new.coachingStyle:

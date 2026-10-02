@@ -28,6 +28,7 @@ import type {
   RaceDistance,
   RunSource,
   Units,
+  Phase,
   WorkoutStep,
   WorkoutType,
 } from "@/lib/training/types";
@@ -203,6 +204,7 @@ export const workout = pgTable(
     distanceM: integer("distance_m"),
     durationS: integer("duration_s"),
     steps: jsonb("steps").$type<WorkoutStep[]>().default([]).notNull(),
+    phase: text("phase").$type<Phase>(),
     status: text("status")
       .$type<"planned" | "completed" | "skipped">()
       .default("planned")
@@ -263,6 +265,8 @@ export const planAdjustment = pgTable(
       .references(() => user.id, { onDelete: "cascade" }),
     reason: text("reason").notNull(),
     message: text("message"),
+    /** The day being adjusted; null when adjusting the whole plan. */
+    targetDate: date("target_date"),
     status: text("status").$type<"pending" | "applied" | "failed">().notNull(),
     reply: text("reply"),
     changedDates: date("changed_dates").array(),

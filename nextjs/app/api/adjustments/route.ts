@@ -31,6 +31,7 @@ export const POST = withUser(async (req, me) => {
       userId: me.id,
       reason: input.reason,
       message: input.message || null,
+      targetDate: input.targetDate ?? null,
       status: "pending",
     })
     .returning();

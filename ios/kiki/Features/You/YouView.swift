@@ -125,6 +125,10 @@ struct YouView: View {
                               value: Format.distance(Double(profile.weeklyDistanceM), store.units, decimals: 0)) {
                     path.append(Route.edit(.weeklyVolume))
                 }
+                SettingsRow(icon: "road.lanes", label: "Longest recent run",
+                              value: Format.distance(Double(profile.longestRunM), store.units, decimals: 0)) {
+                    path.append(Route.edit(.longestRun))
+                }
             }
             SettingsRow(icon: "calendar", label: "Run days", value: RunDaysSelector.summary(profile.runDays)) {
                 path.append(Route.edit(.runDays))

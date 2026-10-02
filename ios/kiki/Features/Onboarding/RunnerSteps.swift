@@ -51,6 +51,23 @@ struct WeeklyVolumeStep: View {
     }
 }
 
+struct LongestRunStep: View {
+    @Environment(OnboardingModel.self) private var model
+
+    var body: some View {
+        OnboardingScaffold(
+            title: "What's your longest run lately?",
+            subtitle: "In the last few weeks.",
+            canContinue: model.answers.longestRunM != nil
+        ) {
+            ChoiceList(
+                options: Questions.longestRun(units: model.answers.units),
+                selection: model.answers.longestRunM
+            ) { model.answers.longestRunM = $0 }
+        }
+    }
+}
+
 struct RunDaysStep: View {
     @Environment(OnboardingModel.self) private var model
 

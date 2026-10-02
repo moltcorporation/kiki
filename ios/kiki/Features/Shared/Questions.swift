@@ -142,6 +142,19 @@ enum Questions {
         ]
     }
 
+    /// Longest recent run. Same values for both units, so a saved answer
+    /// matches an option either way.
+    static func longestRun(units: Units) -> [ChoiceList<Int>.Option] {
+        let km = units == .km
+        return [
+            .init(value: 4_000, title: km ? "Less than 4 km" : "Less than 2.5 miles"),
+            .init(value: 6_500, title: km ? "4–8 km" : "2.5–5 miles"),
+            .init(value: 10_500, title: km ? "8–13 km" : "5–8 miles"),
+            .init(value: 16_000, title: km ? "13–20 km" : "8–12 miles"),
+            .init(value: 23_000, title: km ? "More than 20 km" : "More than 12 miles"),
+        ]
+    }
+
     static let referralSources = [
         "Instagram", "Facebook", "TikTok", "YouTube", "Google",
         "Friend or family", "Running club", "App Store", "Other",
