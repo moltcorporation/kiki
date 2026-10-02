@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// The end of Home: "Help Kiki grow", a row of compact tiles that scrolls
-/// sideways (invite a friend, share feedback, leave a review).
+/// sideways (share feedback, leave a review, invite a friend).
 struct HelpKikiGrowSection: View {
     @Environment(\.openURL) private var openURL
     @State private var showFeedback = false
@@ -10,17 +10,6 @@ struct HelpKikiGrowSection: View {
         PageSection("Help Kiki grow") {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: Metrics.stackSpacing) {
-                    ShareLink(
-                        item: Config.appStoreURL,
-                        message: Text("I'm training with Kiki, an AI running coach that builds your plan around your goal. Try it:")
-                    ) {
-                        GrowTile(icon: "person.2", title: "Invite a friend", subtitle: "Run together")
-                    }
-                    .buttonStyle(.haptic)
-                    .simultaneousGesture(TapGesture().onEnded {
-                        Analytics.track("help_kiki_grow_tapped", ["item": "invite"])
-                    })
-
                     Button {
                         showFeedback = true
                         Analytics.track("help_kiki_grow_tapped", ["item": "feedback"])
@@ -36,6 +25,17 @@ struct HelpKikiGrowSection: View {
                         GrowTile(icon: "star", title: "Leave a review", subtitle: "On the App Store")
                     }
                     .buttonStyle(.haptic)
+                    ShareLink(
+                        item: Config.appStoreURL,
+                        message: Text("I'm training with Kiki, an AI running coach that builds your plan around your goal. Try it:")
+                    ) {
+                        GrowTile(icon: "person.2", title: "Invite a friend", subtitle: "Run together")
+                    }
+                    .buttonStyle(.haptic)
+                    .simultaneousGesture(TapGesture().onEnded {
+                        Analytics.track("help_kiki_grow_tapped", ["item": "invite"])
+                    })
+
                 }
                 // Room for the cards' shadows inside the scroll view.
                 .padding(.vertical, Spacing.l)
@@ -56,7 +56,7 @@ private struct GrowTile: View {
     let subtitle: LocalizedStringKey
 
     static let width: CGFloat = 148
-    static let height: CGFloat = 112
+    static let height: CGFloat = 124
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
