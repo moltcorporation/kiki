@@ -47,6 +47,8 @@ enum Metrics {
     static let stackSpacing: CGFloat = 12
     /// Padding inside content cards.
     static let cardPadding: CGFloat = 20
+    /// The top bar row above a large title (the iOS navigation bar height).
+    static let navigationBarHeight: CGFloat = 44
     /// Height of full-width buttons.
     static let buttonHeight: CGFloat = 56
     /// Height of buttons inside cards (`.controlSize(.small)`).

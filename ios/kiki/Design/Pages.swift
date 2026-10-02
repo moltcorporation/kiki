@@ -19,7 +19,8 @@ struct TabPage<Content: View>: View {
     /// A small gray line above the title (Home's date). It starts where
     /// other tabs' titles start, so every tab's header begins at one height.
     var eyebrow: String?
-    /// Shows the small Kiki wordmark on the left of the eyebrow row (Home).
+    /// Home's top bar: the small Kiki wordmark on the left and the eyebrow
+    /// (the date) on the right, in the row above the title.
     var showsWordmark = false
     @ViewBuilder let content: Content
 
@@ -37,21 +38,8 @@ struct TabPage<Content: View>: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                VStack(alignment: .leading, spacing: showsWordmark ? Spacing.m : Spacing.xxs) {
-                    if showsWordmark {
-                        // Brand on the left, the date on the right.
-                        HStack(alignment: .firstTextBaseline) {
-                            Text("Kiki")
-                                .font(.display(.title3))
-                                .accessibilityHidden(true)
-                            Spacer()
-                            if let eyebrow {
-                                Text(eyebrow)
-                                    .font(.eyebrow)
-                                    .foregroundStyle(.muted)
-                            }
-                        }
-                    } else if let eyebrow {
+                VStack(alignment: .leading, spacing: Spacing.xxs) {
+                    if let eyebrow, !showsWordmark {
                         Text(eyebrow)
                             .font(.eyebrow)
                             .foregroundStyle(.muted)
@@ -67,6 +55,26 @@ struct TabPage<Content: View>: View {
             .padding(.horizontal, Metrics.screenMargin)
             .padding(.top, title.topInset)
             .padding(.bottom, Metrics.bottomInset)
+            // Home's top bar: the 44pt row above the large title (where a
+            // navigation bar would sit), so the title still starts at the
+            // same height as on the other tabs.
+            .overlay(alignment: .top) {
+                if showsWordmark {
+                    HStack(alignment: .firstTextBaseline) {
+                        Text("Kiki")
+                            .font(.display(.title3))
+                            .accessibilityHidden(true)
+                        Spacer()
+                        if let eyebrow {
+                            Text(eyebrow)
+                                .font(.eyebrow)
+                                .foregroundStyle(.muted)
+                        }
+                    }
+                    .frame(height: Metrics.navigationBarHeight)
+                    .padding(.horizontal, Metrics.screenMargin)
+                }
+            }
         }
         .background { PageBackground() }
         .statusBarFade()
