@@ -3,8 +3,8 @@ import SwiftUI
 /// One week of the plan as a schedule, like a calendar's list view: every
 /// day is an equal-height row split by hairlines, the date on the left and
 /// the day's workout as a tile (status circle, title, "2.0 mi · Easy", and a
-/// grip when it can be dragged). Today's tile is tinted; done workouts get a
-/// filled check; rest days are just the word. Only the tile is interactive.
+/// grip when it can be dragged). Done workouts get a filled check and are
+/// struck through; rest days are just the word. Only the tile is interactive.
 struct WeekSchedule: View {
     let workouts: [Workout]
     let units: Units
@@ -126,7 +126,6 @@ private struct DayLabel: View {
 
 /// A workout tile: a status circle (empty to do, filled check when done),
 /// the title over "2.0 mi · Easy", and a grip when it can be dragged.
-/// Today's tile is tinted so it stands out.
 private struct WorkoutEvent: View {
     let workout: Workout
     let units: Units
@@ -139,8 +138,9 @@ private struct WorkoutEvent: View {
             VStack(alignment: .leading, spacing: Spacing.xxs) {
                 Text(workout.title)
                     .font(.subheadline.weight(.semibold))
-                    .strikethrough(workout.status == .skipped)
-                    .foregroundStyle(workout.status == .skipped ? Color.muted : Color.ink)
+                    // Done and skipped are struck through, so finished days read at a glance.
+                    .strikethrough(workout.status != .planned)
+                    .foregroundStyle(workout.status == .planned ? Color.ink : Color.muted)
                     .lineLimit(1)
                 Text(subtitle)
                     .font(.caption.weight(.medium))
@@ -157,8 +157,7 @@ private struct WorkoutEvent: View {
         }
         .padding(.horizontal, Spacing.m)
         .frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
-        .background(isToday && workout.status == .planned ? Color.ink.opacity(0.09) : Color.wash,
-                    in: .rect(cornerRadius: Radius.inner))
+        .background(Color.wash, in: .rect(cornerRadius: Radius.inner))
         .accessibilityElement(children: .combine)
         .accessibilityValue(workout.status == .completed ? "Done" : workout.status == .skipped ? "Skipped" : "")
     }
