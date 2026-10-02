@@ -9,23 +9,18 @@ struct PlanView: View {
     @State private var path = NavigationPath()
     /// Fires the confetti when the finish line scrolls into view.
     @State private var celebrations = 0
-    /// Shown briefly after a drop until moving workouts is wired up.
-    @State private var moveNotice = false
+    /// Shared by every week so all drop targets light up during a drag.
+    @State private var drag = ScheduleDrag()
     /// The list is the default every time; the calendar is for runners who
     /// prefer one.
     @State private var showsCalendar = false
     @State private var showsShare = false
 
-    /// A workout was dropped on another day. The UI is ready; saving the
-    /// move needs the API, so for now this only says it's coming.
-    /// TODO: call the store to swap the workout's date with `day`'s.
+    /// A workout was dropped on another day: the two days swap, right
+    /// away and saved in the background. No AI, nothing else changes.
     private func moveWorkout(_ id: UUID, to day: Day) {
-        Analytics.track("workout_move_attempted")
-        moveNotice = true
-        Task {
-            try? await Task.sleep(for: .seconds(2))
-            moveNotice = false
-        }
+        guard let workout = store.workouts.first(where: { $0.id == id }) else { return }
+        withAnimation(.smooth(duration: 0.35)) { store.move(workout, to: day) }
     }
 
     /// "This week" or "Next week", so it's clear where you are as you scroll.
@@ -102,6 +97,12 @@ struct PlanView: View {
                     }
                 }
                 .refreshable { await store.refresh() }
+                // Catches drops that miss a day, so the drag ends cleanly
+                // and the workout springs back.
+                .dropDestination(for: String.self) { _, _ in
+                    drag.end()
+                    return false
+                } isTargeted: { drag.targetChanged($0) }
                 .hidesTabBar(!path.isEmpty)
 
             }
@@ -109,18 +110,7 @@ struct PlanView: View {
             .navigationDestination(for: PlanRoute.self) { _ in GoalDetailView() }
         }
         .overlay { ConfettiBurst(trigger: celebrations).ignoresSafeArea() }
-        .overlay(alignment: .bottom) {
-            if moveNotice {
-                Label("Moving workouts is coming soon", systemImage: "calendar.badge.clock")
-                    .font(.footnote.weight(.semibold))
-                    .padding(.horizontal, Spacing.l)
-                    .padding(.vertical, Spacing.m)
-                    .glassEffect()
-                    .padding(.bottom, Spacing.s)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-            }
-        }
-        .animation(.snappy, value: moveNotice)
+        .environment(\.scheduleDrag, drag)
         .sheet(isPresented: $showsShare) {
             if let plan = store.plan {
                 SharePlanSheet(plan: plan, workouts: store.workouts, units: store.units)

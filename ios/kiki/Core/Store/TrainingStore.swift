@@ -221,16 +221,23 @@ final class TrainingStore {
         Analytics.track("workout_status_changed", ["status": status.rawValue, "type": workout.type.rawValue])
     }
 
-    /// Swaps a workout with another day of the plan (online only).
-    func move(_ workout: Workout, to day: Day) async throws {
-        struct Body: Encodable { let moveTo: Day }
-        struct Response: Decodable { let workouts: [Workout] }
-        let response: Response = try await api.patch("api/workouts/\(workout.id.uuidString.lowercased())", Body(moveTo: day))
-        for updated in response.workouts {
-            updateWorkout(updated.id) { $0 = updated }
-        }
-        persist()
-        Analytics.track("workout_moved", ["type": workout.type.rawValue])
+    /// Moves a workout to another day of the plan, swapping with whatever
+    /// is there (a rest day or another workout). Instant and offline-safe:
+    /// the swap shows right away and syncs through the outbox. No AI.
+    func move(_ workout: Workout, to day: Day) {
+        guard let source = workouts.firstIndex(where: { $0.id == workout.id }),
+              let target = workouts.firstIndex(where: { $0.planId == workout.planId && $0.date == day }),
+              source != target
+        else { return }
+        let expect = PendingChange.MoveExpectation(type: workouts[source].type.rawValue,
+                                                   distanceM: workouts[source].distanceM,
+                                                   durationS: workouts[source].durationS)
+        // Each day keeps its own row (and id); the contents trade places.
+        let moving = workouts[source]
+        workouts[source].swapContents(with: workouts[target])
+        workouts[target].swapContents(with: moving)
+        enqueue(.moveWorkout(id: workout.id, to: day, expect: expect))
+        Analytics.track("workout_moved", ["type": workout.type.rawValue, "onto": workouts[source].isRest ? "rest" : "workout"])
     }
 
     private func updateWorkout(_ id: UUID, _ change: (inout Workout) -> Void) {
@@ -351,6 +358,9 @@ final class TrainingStore {
         case .workoutStatus(let id, let status):
             struct Body: Encodable { let status: Workout.Status }
             let _: Empty = try await api.patch("api/workouts/\(id.uuidString.lowercased())", Body(status: status))
+        case .moveWorkout(let id, let day, let expect):
+            struct Body: Encodable { let moveTo: Day; let expect: PendingChange.MoveExpectation }
+            let _: Empty = try await api.patch("api/workouts/\(id.uuidString.lowercased())", Body(moveTo: day, expect: expect))
         }
     }
 
@@ -385,12 +395,22 @@ enum PendingChange: Codable {
     case upsertRun(Run)
     case deleteRun(id: UUID)
     case workoutStatus(id: UUID, status: Workout.Status)
+    /// Swap a workout's day; `expect` is what was on its day, so a retry
+    /// can't swap it back.
+    case moveWorkout(id: UUID, to: Day, expect: MoveExpectation)
+
+    struct MoveExpectation: Codable {
+        let type: String
+        let distanceM: Int?
+        let durationS: Int?
+    }
 
     var kind: String {
         switch self {
         case .upsertRun: "upsert_run"
         case .deleteRun: "delete_run"
         case .workoutStatus: "workout_status"
+        case .moveWorkout: "move_workout"
         }
     }
 }

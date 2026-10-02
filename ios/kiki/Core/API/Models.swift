@@ -315,6 +315,18 @@ nonisolated struct Workout: Codable, Identifiable, Hashable, Sendable {
     var phase: String?
 
     var isRest: Bool { type == .rest }
+
+    /// Takes another day's workout (for moving): everything but the day,
+    /// its id, plan, week and phase.
+    mutating func swapContents(with other: Workout) {
+        type = other.type
+        title = other.title
+        description = other.description
+        distanceM = other.distanceM
+        durationS = other.durationS
+        steps = other.steps
+        status = other.status
+    }
 }
 
 nonisolated struct Run: Codable, Identifiable, Hashable, Sendable {

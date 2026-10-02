@@ -8,6 +8,15 @@ const patchSchema = z.object({
   status: z.enum(["planned", "completed", "skipped"]).optional(),
   /** Move this workout to another day of the plan, swapping with that day. */
   moveTo: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  /**
+   * What the client saw on this day when it asked for the move. The swap
+   * only happens if it still matches, so a retried request can't swap the
+   * days back.
+   */
+  expect: z
+    // The app leaves out empty values, so a missing key means null.
+    .object({ type: z.string(), distanceM: z.number().int().nullish(), durationS: z.number().int().nullish() })
+    .optional(),
 });
 
 export const PATCH = withUser(async (req, me, { params }: RouteContext<"/api/workouts/[id]">) => {
@@ -32,6 +41,16 @@ export const PATCH = withUser(async (req, me, { params }: RouteContext<"/api/wor
     }
     if (planRow?.raceDate === input.moveTo) {
       throw new ApiError(400, "not_movable", "Race day can't be changed");
+    }
+    const { expect } = input;
+    if (
+      expect &&
+      (expect.type !== current.type ||
+        (expect.distanceM ?? null) !== current.distanceM ||
+        (expect.durationS ?? null) !== current.durationS)
+    ) {
+      // Already applied (a retry): leave both days as they are.
+      return Response.json({ workouts: [current, target] });
     }
 
     // Swap contents so each date keeps exactly one workout.

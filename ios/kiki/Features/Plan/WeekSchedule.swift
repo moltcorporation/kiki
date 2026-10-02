@@ -25,33 +25,81 @@ struct WeekSchedule: View {
     }
 }
 
-/// One day: the date column and the day's workout (or "Rest"). The row is
-/// a drop target when moving is on; it outlines where a dragged workout
-/// would land.
+/// Which workout is being dragged, shared by every week on the Plan tab so
+/// all the days it can land on outline at once.
+@Observable
+final class ScheduleDrag {
+    var draggingID: UUID?
+
+    private var targeted = 0
+    private var endCheck: Task<Void, Never>?
+
+    func begin(_ id: UUID) {
+        guard draggingID != id else { return }
+        Haptics.tap()
+        withAnimation(.smooth(duration: 0.25)) { draggingID = id }
+    }
+
+    func end() {
+        endCheck?.cancel()
+        targeted = 0
+        withAnimation(.smooth(duration: 0.25)) { draggingID = nil }
+    }
+
+    /// Drop targets report the finger entering and leaving. iOS doesn't
+    /// tell SwiftUI when a drag is cancelled, so once nothing has been
+    /// targeted for a moment, the drag is over.
+    func targetChanged(_ isTargeted: Bool) {
+        targeted = max(0, targeted + (isTargeted ? 1 : -1))
+        endCheck?.cancel()
+        guard targeted == 0, draggingID != nil else { return }
+        endCheck = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(1))
+            guard !Task.isCancelled else { return }
+            self?.end()
+        }
+    }
+}
+
+extension EnvironmentValues {
+    @Entry var scheduleDrag: ScheduleDrag?
+}
+
+/// One day: the date column and the day's workout (or "Rest"). When moving
+/// is on, a planned workout from today on can be pressed, held and dragged
+/// onto any open day: every valid day gets a dashed outline, the one under
+/// your finger turns solid, and the two days swap on drop.
 private struct DayRow: View {
     let workout: Workout
     let units: Units
     let isNavigable: Bool
     let onMove: ((UUID, Day) -> Void)?
 
+    @Environment(\.scheduleDrag) private var drag
     @State private var isTargeted = false
 
     /// Every day is the same height, rest days included, so the hairlines
     /// fall evenly (and rest days stay a full-size drop target).
     static let height: CGFloat = 54
 
+    /// Days from today on can change; done runs and race day stay put.
+    private var isMovable: Bool {
+        workout.date >= .today && workout.status != .completed && workout.type != .race
+    }
+
+    private var isDragging: Bool { drag?.draggingID != nil }
+    private var isSource: Bool { drag?.draggingID == workout.id }
+    private var isDropTarget: Bool { isDragging && !isSource && isMovable }
+
     var body: some View {
         let row = HStack(spacing: Spacing.m) {
             DayLabel(day: workout.date)
             content
-                .overlay {
-                    if isTargeted {
-                        RoundedRectangle(cornerRadius: Radius.inner)
-                            .strokeBorder(Color.ink, style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
-                            .padding(.vertical, -Spacing.xs)
-                    }
-                }
-                .animation(.snappy(duration: 0.15), value: isTargeted)
+                .opacity(isSource ? 0.35 : 1)
+                .overlay { dropOutline }
+                .scaleEffect(isTargeted ? 1.02 : 1)
+                .animation(.snappy(duration: 0.2), value: isTargeted)
+                .animation(.smooth(duration: 0.25), value: isDragging)
         }
         .padding(.leading, Spacing.m)
         .padding(.trailing, RowMetrics.horizontalPadding)
@@ -59,16 +107,37 @@ private struct DayRow: View {
 
         if let onMove {
             row.dropDestination(for: String.self) { items, _ in
-                guard let id = items.first.flatMap(UUID.init(uuidString:)), id != workout.id else { return false }
+                guard isMovable, let id = items.first.flatMap(UUID.init(uuidString:)), id != workout.id else { return false }
                 Haptics.success()
                 onMove(id, workout.date)
+                drag?.end()
                 return true
             } isTargeted: { targeted in
-                if targeted && !isTargeted { Haptics.select() }
-                isTargeted = targeted
+                drag?.targetChanged(targeted)
+                let valid = targeted && isMovable && !isSource
+                if valid && !isTargeted { Haptics.select() }
+                isTargeted = valid
             }
         } else {
             row
+        }
+    }
+
+    /// Dashed on every day the workout can land on; solid ink on the one
+    /// under your finger.
+    @ViewBuilder
+    private var dropOutline: some View {
+        if isTargeted {
+            RoundedRectangle(cornerRadius: Radius.inner)
+                .fill(Color.ink.opacity(0.04))
+                .strokeBorder(Color.ink, lineWidth: 2)
+                .padding(.vertical, -Spacing.xs)
+                .transition(.opacity)
+        } else if isDropTarget {
+            RoundedRectangle(cornerRadius: Radius.inner)
+                .strokeBorder(Color.ink.opacity(0.3), style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
+                .padding(.vertical, -Spacing.xs)
+                .transition(.opacity)
         }
     }
 
@@ -86,12 +155,18 @@ private struct DayRow: View {
                     .contentShape(.rect(cornerRadius: Radius.inner))
             }
             .buttonStyle(.haptic)
-            if onMove != nil, workout.status == .planned {
-                link.draggable(workout.id.uuidString) {
-                    WorkoutEvent(workout: workout, units: units)
-                        .frame(width: 260)
-                        .background(Color.surface, in: .rect(cornerRadius: Radius.inner))
-                }
+            if onMove != nil, isMovable, workout.status == .planned {
+                link
+                    .onDrag {
+                        drag?.begin(workout.id)
+                        return NSItemProvider(object: workout.id.uuidString as NSString)
+                    } preview: {
+                        WorkoutEvent(workout: workout, units: units)
+                            .frame(width: 280)
+                            .background(Color.surface, in: .rect(cornerRadius: Radius.inner))
+                            .overlay(RoundedRectangle(cornerRadius: Radius.inner).strokeBorder(Color.ink, lineWidth: 1.5))
+                    }
+                    .accessibilityHint("Press and hold, then drag to another day")
             } else {
                 link
             }
