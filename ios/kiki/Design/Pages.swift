@@ -316,7 +316,7 @@ struct PageSection<Content: View>: View {
                 }
                 if let actionTitle, let action {
                     Button(actionTitle, action: action)
-                        .font(.subheadline.weight(.semibold))
+                        .font(.subheadline.weight(.medium))
                         .foregroundStyle(.ink)
                         .buttonStyle(.haptic)
                 }

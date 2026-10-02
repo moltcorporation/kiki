@@ -55,6 +55,8 @@ struct ListRow<Trailing: View>: View {
     enum Emphasis {
         /// Semibold title: things (a workout, a goal, a run).
         case content
+        /// Medium title: lighter content rows (Learn articles).
+        case medium
         /// Regular title: settings labels.
         case setting
     }
@@ -95,7 +97,7 @@ struct ListRow<Trailing: View>: View {
             }
             VStack(alignment: .leading, spacing: Spacing.xxs) {
                 title
-                    .font(emphasis == .content ? .rowTitle : .body)
+                    .font(emphasis == .content ? .rowTitle : emphasis == .medium ? .body.weight(.medium) : .body)
                     .foregroundStyle(isDestructive ? Color.destructive : Color.ink)
                     .multilineTextAlignment(.leading)
                 ForEach(subtitles, id: \.self) { line in
