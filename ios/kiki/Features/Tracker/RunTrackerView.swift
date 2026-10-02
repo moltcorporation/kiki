@@ -80,8 +80,12 @@ struct RunTrackerView: View {
         // close on the left, recenter on the right.
         .overlay(alignment: .top) {
             HStack {
-                if tracker.state == .ready {
-                    Button("Close", systemImage: "xmark") { tracker.close() }
+                if tracker.state != .finished {
+                    // Before Start it just closes; during a run it asks first,
+                    // so an accidental start is easy to throw away.
+                    Button(tracker.state == .ready ? "Close" : "Discard run", systemImage: "xmark") {
+                        if tracker.state == .ready { tracker.close() } else { confirmDiscard = true }
+                    }
                         .labelStyle(.iconOnly)
                         .font(.headline)
                         .foregroundStyle(.ink)
@@ -115,6 +119,9 @@ struct RunTrackerView: View {
         }
         .confirmationDialog("Discard this run?", isPresented: $confirmDiscard, titleVisibility: .visible) {
             Button("Discard run", role: .destructive) { tracker.discard() }
+            Button("Keep going", role: .cancel) {}
+        } message: {
+            Text("It won't be saved.")
         }
     }
 

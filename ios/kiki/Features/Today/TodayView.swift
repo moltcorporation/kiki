@@ -18,7 +18,7 @@ struct TodayView: View {
         let units = store.units
 
         NavigationStack(path: $path) {
-            TabPage(LocalizedStringKey(greeting), eyebrow: Date.now.formatted(.dateTime.weekday(.wide).month(.abbreviated).day()), showsWordmark: true) {
+            TabPage(LocalizedStringKey(greeting)) {
                 // The goal: Home's header, with the plan actions in its footer.
                 if let plan = store.plan {
                     GoalProgressCard(
@@ -72,9 +72,12 @@ struct TodayView: View {
         .onAppear { Analytics.screen("Home") }
     }
 
-    /// "Hello, Stuart!"
+    /// "Good evening,\nStuart!" by time of day, on two lines so it always
+    /// fits; "Good evening!" without a name.
     private var greeting: String {
-        store.profile?.firstName.map { "Hello, \($0)!" } ?? "Hello!"
+        let hour = Calendar.current.component(.hour, from: .now)
+        let part = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening"
+        return store.profile?.firstName.map { "\(part),\n\($0)!" } ?? "\(part)!"
     }
 }
 
