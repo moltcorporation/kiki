@@ -33,16 +33,13 @@ struct ThisWeekCard: View {
 
                 VStack(spacing: Spacing.s) {
                     HStack(alignment: .firstTextBaseline) {
-                        HStack(alignment: .firstTextBaseline, spacing: Spacing.xs) {
-                            Text(Format.distanceNumber(doneM, units)).font(.metric(.title3))
-                            Text("of \(Format.distance(plannedM, units))")
-                                .font(.subheadline.weight(.medium))
-                                .foregroundStyle(.muted)
-                        }
+                        Text("\(runsDone) of \(runs.count) runs done")
+                            .font(.subheadline.weight(.semibold))
                         Spacer()
-                        Text("\(runsDone) of \(runs.count) runs")
+                        Text("\(shortDistance(doneM)) of \(shortDistance(plannedM)) \(units.rawValue)")
                             .font(.subheadline.weight(.medium))
                             .foregroundStyle(.muted)
+                            .monospacedDigit()
                     }
                     ProgressView(value: min(doneM, plannedM), total: max(plannedM, 1))
                         .tint(.ink)
@@ -52,6 +49,16 @@ struct ThisWeekCard: View {
             }
         }
     }
+
+    /// "2" or "5.5": no trailing ".0".
+    private func shortDistance(_ meters: Double) -> String {
+        shortNumber(Format.distanceNumber(meters, units))
+    }
+}
+
+/// "2.0" → "2", "5.5" stays.
+private func shortNumber(_ value: String) -> String {
+    value.hasSuffix(".0") ? String(value.dropLast(2)) : value
 }
 
 /// One day: weekday letter, the date in a circle, and the plan below.
@@ -79,8 +86,8 @@ private struct DayColumn: View {
                     .foregroundStyle(day == .today ? Color.ink : Color.muted)
                 circle
                 Text(label)
-                    .font(.caption2.weight(.medium))
-                    .foregroundStyle(.muted)
+                    .font(.caption2.weight(day == .today ? .bold : .medium))
+                    .foregroundStyle(day == .today ? Color.ink : Color.muted)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
             }
@@ -103,6 +110,10 @@ private struct DayColumn: View {
                     .foregroundStyle(.paper)
             case .today:
                 Circle().fill(Color.ink)
+                // A ring around today, so it stands apart from done days.
+                Circle()
+                    .strokeBorder(Color.ink, lineWidth: 1.5)
+                    .padding(-4)
                 Text("\(day.day)")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.paper)
@@ -122,11 +133,10 @@ private struct DayColumn: View {
         .frame(width: 36, height: 36)
     }
 
-    /// The day's amount ("2.0"), "Rest", or a dash outside the plan.
+    /// The run's amount ("2 mi"); nothing on rest days or outside the plan.
     private var label: String {
-        guard let workout else { return "–" }
-        if workout.isRest { return "Rest" }
-        if let meters = workout.distanceM { return Format.distanceNumber(Double(meters), units) }
+        guard let workout, !workout.isRest else { return " " }
+        if let meters = workout.distanceM { return "\(shortNumber(Format.distanceNumber(Double(meters), units))) \(units.rawValue)" }
         if let seconds = workout.durationS { return Format.minutes(seconds) }
         return workout.type.label
     }
