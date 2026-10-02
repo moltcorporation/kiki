@@ -24,6 +24,17 @@ struct PlanView: View {
         }
     }
 
+    /// "This week" or "Next week", so it's clear where you are as you scroll.
+    private func weekEyebrow(_ workouts: [Workout]) -> String? {
+        guard let first = workouts.map(\.date).min() else { return nil }
+        let thisMonday = Day.today.mondayOfWeek
+        switch first.mondayOfWeek {
+        case thisMonday: return "This week"
+        case thisMonday.adding(days: 7): return "Next week"
+        default: return nil
+        }
+    }
+
     /// The week's planned distance ("6.5 mi").
     private func weekDetail(_ workouts: [Workout], units: Units) -> String {
         let meters = workouts.filter { !$0.isRest }.compactMap(\.distanceM).reduce(0, +)
@@ -50,7 +61,7 @@ struct PlanView: View {
                         CompletedWeeks(weeks: past, units: units)
                     }
                     ForEach(store.weeks.filter { !pastNumbers.contains($0.week) }, id: \.week) { week, workouts in
-                        PageSection("Week \(week)", detail: weekDetail(workouts, units: units)) {
+                        PageSection("Week \(week)", eyebrow: weekEyebrow(workouts), detail: weekDetail(workouts, units: units)) {
                             WeekSchedule(workouts: workouts, units: units, onMove: moveWorkout)
                         }
                         .id(week)

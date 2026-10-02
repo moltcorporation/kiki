@@ -267,6 +267,8 @@ struct PageHeader: View {
 /// its card. All section titles share one size.
 struct PageSection<Content: View>: View {
     let title: LocalizedStringKey
+    /// A small gray line above the title ("This week").
+    var eyebrow: String?
     var detail: String?
     /// An optional link on the right of the title ("See plan").
     var actionTitle: LocalizedStringKey?
@@ -275,12 +277,14 @@ struct PageSection<Content: View>: View {
 
     init(
         _ title: LocalizedStringKey,
+        eyebrow: String? = nil,
         detail: String? = nil,
         actionTitle: LocalizedStringKey? = nil,
         action: (() -> Void)? = nil,
         @ViewBuilder content: () -> Content
     ) {
         self.title = title
+        self.eyebrow = eyebrow
         self.detail = detail
         self.actionTitle = actionTitle
         self.action = action
@@ -289,12 +293,20 @@ struct PageSection<Content: View>: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Metrics.sectionHeaderSpacing) {
-            HStack(alignment: .firstTextBaseline) {
-                Text(title)
-                    .font(.sectionTitle)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-                    .accessibilityAddTraits(.isHeader)
+            HStack(alignment: .lastTextBaseline) {
+                VStack(alignment: .leading, spacing: 0) {
+                    if let eyebrow {
+                        Text(eyebrow)
+                            .font(.eyebrow)
+                            .foregroundStyle(.muted)
+                    }
+                    Text(title)
+                        .font(.sectionTitle)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                }
+                .accessibilityElement(children: .combine)
+                .accessibilityAddTraits(.isHeader)
                 Spacer()
                 if let detail {
                     Text(detail)

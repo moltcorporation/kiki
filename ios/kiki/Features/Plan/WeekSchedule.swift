@@ -157,9 +157,9 @@ private struct WorkoutEvent: View {
         }
         .padding(.horizontal, Spacing.m)
         .frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
-        .background(Color.wash, in: .rect(cornerRadius: Radius.inner))
-        // Today's workout: a thin ink outline, like a calendar's today
-        // marker (the fill stays the same so it never looks selected).
+        // Today's workout: white with a crisp ink outline, like a calendar's
+        // today marker. Other days sit on a soft gray.
+        .background(isToday ? Color.surface : Color.wash, in: .rect(cornerRadius: Radius.inner))
         .overlay {
             if isToday {
                 RoundedRectangle(cornerRadius: Radius.inner)
