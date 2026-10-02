@@ -31,7 +31,7 @@ struct TabPage<Content: View>: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 TabTitle(kind: title)
-                    .padding(.bottom, Metrics.titleSpacing)
+                    .padding(.bottom, title.bottomSpacing)
                 VStack(alignment: .leading, spacing: Metrics.sectionSpacing) {
                     content
                 }
@@ -72,6 +72,15 @@ struct TabTitle: View {
             switch self {
             case .wordmark: Metrics.topInset
             case .text: Metrics.largeTitleTopInset
+            }
+        }
+
+        /// Space below the title: a centered logo needs a little more air
+        /// than a left-aligned title.
+        var bottomSpacing: CGFloat {
+            switch self {
+            case .wordmark: Spacing.xxl
+            case .text: Metrics.titleSpacing
             }
         }
     }
