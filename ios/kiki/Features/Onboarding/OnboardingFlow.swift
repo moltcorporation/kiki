@@ -45,6 +45,7 @@ struct OnboardingFlow: View {
         case .coachingStyle: CoachingStyleStep()
         case .goalCheck: GoalCheckStep()
         case .name: NameStep()
+        case .health: HealthStep()
         case .age: AgeStep()
         case .height: HeightStep()
         case .weight: WeightStep()

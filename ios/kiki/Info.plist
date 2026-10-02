@@ -17,6 +17,10 @@
 		<key>RunTracking</key>
 		<string>Precise location lets Kiki measure your run's distance and pace accurately.</string>
 	</dict>
+	<key>NSHealthShareUsageDescription</key>
+	<string>Kiki reads runs from Apple Health, including runs from apps like Strava, Garmin and Nike Run Club, to check off your plan. It can also use your age, height and weight to tailor your training.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>Kiki saves the runs you record to Apple Health, with distance and route.</string>
 	<key>NSUserTrackingUsageDescription</key>
 	<string>This helps us understand which ads bring runners to Kiki. We never sell your data.</string>
 	<key>NSSupportsLiveActivities</key>

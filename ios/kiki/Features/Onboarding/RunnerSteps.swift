@@ -195,6 +195,58 @@ struct ReferralStep: View {
     }
 }
 
+/// Connect Apple Health: optional. Kiki saves its runs there and syncs
+/// runs from other apps; any age, height and weight Health shares fill in
+/// those questions so they're skipped.
+struct HealthStep: View {
+    @Environment(OnboardingModel.self) private var model
+    @Environment(HealthService.self) private var health
+    @State private var isConnecting = false
+
+    var body: some View {
+        OnboardingScaffold(
+            title: "Connect Apple Health",
+            subtitle: "Kiki works with the running apps you already use.",
+            continueTitle: isConnecting ? "Connecting…" : "Connect Apple Health",
+            canContinue: !isConnecting,
+            onContinue: connect,
+            secondaryTitle: "Not now"
+        ) {
+            InfoList {
+                InfoRow(symbol: "arrow.triangle.2.circlepath", text: "Runs from Strava, Garmin, Nike Run Club and more check off your plan")
+                InfoRow(symbol: "heart", text: "Runs you record in Kiki save to Apple Health")
+                InfoRow(symbol: "person.text.rectangle", text: "Skip questions Health already knows, like your age")
+            }
+        }
+    }
+
+    private func connect() {
+        isConnecting = true
+        Task {
+            defer { isConnecting = false }
+            if await health.connect() {
+                let info = await health.bodyInfo()
+                var filled: Set<OnboardingModel.Step> = []
+                if let age = info.age, (13...100).contains(age) {
+                    model.answers.age = age
+                    filled.insert(.age)
+                }
+                if let height = info.heightCm, (100...250).contains(height) {
+                    model.answers.heightCm = height
+                    filled.insert(.height)
+                }
+                if let weight = info.weightKg, (30...250).contains(weight) {
+                    model.answers.weightKg = weight
+                    filled.insert(.weight)
+                }
+                model.answers.fromHealth = filled
+                Analytics.track("health_onboarding_connected", ["prefilled": filled.count])
+            }
+            model.advance()
+        }
+    }
+}
+
 struct NotificationsStep: View {
     @Environment(OnboardingModel.self) private var model
 

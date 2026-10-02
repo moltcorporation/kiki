@@ -22,7 +22,7 @@ final class OnboardingModel {
         // Running
         case experience, weeklyVolume, runDays, coachingStyle, goalCheck
         // About you
-        case name, age, height, weight, flexibility, referral, notifications, summary
+        case name, health, age, height, weight, flexibility, referral, notifications, summary
         // Plan
         case account, generating, preview
     }
@@ -50,6 +50,8 @@ final class OnboardingModel {
         var heightCm: Double?
         var weightKg: Double?
         var referralSource: String?
+        /// "About you" steps Apple Health already answered, so they're skipped.
+        var fromHealth: Set<Step> = []
     }
 
     let mode: Mode
@@ -160,7 +162,10 @@ final class OnboardingModel {
         steps.append(.goalCheck)
 
         if mode == .full {
-            steps += [.name, .age, .height, .weight, .flexibility, .referral, .notifications, .summary]
+            steps.append(.name)
+            if HealthService.isAvailable { steps.append(.health) }
+            steps += [Step.age, .height, .weight].filter { !answers.fromHealth.contains($0) }
+            steps += [.flexibility, .referral, .notifications, .summary]
             if !isSignedIn { steps.append(.account) }
         }
         steps += [.generating, .preview]

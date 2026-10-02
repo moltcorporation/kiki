@@ -9,6 +9,8 @@ struct LogRunView: View {
     let workout: Workout?
     let existing: Run?
     var draft: Run?
+    /// Called after a new run is saved (e.g. to write it to Apple Health).
+    var onSave: ((Run) -> Void)?
 
     @State private var distance = ""
     @State private var durationS = 0
@@ -204,6 +206,7 @@ struct LogRunView: View {
             notes: notes.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty
         )
         store.save(run)
+        if existing == nil { onSave?(run) }
         Haptics.success()
 
         if existing == nil, feeling == .pain {

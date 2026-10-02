@@ -9,6 +9,7 @@ struct YouView: View {
     @Environment(AuthService.self) private var auth
     @Environment(TrainingStore.self) private var store
     @Environment(Subscriptions.self) private var subscriptions
+    @Environment(HealthService.self) private var health
     @Environment(\.requestReview) private var requestReview
     @Environment(\.openURL) private var openURL
 
@@ -38,6 +39,7 @@ struct YouView: View {
                     trainingSection(profile)
                     aboutSection(profile)
                 }
+                if HealthService.isAvailable { connectedAppsSection }
                 appSection
                 accountSection
                 footer
@@ -152,6 +154,31 @@ struct YouView: View {
             }
             SettingsRow(icon: "scalemass", label: "Weight", value: profile.weightKg.map { Format.weight($0, bodyUnits) } ?? "Add") {
                 path.append(Route.edit(.weight))
+            }
+        }
+    }
+
+    /// Apple Health for now; other apps (Strava, Garmin) can join later.
+    private var connectedAppsSection: some View {
+        PageSection("Connected apps") {
+            VStack(alignment: .leading, spacing: Metrics.sectionHeaderSpacing) {
+                ListCard {
+                    SettingsRow(icon: "heart", label: "Apple Health", value: health.isConnected ? "Connected" : "Connect") {
+                        if health.isConnected {
+                            // Permissions live in the Health app.
+                            if let url = URL(string: "x-apple-health://") { openURL(url) }
+                        } else {
+                            Task {
+                                if await health.connect() {
+                                    Haptics.success()
+                                    await health.sync(into: store)
+                                    health.startObserving(store)
+                                }
+                            }
+                        }
+                    }
+                }
+                Footnote("Kiki saves your runs to Apple Health and syncs runs from apps like Strava, Garmin and Nike Run Club.")
             }
         }
     }

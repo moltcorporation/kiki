@@ -4,6 +4,7 @@ import SwiftUI
 struct RunTrackerView: View {
     @Environment(RunTracker.self) private var tracker
     @Environment(TrainingStore.self) private var store
+    @Environment(HealthService.self) private var health
     @Environment(\.openURL) private var openURL
 
     @State private var draft: Run?
@@ -87,7 +88,11 @@ struct RunTrackerView: View {
             Analytics.screen("Run Tracker")
         }
         .sheet(item: $draft, onDismiss: { tracker.close() }) { run in
-            LogRunView(workout: tracker.workout, existing: nil, draft: run)
+            LogRunView(workout: tracker.workout, existing: nil, draft: run) { saved in
+                // Kiki's GPS runs also go to Apple Health, with the route.
+                let locations = tracker.locations
+                Task { await health.saveRun(saved, locations: locations) }
+            }
                 .interactiveDismissDisabled()
         }
         .confirmationDialog("Discard this run?", isPresented: $confirmDiscard, titleVisibility: .visible) {

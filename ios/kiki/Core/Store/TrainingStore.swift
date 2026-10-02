@@ -265,6 +265,8 @@ final class TrainingStore {
 
     func delete(_ run: Run) {
         runs.removeAll { $0.id == run.id }
+        // Don't bring a deleted Apple Health run back on the next sync.
+        if run.source == .appleHealth { HealthService.ignore(run) }
         if let workoutID = run.workoutId, !runs.contains(where: { $0.workoutId == workoutID }) {
             updateWorkout(workoutID) { if $0.status == .completed { $0.status = .planned } }
         }
