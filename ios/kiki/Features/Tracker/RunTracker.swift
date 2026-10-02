@@ -3,7 +3,9 @@ import CoreLocation
 import Foundation
 
 /// Records a run with GPS: distance, moving time, pace, splits and route,
-/// mirrored to a Live Activity. Keeps running in the background.
+/// mirrored to a Live Activity (with pause/resume buttons). Keeps running in
+/// the background, and saves its progress every few seconds so a run
+/// survives the app being closed or crashing: reopening Kiki picks it up.
 @Observable
 final class RunTracker {
     enum State { case ready, running, paused, finished }
@@ -15,6 +17,14 @@ final class RunTracker {
     private(set) var currentPaceSPerKm: Double?
     private(set) var locations: [CLLocation] = []
     private(set) var authorizationDenied = false
+    /// Location is allowed but Precise Location is off, so distance is rough.
+    private(set) var isApproximateLocation = false
+    /// Accuracy of the latest GPS fix in meters, from the moment the
+    /// tracker opens (GPS warms up before Start).
+    private(set) var gpsAccuracy: Double?
+
+    /// GPS is good enough to start: a recent fix within 20 m.
+    var hasGoodGPS: Bool { (gpsAccuracy ?? .infinity) <= 20 }
 
     private(set) var startedAt: Date?
     private var activeSince: Date?
@@ -30,6 +40,13 @@ final class RunTracker {
     private var serviceSession: CLServiceSession?
     private var activity: Activity<RunActivityAttributes>?
     private var lastActivityUpdate = Date.distantPast
+    private var lastSnapshot = Date.distantPast
+
+    init() {
+        RunControl.onPause = { [weak self] in self?.pause() }
+        RunControl.onResume = { [weak self] in self?.resume() }
+        restore()
+    }
 
     /// Moving time in seconds (excludes pauses).
     func elapsed(at date: Date = .now) -> TimeInterval {
@@ -48,11 +65,23 @@ final class RunTracker {
         isPresented = true
         // Ask for location permission up front so the run starts instantly.
         serviceSession = CLServiceSession(authorization: .whenInUse, fullAccuracyPurposeKey: "RunTracking")
-        authorizationDenied = [.denied, .restricted].contains(CLLocationManager().authorizationStatus)
+        refreshAuthorization()
+        // Warm up GPS now so the first stretch of the run is accurate.
+        startUpdates()
         Analytics.track("tracker_opened", ["linked_workout": workout != nil])
     }
 
     func setUnits(_ units: Units) { self.units = units }
+
+    /// Re-reads location permission (e.g. after a trip to Settings).
+    func refreshAuthorization() {
+        let manager = CLLocationManager()
+        authorizationDenied = [.denied, .restricted].contains(manager.authorizationStatus)
+        isApproximateLocation = !authorizationDenied
+            && manager.authorizationStatus != .notDetermined
+            && manager.accuracyAuthorization == .reducedAccuracy
+        if !authorizationDenied, state == .ready, updatesTask == nil, isPresented { startUpdates() }
+    }
 
     func begin() {
         guard state == .ready else { return }
@@ -60,8 +89,9 @@ final class RunTracker {
         activeSince = .now
         state = .running
         backgroundSession = CLBackgroundActivitySession()
-        startUpdates()
+        if updatesTask == nil { startUpdates() }
         startActivity()
+        saveSnapshot()
         Haptics.success()
         Analytics.track("run_tracking_started")
     }
@@ -74,6 +104,7 @@ final class RunTracker {
         currentPaceSPerKm = nil
         Haptics.tap()
         updateActivity(force: true)
+        saveSnapshot()
     }
 
     func resume() {
@@ -84,6 +115,7 @@ final class RunTracker {
         state = .running
         Haptics.tap()
         updateActivity(force: true)
+        saveSnapshot()
     }
 
     /// Stops recording and returns a draft run to review and save.
@@ -92,6 +124,7 @@ final class RunTracker {
         state = .finished
         stopUpdates()
         endActivity()
+        clearSnapshot()
         guard let startedAt, distanceM > 0 else { return nil }
 
         let duration = Int(elapsed().rounded())
@@ -112,6 +145,7 @@ final class RunTracker {
     func discard() {
         stopUpdates()
         endActivity()
+        clearSnapshot()
         reset()
         isPresented = false
         Analytics.track("run_tracking_discarded")
@@ -124,7 +158,9 @@ final class RunTracker {
 
     private func reset() {
         stopUpdates()
+        clearSnapshot()
         state = .ready
+        gpsAccuracy = nil
         workout = nil
         distanceM = 0
         currentPaceSPerKm = nil
@@ -149,7 +185,10 @@ final class RunTracker {
                     if update.authorizationDenied || update.authorizationDeniedGlobally {
                         self.authorizationDenied = true
                     }
-                    if let location = update.location { self.ingest(location) }
+                    if let location = update.location {
+                        if location.horizontalAccuracy >= 0 { self.gpsAccuracy = location.horizontalAccuracy }
+                        self.ingest(location)
+                    }
                 }
             } catch {
                 Analytics.captureError(error, context: ["step": "location_updates"])
@@ -187,6 +226,7 @@ final class RunTracker {
         updatePace()
         recordSplitIfNeeded()
         updateActivity()
+        if Date.now.timeIntervalSince(lastSnapshot) > 5 { saveSnapshot() }
     }
 
     /// Pace over roughly the last 30 seconds.
@@ -216,6 +256,99 @@ final class RunTracker {
         return locations.enumerated()
             .filter { $0.offset % step == 0 || $0.offset == locations.count - 1 }
             .map(\.element.coordinate)
+    }
+
+    // MARK: Recovery
+
+    /// Everything needed to pick a run back up after the app closes.
+    private struct Snapshot: Codable {
+        var workout: Workout?
+        var paused: Bool
+        var startedAt: Date
+        var activeSince: Date?
+        var accumulated: TimeInterval
+        var distanceM: Double
+        var elevationGain: Double
+        var splits: [Run.Split]
+        var splitStartDistance: Double
+        var splitStartTime: TimeInterval
+        var units: Units
+        /// lat, lon, altitude, timestamp (seconds since 1970).
+        var points: [[Double]]
+    }
+
+    private static var snapshotURL: URL {
+        URL.applicationSupportDirectory.appending(path: "run-in-progress.json")
+    }
+
+    private func saveSnapshot() {
+        guard let startedAt, state == .running || state == .paused else { return }
+        lastSnapshot = .now
+        let snapshot = Snapshot(
+            workout: workout,
+            paused: state == .paused,
+            startedAt: startedAt,
+            activeSince: activeSince,
+            accumulated: accumulated,
+            distanceM: distanceM,
+            elevationGain: elevationGain,
+            splits: splits,
+            splitStartDistance: splitStart.distance,
+            splitStartTime: splitStart.time,
+            units: units,
+            points: locations.suffix(20_000).map {
+                [$0.coordinate.latitude, $0.coordinate.longitude, $0.altitude, $0.timestamp.timeIntervalSince1970]
+            }
+        )
+        let url = Self.snapshotURL
+        Task.detached(priority: .utility) {
+            try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try? JSONEncoder().encode(snapshot).write(to: url, options: .atomic)
+        }
+    }
+
+    private func clearSnapshot() {
+        try? FileManager.default.removeItem(at: Self.snapshotURL)
+    }
+
+    /// Picks up a run that was in progress when the app closed.
+    private func restore() {
+        guard let data = try? Data(contentsOf: Self.snapshotURL),
+              let snapshot = try? JSONDecoder().decode(Snapshot.self, from: data)
+        else { return }
+        // A run left for more than a day was abandoned.
+        guard Date.now.timeIntervalSince(snapshot.startedAt) < 24 * 3600 else {
+            clearSnapshot()
+            return
+        }
+        workout = snapshot.workout
+        startedAt = snapshot.startedAt
+        accumulated = snapshot.accumulated
+        activeSince = snapshot.paused ? nil : snapshot.activeSince
+        distanceM = snapshot.distanceM
+        elevationGain = snapshot.elevationGain
+        splits = snapshot.splits
+        splitStart = (snapshot.splitStartDistance, snapshot.splitStartTime)
+        units = snapshot.units
+        locations = snapshot.points.compactMap { point in
+            guard point.count == 4 else { return nil }
+            return CLLocation(
+                coordinate: CLLocationCoordinate2D(latitude: point[0], longitude: point[1]),
+                altitude: point[2], horizontalAccuracy: 5, verticalAccuracy: 5,
+                timestamp: Date(timeIntervalSince1970: point[3])
+            )
+        }
+        // Don't draw a straight line across whatever happened while closed.
+        segmentBreak = true
+        state = snapshot.paused ? .paused : .running
+        isPresented = true
+        activity = Activity<RunActivityAttributes>.activities.first
+        if state == .running {
+            backgroundSession = CLBackgroundActivitySession()
+            startUpdates()
+        }
+        updateActivity(force: true)
+        Analytics.track("run_tracking_restored", ["paused": snapshot.paused])
     }
 
     // MARK: Live Activity

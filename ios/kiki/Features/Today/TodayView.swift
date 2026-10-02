@@ -57,6 +57,8 @@ struct TodayView: View {
                 }
 
 
+                GetSetUpSection()
+
                 HelpKikiGrowSection()
 
             }

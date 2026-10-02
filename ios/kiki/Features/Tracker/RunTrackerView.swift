@@ -6,6 +6,7 @@ struct RunTrackerView: View {
     @Environment(TrainingStore.self) private var store
     @Environment(HealthService.self) private var health
     @Environment(\.openURL) private var openURL
+    @Environment(\.scenePhase) private var scenePhase
 
     @State private var draft: Run?
     @State private var confirmDiscard = false
@@ -28,10 +29,16 @@ struct RunTrackerView: View {
             .ignoresSafeArea(edges: .top)
 
             VStack(spacing: Spacing.xxl) {
-                if let title = tracker.workout?.title {
-                    Text(title).font(.headline).foregroundStyle(.muted)
+                HStack(spacing: Spacing.s) {
+                    if let title = tracker.workout?.title {
+                        Text(title).font(.headline).foregroundStyle(.muted)
+                    }
+                    if tracker.state == .ready, !tracker.authorizationDenied {
+                        GPSStatus(isReady: tracker.hasGoodGPS)
+                    }
                 }
 
+                if !tracker.authorizationDenied {
                 TimelineView(.periodic(from: .now, by: 1)) { context in
                     Text(Format.duration(Int(tracker.elapsed(at: context.date))))
                         .heroMetricFont()
@@ -47,15 +54,22 @@ struct RunTrackerView: View {
                     MetricView(value: tracker.averagePaceSPerKm.map { Format.pace($0, units, withUnit: false) } ?? "–:––", label: "avg /\(units.rawValue)")
                         .frame(maxWidth: .infinity)
                 }
-
-                if tracker.authorizationDenied {
-                    Button("Allow location access in Settings") {
-                        if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
-                    }
-                    .font(.footnote.weight(.semibold))
                 }
 
-                controls
+                if tracker.authorizationDenied {
+                    LocationOffCard { openSettings() }
+                } else {
+                    if tracker.isApproximateLocation {
+                        Button(action: openSettings) {
+                            Label("Precise Location is off, so distance may be off. Turn it on in Settings.", systemImage: "location.slash")
+                                .font(.footnote.weight(.medium))
+                                .foregroundStyle(.muted)
+                                .multilineTextAlignment(.leading)
+                        }
+                        .buttonStyle(.haptic)
+                    }
+                    controls
+                }
             }
             .padding(.horizontal, Metrics.screenMargin)
             .padding(.top, Spacing.xl)
@@ -83,6 +97,10 @@ struct RunTrackerView: View {
             .padding(.top, Spacing.s)
         }
         .mapScope(mapScope)
+        // Coming back from Settings: pick up the new permission.
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { tracker.refreshAuthorization() }
+        }
         .onAppear {
             tracker.setUnits(units)
             Analytics.screen("Run Tracker")
@@ -98,6 +116,11 @@ struct RunTrackerView: View {
         .confirmationDialog("Discard this run?", isPresented: $confirmDiscard, titleVisibility: .visible) {
             Button("Discard run", role: .destructive) { tracker.discard() }
         }
+    }
+
+    /// Kiki's page in the Settings app (location, notifications).
+    private func openSettings() {
+        if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
     }
 
     @ViewBuilder
@@ -122,5 +145,54 @@ struct RunTrackerView: View {
         case .finished:
             ProgressView()
         }
+    }
+}
+
+/// Whether GPS has a good fix yet, shown before the run starts.
+private struct GPSStatus: View {
+    let isReady: Bool
+
+    var body: some View {
+        HStack(spacing: Spacing.xs) {
+            if isReady {
+                Image(systemName: "location.fill")
+            } else {
+                ProgressView().controlSize(.mini)
+            }
+            Text(isReady ? "GPS ready" : "Finding GPS…")
+        }
+        .font(.caption.weight(.semibold))
+        .foregroundStyle(isReady ? Color.ink : Color.muted)
+        .padding(.horizontal, Spacing.s + Spacing.xxs)
+        .padding(.vertical, Spacing.xs)
+        .background(Color.wash, in: .capsule)
+        .animation(.snappy, value: isReady)
+        .accessibilityElement(children: .combine)
+    }
+}
+
+/// Shown instead of Start when location is off: why it's needed and a
+/// button straight to Kiki's page in Settings.
+private struct LocationOffCard: View {
+    let openSettings: () -> Void
+
+    var body: some View {
+        VStack(spacing: Spacing.m) {
+            Image(systemName: "location.slash.fill")
+                .font(.title2)
+                .frame(width: 48, height: 48)
+                .background(Color.wash, in: .circle)
+                .accessibilityHidden(true)
+            VStack(spacing: Spacing.xs) {
+                Text("Turn on location to track runs").font(.cardTitle)
+                Text("Kiki uses your location only while you run, to measure distance, pace and your route. In Settings, tap Location and choose While Using the App.")
+                    .font(.detail)
+                    .foregroundStyle(.muted)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            PrimaryButton("Open Settings", systemImage: "gear", action: openSettings)
+        }
+        .frame(maxWidth: .infinity)
     }
 }

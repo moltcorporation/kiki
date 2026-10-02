@@ -50,7 +50,8 @@ struct HelpKikiGrowSection: View {
 }
 
 /// A compact tile: icon at the top, title and subtitle at the bottom.
-private struct GrowTile: View {
+/// Used by Home's "Help Kiki grow" and "Get set up" rows.
+struct GrowTile: View {
     let icon: String
     let title: LocalizedStringKey
     let subtitle: LocalizedStringKey

@@ -1,4 +1,5 @@
 import ActivityKit
+import AppIntents
 import SwiftUI
 import WidgetKit
 
@@ -23,9 +24,14 @@ struct RunLiveActivity: Widget {
                         .font(.system(.title, weight: .heavy).italic().monospacedDigit())
                 }
                 DynamicIslandExpandedRegion(.bottom) {
-                    Text(context.state.isPaused ? "Paused" : context.attributes.workoutTitle)
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.secondary)
+                    HStack {
+                        Text(context.state.isPaused ? "Paused" : context.attributes.workoutTitle)
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        PauseResumeButton(isPaused: context.state.isPaused)
+                    }
+                    .padding(.horizontal, 4)
                 }
             } compactLeading: {
                 Image(systemName: context.state.isPaused ? "pause.fill" : "figure.run")
@@ -55,6 +61,7 @@ private struct LockScreenView: View {
                 Text(state.isPaused ? "Paused" : attributes.workoutTitle)
                     .font(.subheadline.weight(.semibold))
                 Spacer()
+                PauseResumeButton(isPaused: state.isPaused)
             }
             HStack(alignment: .firstTextBaseline) {
                 ElapsedText(state: state)
@@ -92,5 +99,31 @@ private struct Metric: View {
             Text(value).font(.system(.title3, weight: .heavy).italic().monospacedDigit())
             Text(label).font(.caption2).foregroundStyle(.secondary)
         }
+    }
+}
+
+/// Pauses or resumes the run from the Lock Screen or Dynamic Island.
+private struct PauseResumeButton: View {
+    let isPaused: Bool
+
+    var body: some View {
+        Group {
+            if isPaused {
+                Button(intent: ResumeRunIntent()) {
+                    Label("Resume", systemImage: "play.fill")
+                }
+            } else {
+                Button(intent: PauseRunIntent()) {
+                    Label("Pause", systemImage: "pause.fill")
+                }
+            }
+        }
+        .font(.caption.weight(.bold))
+        .labelStyle(.titleAndIcon)
+        .buttonStyle(.plain)
+        .foregroundStyle(.black)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 7)
+        .background(.white, in: .capsule)
     }
 }
