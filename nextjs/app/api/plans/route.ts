@@ -3,7 +3,7 @@ import { start } from "workflow/api";
 import { db } from "@/db";
 import { plan, profile } from "@/db/schema";
 import { ApiError, parseBody, withUser } from "@/lib/api";
-import { isSubscribed } from "@/lib/subscription";
+import { isSubscribed, PAYWALL_ENABLED } from "@/lib/subscription";
 import { addDays, dateFor, todayIn, weekCount } from "@/lib/training/dates";
 import { planInputSchema, RACE_DISTANCE_M } from "@/lib/training/types";
 import { generatePlanWorkflow } from "@/workflows/generate-plan";
@@ -64,7 +64,7 @@ export const POST = withUser(async (req, me) => {
   if (recent >= DAILY_PLAN_LIMIT) {
     throw new ApiError(429, "rate_limited", "You've created a lot of plans today. Try again tomorrow.");
   }
-  if (total >= FREE_PLAN_LIMIT && !(await isSubscribed(me.id))) {
+  if (PAYWALL_ENABLED && total >= FREE_PLAN_LIMIT && !(await isSubscribed(me.id))) {
     throw new ApiError(402, "subscription_required", "Subscribe to create more plans");
   }
 

@@ -55,16 +55,6 @@ struct YouView: View {
             .navigationDestination(for: Run.self) { RunDetailView(run: $0) }
             .sheet(isPresented: $showCustomerCenter) { CustomerCenterView() }
             .goalEditFlow($goalFlow)
-            .confirmationDialog("Sign out of Kiki?", isPresented: $confirmSignOut, titleVisibility: .visible) {
-                Button("Sign out", role: .destructive) {
-                    Task { await auth.signOut() }
-                }
-            }
-            .confirmationDialog("Delete your account?", isPresented: $confirmDelete, titleVisibility: .visible) {
-                Button("Delete account", role: .destructive, action: deleteAccount)
-            } message: {
-                Text("This permanently deletes your profile, plans and runs. It doesn't cancel your subscription. Manage that in your Apple ID settings.")
-            }
             .alert(message ?? "", isPresented: .constant(message != nil)) {
                 Button("OK") { message = nil }
             }
@@ -196,11 +186,13 @@ struct YouView: View {
                 .onChange(of: remindersEnabled) { _, enabled in
                     Task { await updateReminders(enabled) }
                 }
-            SettingsRow(icon: "creditcard", label: "Subscription") { showCustomerCenter = true }
-            SettingsRow(icon: "arrow.clockwise", label: "Restore purchases") {
-                Task {
-                    let found = (try? await subscriptions.restore()) ?? false
-                    message = found ? "Your subscription is active." : "No active subscription found for this Apple ID."
+            if Config.paywallEnabled {
+                SettingsRow(icon: "creditcard", label: "Subscription") { showCustomerCenter = true }
+                SettingsRow(icon: "arrow.clockwise", label: "Restore purchases") {
+                    Task {
+                        let found = (try? await subscriptions.restore()) ?? false
+                        message = found ? "Your subscription is active." : "No active subscription found for this Apple ID."
+                    }
                 }
             }
             SettingsRow(icon: "star", label: "Rate Kiki") { requestReview() }
@@ -214,11 +206,24 @@ struct YouView: View {
 
     private var accountSection: some View {
         ListSection("Account") {
+            // Dialogs sit on their rows, so the popover points at the right one.
             SettingsRow(icon: "rectangle.portrait.and.arrow.right", label: "Sign out") { confirmSignOut = true }
+                .confirmationDialog("Sign out of Kiki?", isPresented: $confirmSignOut, titleVisibility: .visible) {
+                    Button("Sign out", role: .destructive) {
+                        Task { await auth.signOut() }
+                    }
+                }
             SettingsRow(icon: "trash", label: "Delete account", role: .destructive) {
                 confirmDelete = true
             }
             .disabled(isDeleting)
+            .confirmationDialog("Delete your account?", isPresented: $confirmDelete, titleVisibility: .visible) {
+                Button("Delete account", role: .destructive, action: deleteAccount)
+            } message: {
+                Text(Config.paywallEnabled
+                     ? "This permanently deletes your profile, plans and runs. It doesn't cancel your subscription. Manage that in your Apple ID settings."
+                     : "This permanently deletes your profile, plans and runs.")
+            }
         }
     }
 

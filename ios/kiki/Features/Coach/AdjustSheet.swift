@@ -89,12 +89,13 @@ struct AdjustSheet: View {
     }
 
     private func go(to next: Phase) {
-        withAnimation(.easeOut(duration: 0.12)) { isContentVisible = false }
+        withAnimation(.easeOut(duration: 0.18)) { isContentVisible = false }
         Task {
-            try? await Task.sleep(for: .seconds(0.12))
-            phase = next
-            try? await Task.sleep(for: .seconds(0.05))
-            withAnimation(.smooth(duration: 0.28)) { isContentVisible = true }
+            try? await Task.sleep(for: .seconds(0.18))
+            // The sheet eases to its new height while it's empty.
+            withAnimation(.smooth(duration: 0.45)) { phase = next }
+            try? await Task.sleep(for: .seconds(0.2))
+            withAnimation(.smooth(duration: 0.35)) { isContentVisible = true }
         }
     }
 

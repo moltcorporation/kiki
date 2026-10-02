@@ -4,7 +4,7 @@ import { db } from "@/db";
 import { planAdjustment } from "@/db/schema";
 import { ApiError, parseBody, withUser } from "@/lib/api";
 import { currentPlan } from "@/lib/plans";
-import { isSubscribed } from "@/lib/subscription";
+import { isSubscribed, PAYWALL_ENABLED } from "@/lib/subscription";
 import { adjustmentInputSchema } from "@/lib/training/types";
 import { adjustPlanWorkflow } from "@/workflows/adjust-plan";
 
@@ -17,7 +17,7 @@ export const POST = withUser(async (req, me) => {
   });
   if (existing) return Response.json({ adjustment: existing }, { status: 202 });
 
-  if (!(await isSubscribed(me.id))) {
+  if (PAYWALL_ENABLED && !(await isSubscribed(me.id))) {
     throw new ApiError(402, "subscription_required", "Subscribe to adjust your plan");
   }
   const { plan } = await currentPlan(me.id);

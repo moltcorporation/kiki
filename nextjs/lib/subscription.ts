@@ -3,6 +3,13 @@ import "server-only";
 export const ENTITLEMENT_ID = "premium";
 
 /**
+ * Launch switch: while false, nothing is behind the paywall (adjustments
+ * and new plans are free for everyone). RevenueCat still knows every user.
+ * Turn on together with `Config.paywallEnabled` in the app.
+ */
+export const PAYWALL_ENABLED = false;
+
+/**
  * Whether the user has an active Kiki subscription (including free trials),
  * checked against RevenueCat. The App User ID in RevenueCat is our user ID.
  * Fails open on RevenueCat outages so paying runners are never locked out.

@@ -14,10 +14,11 @@ struct RootView: View {
     private var route: Route {
         if !onboarding.path.isEmpty { return .onboarding }
         if !auth.isSignedIn { return .welcome }
-        if !store.hasLoaded || !subscriptions.hasLoaded { return .loading }
+        // Without the paywall, never wait on RevenueCat to open the app.
+        if !store.hasLoaded || (Config.paywallEnabled && !subscriptions.hasLoaded) { return .loading }
         if store.needsConsent { return .consent }
         if store.plan == nil { return .needsPlan }
-        if !subscriptions.isPremium { return .paywall }
+        if Config.paywallEnabled && !subscriptions.isPremium { return .paywall }
         return .main
     }
 
