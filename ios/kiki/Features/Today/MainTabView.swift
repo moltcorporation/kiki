@@ -9,7 +9,14 @@ struct MainTabView: View {
 
     var body: some View {
         @Bindable var tracker = tracker
-        TabView(selection: $tab) {
+        // The run button never becomes the selection: the setter opens the
+        // tracker instead, so the tab bar's highlight doesn't jump to it.
+        TabView(selection: Binding(
+            get: { tab },
+            set: { new in
+                if new == .run { startRun() } else { tab = new }
+            }
+        )) {
             Tab(value: .today) {
                 TodayView(onViewPlan: { tab = .plan })
             } label: {
@@ -20,7 +27,7 @@ struct MainTabView: View {
             } label: {
                 tabLabel("Plan", "calendar", .plan)
             }
-            // Not a page: tapping it starts a run (see onChange below).
+            // Not a page: tapping it starts a run (see the selection binding).
             Tab(value: .run) {
                 Color.clear
             } label: {
@@ -38,15 +45,7 @@ struct MainTabView: View {
                 tabLabel("Profile", "person.crop.circle", .you)
             }
         }
-        .onChange(of: tab) { old, new in
-            if new == .run {
-                // Stay on the current tab and open the tracker.
-                tab = old
-                startRun()
-                return
-            }
-            Haptics.select()
-        }
+        .onChange(of: tab) { Haptics.select() }
         .fullScreenCover(isPresented: $tracker.isPresented) {
             RunTrackerView()
         }
