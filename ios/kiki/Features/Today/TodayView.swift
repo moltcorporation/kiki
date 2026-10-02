@@ -19,7 +19,7 @@ struct TodayView: View {
         let units = store.units
 
         NavigationStack(path: $path) {
-            TabPage(LocalizedStringKey(greeting)) {
+            TabPage(LocalizedStringKey(greeting), eyebrow: Date.now.formatted(.dateTime.weekday(.wide).month(.abbreviated).day())) {
                 // The goal: Home's header, with the plan actions in its footer.
                 if let plan = store.plan {
                     GoalProgressCard(

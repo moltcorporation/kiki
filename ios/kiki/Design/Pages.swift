@@ -16,22 +16,34 @@ import SwiftUI
 /// wordmark, centered at the top like a logo (`TabPage(.wordmark)`).
 struct TabPage<Content: View>: View {
     let title: TabTitle.Kind
+    /// A small gray line above the title (Home's date). It starts where
+    /// other tabs' titles start, so every tab's header begins at one height.
+    var eyebrow: String?
     @ViewBuilder let content: Content
 
-    init(_ title: TabTitle.Kind, @ViewBuilder content: () -> Content) {
+    init(_ title: TabTitle.Kind, eyebrow: String? = nil, @ViewBuilder content: () -> Content) {
         self.title = title
+        self.eyebrow = eyebrow
         self.content = content()
     }
 
-    init(_ title: LocalizedStringKey, @ViewBuilder content: () -> Content) {
-        self.init(.text(title), content: content)
+    init(_ title: LocalizedStringKey, eyebrow: String? = nil, @ViewBuilder content: () -> Content) {
+        self.init(.text(title), eyebrow: eyebrow, content: content)
     }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                TabTitle(kind: title)
-                    .padding(.bottom, title.bottomSpacing)
+                VStack(alignment: .leading, spacing: Spacing.xxs) {
+                    if let eyebrow {
+                        Text(eyebrow)
+                            .font(.eyebrow)
+                            .foregroundStyle(.muted)
+                    }
+                    TabTitle(kind: title)
+                }
+                .accessibilityElement(children: .combine)
+                .padding(.bottom, title.bottomSpacing)
                 VStack(alignment: .leading, spacing: Metrics.sectionSpacing) {
                     content
                 }
