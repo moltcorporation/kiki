@@ -278,13 +278,15 @@ private struct FinishLine: View {
     }
 }
 
-/// Past weeks, folded away: a small "Completed" label, then one row per
-/// week (a check when every run was done, else "2/3"; the dates; runs done)
-/// that expands to its schedule.
+/// Past weeks, folded away so this week stays near the top: a small
+/// "Completed" label over one summary card ("Weeks 1–10", the dates, runs
+/// done) that opens like an accordion into a row per week, each of which
+/// opens to its schedule. A single past week shows as its own row.
 private struct CompletedWeeks: View {
     let weeks: [(week: Int, workouts: [Workout])]
     let units: Units
 
+    @State private var isOpen = false
     @State private var expanded: Set<Int> = []
 
     var body: some View {
@@ -293,42 +295,63 @@ private struct CompletedWeeks: View {
                 .font(.eyebrow)
                 .foregroundStyle(.muted)
                 .accessibilityAddTraits(.isHeader)
-            ForEach(weeks, id: \.week) { week, workouts in
-                let isExpanded = expanded.contains(week)
-                // One card that grows: the week row, then its days revealed
-                // inside it (clipped to the card), like an accordion.
-                VStack(spacing: 0) {
+            VStack(spacing: 0) {
+                if weeks.count > 1 {
                     Button {
-                        withAnimation(.smooth(duration: 0.35)) {
-                            if isExpanded { expanded.remove(week) } else { expanded.insert(week) }
-                        }
+                        withAnimation(.smooth(duration: 0.35)) { isOpen.toggle() }
                     } label: {
-                        CompletedWeekRow(week: week, workouts: workouts, isExpanded: isExpanded)
+                        SummaryRow(
+                            title: "Weeks \(weeks.first?.week ?? 1)–\(weeks.last?.week ?? 1)",
+                            workouts: weeks.flatMap(\.workouts),
+                            isExpanded: isOpen
+                        )
                     }
                     .buttonStyle(.haptic)
-                    if isExpanded {
-                        Divider().padding(.horizontal, RowMetrics.horizontalPadding)
-                        WeekSchedule(workouts: workouts, units: units, isCard: false)
-                            .transition(.opacity)
-                    }
                 }
-                .background(Color.surface)
-                .clipShape(.rect(cornerRadius: Radius.card))
-                .elevation(.card)
+                if isOpen || weeks.count == 1 {
+                    ForEach(weeks, id: \.week) { week, workouts in
+                        let isExpanded = expanded.contains(week)
+                        if weeks.count > 1 || week != weeks.first?.week {
+                            Divider().padding(.horizontal, RowMetrics.horizontalPadding)
+                        }
+                        Button {
+                            withAnimation(.smooth(duration: 0.35)) {
+                                if isExpanded { expanded.remove(week) } else { expanded.insert(week) }
+                            }
+                        } label: {
+                            SummaryRow(title: "Week \(week)", workouts: workouts, isExpanded: isExpanded)
+                        }
+                        .buttonStyle(.haptic)
+                        if isExpanded {
+                            Divider().padding(.horizontal, RowMetrics.horizontalPadding)
+                            WeekSchedule(workouts: workouts, units: units, isCard: false)
+                                .transition(.opacity)
+                        }
+                    }
+                    .transition(.opacity)
+                }
             }
+            .background(Color.surface)
+            .clipShape(.rect(cornerRadius: Radius.card))
+            .elevation(.card)
         }
     }
 }
 
-private struct CompletedWeekRow: View {
-    let week: Int
+/// A completed stretch: a Volt check when every run was done (else
+/// "2/3"), the title over its dates, runs done, and a chevron.
+private struct SummaryRow: View {
+    let title: String
     let workouts: [Workout]
     let isExpanded: Bool
 
     var body: some View {
         let runs = workouts.filter { !$0.isRest }
         let done = runs.filter { $0.status == .completed }.count
-        let allDone = done == runs.count && !runs.isEmpty
+        // The multi-week summary always shows a check: it's the finished
+        // stretch. Single weeks show a check only when every run was done.
+        let weeks = Set(workouts.map(\.week)).count
+        let allDone = weeks > 1 || (done == runs.count && !runs.isEmpty)
         HStack(spacing: Spacing.m) {
             ZStack {
                 Circle().fill(allDone ? Color.highlight : Color.wash)
@@ -346,7 +369,7 @@ private struct CompletedWeekRow: View {
             .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: Spacing.xxs) {
-                Text("Week \(week)").font(.rowTitle)
+                Text(title).font(.rowTitle)
                 Text(dateRange).font(.detail).foregroundStyle(.muted)
             }
             Spacer(minLength: Spacing.s)
@@ -366,14 +389,14 @@ private struct CompletedWeekRow: View {
         .contentShape(.rect)
         .accessibilityElement(children: .combine)
         .accessibilityValue(isExpanded ? "Expanded" : "Collapsed")
-        .accessibilityHint("Shows the week's workouts")
+        .accessibilityHint("Shows the workouts")
     }
 
-    /// "Sep 28 – Oct 4" or "Oct 5 – 11".
+    /// "Sep 28 – Oct 4", "Oct 5 – 11", or "Jul 20 – Sep 27" for many weeks.
     private var dateRange: String {
-        guard let first = workouts.map(\.date).min() else { return "" }
+        guard let first = workouts.map(\.date).min(), let last = workouts.map(\.date).max() else { return "" }
         let monday = first.mondayOfWeek
-        let sunday = monday.adding(days: 6)
+        let sunday = last.mondayOfWeek.adding(days: 6)
         let sameMonth = Calendar.current.isDate(monday.date, equalTo: sunday.date, toGranularity: .month)
         return "\(monday.date.formatted(.dateTime.month(.abbreviated).day())) – "
             + (sameMonth ? "\(sunday.day)" : sunday.date.formatted(.dateTime.month(.abbreviated).day()))

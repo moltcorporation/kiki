@@ -95,24 +95,35 @@ struct PlanCalendar: View {
         return days
     }
 
+    /// Plain rows, not a lazy grid: the month is always fully visible, and
+    /// a lazy grid inside the scrolling page mis-measures after a push and
+    /// pop, shrinking the card.
     private func grid(_ byDay: [Day: Workout]) -> some View {
-        let columns = Array(repeating: GridItem(.flexible(), spacing: 0), count: 7)
-        return LazyVGrid(columns: columns, spacing: Spacing.xs) {
-            ForEach(["M", "T", "W", "T", "F", "S", "S"].indices, id: \.self) { index in
-                Text(["M", "T", "W", "T", "F", "S", "S"][index])
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.muted)
-                    .accessibilityHidden(true)
+        let days = monthDays
+        let weeks = stride(from: 0, to: days.count, by: 7).map { Array(days[$0..<min($0 + 7, days.count)]) }
+        return VStack(spacing: Spacing.xs) {
+            HStack(spacing: 0) {
+                ForEach(Array(["M", "T", "W", "T", "F", "S", "S"].enumerated()), id: \.offset) { _, letter in
+                    Text(letter)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.muted)
+                        .frame(maxWidth: .infinity)
+                        .accessibilityHidden(true)
+                }
             }
-            ForEach(monthDays, id: \.self) { day in
-                DayCell(
-                    day: day,
-                    workout: byDay[day],
-                    isInMonth: day.month == month.month,
-                    isSelected: day == selected
-                ) {
-                    Haptics.select()
-                    selected = day
+            ForEach(weeks, id: \.first) { week in
+                HStack(spacing: 0) {
+                    ForEach(week, id: \.self) { day in
+                        DayCell(
+                            day: day,
+                            workout: byDay[day],
+                            isInMonth: day.month == month.month,
+                            isSelected: day == selected
+                        ) {
+                            Haptics.select()
+                            selected = day
+                        }
+                    }
                 }
             }
         }
@@ -197,7 +208,7 @@ private struct SelectedDay: View {
 }
 
 /// One day: its number in a circle styled by status. Days outside the plan
-/// or the month are gray; the selected day sits on a soft square.
+/// or the month are gray; the selected day sits in a black-outlined square.
 private struct DayCell: View {
     let day: Day
     let workout: Workout?
@@ -219,8 +230,12 @@ private struct DayCell: View {
                 .background { background }
                 .padding(Spacing.xs)
                 .background {
+                    // Selected: a black outline on a gray square, clearly
+                    // apart from the round today / run-day markers.
                     if isSelected {
-                        RoundedRectangle(cornerRadius: Radius.inner).fill(Color.wash)
+                        RoundedRectangle(cornerRadius: Radius.inner)
+                            .fill(Color.wash)
+                            .overlay(RoundedRectangle(cornerRadius: Radius.inner).strokeBorder(Color.ink, lineWidth: 1.5))
                     }
                 }
                 .frame(maxWidth: .infinity, minHeight: 44)
