@@ -133,7 +133,7 @@ struct ProgressCard: View {
                     HStack(spacing: Spacing.m) {
                         Stat(value: Format.distanceNumber(distanceM, units), label: units == .mi ? "Miles run" : "Km run")
                         Rectangle().fill(Color.hairline).frame(width: 1, height: 32)
-                        Stat(value: Format.distanceNumber(longestM, units), label: "Longest run")
+                        Stat(value: Format.distanceNumber(longestM, units), unit: units.rawValue, label: "Longest run")
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -144,11 +144,13 @@ struct ProgressCard: View {
     /// A bold number over its label.
     private struct Stat: View {
         let value: String
+        /// A small unit after the number ("mi").
+        var unit: String?
         let label: String
 
         var body: some View {
             VStack(alignment: .leading, spacing: Spacing.xxs) {
-                Text(value)
+                (Text(value) + Text(unit.map { " \($0)" } ?? "").font(.subheadline.weight(.semibold)))
                     .font(.metric(.title3))
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)

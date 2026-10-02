@@ -27,13 +27,6 @@ struct MainTabView: View {
             } label: {
                 tabLabel("Plan", "calendar", .plan)
             }
-            // Not a page: tapping it starts a run (see the selection binding).
-            Tab(value: .run) {
-                Color.clear
-            } label: {
-                Image(uiImage: Self.runIcon)
-                    .accessibilityLabel("Start a run")
-            }
             Tab(value: .learn) {
                 LearnView()
             } label: {
@@ -44,9 +37,16 @@ struct MainTabView: View {
             } label: {
                 tabLabel("Profile", "person.crop.circle", .you)
             }
+            // The run button: the search role gives it iOS's own floating
+            // circle beside the bar. It's not a page: selecting it starts a
+            // run instead (see the selection binding).
+            Tab(value: .run, role: .search) {
+                Color.clear
+            } label: {
+                Label("Start a run", systemImage: "play.fill")
+            }
         }
         .onChange(of: tab) { Haptics.select() }
-        .background(RunButtonCatcher { startRun() })
         .fullScreenCover(isPresented: $tracker.isPresented) {
             RunTrackerView()
         }
@@ -78,24 +78,6 @@ extension MainTabView {
         // Template, so the tab bar still tints selected and unselected.
         return image.withRenderingMode(.alwaysTemplate)
     }
-
-    /// The tab bar's run button: a white play glyph on a black circle, drawn
-    /// in its own colors so the tab bar doesn't tint it.
-    static let runIcon: UIImage = {
-        let size = CGSize(width: 46, height: 46)
-        let image = UIGraphicsImageRenderer(size: size).image { _ in
-            UIColor(red: 0x15 / 255, green: 0x18 / 255, blue: 0x1D / 255, alpha: 1).setFill()
-            UIBezierPath(ovalIn: CGRect(origin: .zero, size: size)).fill()
-            let play = UIImage(systemName: "play.fill", withConfiguration: UIImage.SymbolConfiguration(pointSize: 16, weight: .semibold))?
-                .withTintColor(.white, renderingMode: .alwaysOriginal)
-            if let play {
-                // Nudged right so the triangle looks centered.
-                let origin = CGPoint(x: (size.width - play.size.width) / 2 + 2, y: (size.height - play.size.height) / 2)
-                play.draw(at: origin)
-            }
-        }
-        return image.withRenderingMode(.alwaysOriginal)
-    }()
 
     /// Starts a run: linked to today's workout if there's one still to do,
     /// otherwise a free run (rest days, extra runs).
@@ -129,60 +111,5 @@ extension View {
                 AdjustMenuSheet()
             }
         }
-    }
-}
-
-/// Catches taps on the tab bar's run button before the tab bar sees them,
-/// so its selection highlight never slides over to it: a clear control laid
-/// over the middle tab item, inside the tab bar (so it hides with it).
-private struct RunButtonCatcher: UIViewRepresentable {
-    let action: () -> Void
-
-    func makeUIView(context: Context) -> UIView {
-        let view = UIView()
-        view.isUserInteractionEnabled = false
-        return view
-    }
-
-    func updateUIView(_ view: UIView, context: Context) {
-        let action = action
-        DispatchQueue.main.async {
-            guard let tabBar = Self.tabBar(in: view.window?.rootViewController) else { return }
-            if let catcher = tabBar.subviews.compactMap({ $0 as? CatcherControl }).first {
-                catcher.action = action
-                return
-            }
-            let catcher = CatcherControl()
-            catcher.action = action
-            catcher.isAccessibilityElement = false
-            catcher.translatesAutoresizingMaskIntoConstraints = false
-            tabBar.addSubview(catcher)
-            NSLayoutConstraint.activate([
-                catcher.centerXAnchor.constraint(equalTo: tabBar.centerXAnchor),
-                catcher.topAnchor.constraint(equalTo: tabBar.topAnchor),
-                catcher.bottomAnchor.constraint(equalTo: tabBar.safeAreaLayoutGuide.bottomAnchor),
-                catcher.widthAnchor.constraint(equalToConstant: 64),
-            ])
-        }
-    }
-
-    private static func tabBar(in controller: UIViewController?) -> UITabBar? {
-        guard let controller else { return nil }
-        if let tabs = controller as? UITabBarController { return tabs.tabBar }
-        for child in controller.children {
-            if let found = tabBar(in: child) { return found }
-        }
-        return tabBar(in: controller.presentedViewController)
-    }
-
-    final class CatcherControl: UIControl {
-        var action: (() -> Void)?
-
-        override init(frame: CGRect) {
-            super.init(frame: frame)
-            addAction(UIAction { [weak self] _ in self?.action?() }, for: .touchUpInside)
-        }
-
-        required init?(coder: NSCoder) { fatalError() }
     }
 }
