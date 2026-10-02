@@ -33,8 +33,8 @@ struct PageBackground: View {
     }
 }
 
-/// The splash's asphalt texture with a soft white glow that drifts slowly
-/// across and back, so the card feels alive. Still under Reduce Motion.
+/// The splash's asphalt texture with a soft electric-blue glow that drifts
+/// slowly across and back, so the card feels alive. Still under Reduce Motion.
 /// Used only behind Home's goal card.
 struct AsphaltBackground: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -51,7 +51,7 @@ struct AsphaltBackground: View {
                     .frame(width: size.width, height: size.height)
                     .clipped()
                 RadialGradient(
-                    colors: [Color.glow.opacity(0.4), Color.glow.opacity(0.1), .clear],
+                    colors: [Color.glow.opacity(0.9), Color.glow.opacity(0.22), .clear],
                     center: UnitPoint(x: -0.1 + 1.2 * phase, y: 0.1),
                     startRadius: 0,
                     endRadius: max(size.width, size.height) * 0.75

@@ -99,9 +99,9 @@ extension Color {
     static var track: Color { .ink.opacity(0.12) }
     /// Destructive actions (Delete account).
     static var destructive: Color { .red }
-    /// The soft off-white light drifting across the asphalt on Home's goal
-    /// card.
-    static var glow: Color { Color(white: 0.96) }
+    /// Electric cobalt blue: the light drifting across the asphalt on
+    /// Home's goal card.
+    static var glow: Color { Color(red: 0.17, green: 0.36, blue: 1) }
 
 }
 
