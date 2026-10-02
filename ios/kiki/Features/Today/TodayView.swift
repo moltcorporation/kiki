@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// Home: the goal card (with the plan actions), today's workout and the next few
-/// days, on the shared tab layout.
+/// Home: the goal card (with the plan actions), today's workout, this week
+/// at a glance, and Help Kiki grow, on the shared tab layout.
 struct TodayView: View {
     @Environment(TrainingStore.self) private var store
     @Environment(RunTracker.self) private var tracker
@@ -58,11 +58,6 @@ struct TodayView: View {
                     }
                 }
 
-                if !upcoming.isEmpty {
-                    PageSection("Upcoming") {
-                        WeekSchedule(workouts: upcoming, units: units)
-                    }
-                }
 
                 HelpKikiGrowSection()
 
@@ -80,12 +75,6 @@ struct TodayView: View {
     /// "Hello, Stuart!"
     private var greeting: String {
         store.profile?.firstName.map { "Hello, \($0)!" } ?? "Hello!"
-    }
-
-    /// The next several days after today (rest days included, so the
-    /// runner sees the shape of the week).
-    private var upcoming: [Workout] {
-        Array(store.workouts.filter { $0.date > .today }.prefix(5))
     }
 }
 
