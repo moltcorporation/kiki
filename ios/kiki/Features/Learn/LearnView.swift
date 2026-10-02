@@ -17,7 +17,7 @@ struct LearnView: View {
                     let shown = filter == nil ? Array(articles.prefix(3)) : articles
                     PageSection(
                         LocalizedStringKey(category.title),
-                        actionTitle: filter == nil && articles.count > shown.count ? "See all \(articles.count)" : nil,
+                        actionTitle: filter == nil && articles.count > shown.count ? "See all" : nil,
                         action: { withAnimation(.snappy) { filter = category } }
                     ) {
                         ListCard {
