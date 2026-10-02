@@ -1,9 +1,9 @@
 import SwiftUI
 
-/// The plan as a month calendar, for runners who prefer one: a card with
-/// month arrows, Monday-first day circles (done = Volt, today = ink, run
-/// day = outline, rest = plain), a legend, and the selected day's workout
-/// below (tap a day to pick it).
+/// The plan as a month calendar, for runners who prefer one: a legend, then
+/// one card with month arrows, Monday-first day circles (done = Volt, today
+/// = ink, run day = outline, rest = plain) and the selected day's workout
+/// in a footer (tap a day to pick it; the footer opens the workout).
 struct PlanCalendar: View {
     let workouts: [Workout]
     let units: Units
@@ -20,17 +20,23 @@ struct PlanCalendar: View {
 
     var body: some View {
         let byDay = self.byDay
-        VStack(alignment: .leading, spacing: Spacing.l) {
-            Card {
-                VStack(spacing: Spacing.l) {
-                    header(byDay)
+        VStack(alignment: .leading, spacing: Spacing.m) {
+            legend
+            VStack(spacing: 0) {
+                VStack(spacing: Spacing.m) {
+                    header
                     grid(byDay)
                 }
+                .padding(.horizontal, Spacing.m)
+                .padding(.top, Spacing.m)
+                .padding(.bottom, Spacing.l)
+                if let workout = byDay[selected] {
+                    SelectedDay(workout: workout, units: units)
+                }
             }
-            legend
-            if let workout = byDay[selected] {
-                WeekSchedule(workouts: [workout], units: units)
-            }
+            .frame(maxWidth: .infinity)
+            .clipShape(.rect(cornerRadius: Radius.card))
+            .elevatedCard()
         }
         .onAppear {
             // Start on this month, or the plan's first month if it hasn't begun.
@@ -42,24 +48,12 @@ struct PlanCalendar: View {
 
     // MARK: Header
 
-    private func header(_ byDay: [Day: Workout]) -> some View {
-        let days = monthDays
-        let inMonth = days.compactMap { byDay[$0] }
-        let weeks = Set(inMonth.map(\.week))
-        let runs = inMonth.filter { !$0.isRest }.count
-        return HStack {
+    private var header: some View {
+        HStack {
             arrow("chevron.left", label: "Previous month", isEnabled: month > firstMonth) { month = month.addingMonths(-1) }
             Spacer()
-            VStack(spacing: Spacing.xxs) {
-                Text(month.date.formatted(.dateTime.month(.wide).year()))
-                    .font(.headline)
-                if let low = weeks.min(), let high = weeks.max() {
-                    Text("\(low == high ? "Week \(low)" : "Weeks \(low)–\(high)") · \(runs) \(runs == 1 ? "run" : "runs")")
-                        .font(.caption)
-                        .foregroundStyle(.muted)
-                }
-            }
-            .accessibilityElement(children: .combine)
+            Text(month.date.formatted(.dateTime.month(.wide).year()))
+                .font(.headline)
             Spacer()
             arrow("chevron.right", label: "Next month", isEnabled: month < lastMonth) { month = month.addingMonths(1) }
         }
@@ -97,7 +91,7 @@ struct PlanCalendar: View {
 
     private func grid(_ byDay: [Day: Workout]) -> some View {
         let columns = Array(repeating: GridItem(.flexible(), spacing: 0), count: 7)
-        return LazyVGrid(columns: columns, spacing: Spacing.s) {
+        return LazyVGrid(columns: columns, spacing: Spacing.xs) {
             ForEach(["M", "T", "W", "T", "F", "S", "S"].indices, id: \.self) { index in
                 Text(["M", "T", "W", "T", "F", "S", "S"][index])
                     .font(.caption.weight(.semibold))
@@ -126,7 +120,7 @@ struct PlanCalendar: View {
         }
         .font(.caption)
         .foregroundStyle(.muted)
-        .padding(.horizontal, Spacing.xs)
+        .padding(.horizontal, Spacing.xxs)
         .accessibilityHidden(true)
     }
 
@@ -138,8 +132,63 @@ struct PlanCalendar: View {
     }
 }
 
+/// The card's footer: the selected day ("THU" over "1"), its workout and
+/// "Today · 2 mi", opening the workout (rest days just say Rest).
+private struct SelectedDay: View {
+    let workout: Workout
+    let units: Units
+
+    var body: some View {
+        if workout.isRest {
+            content
+        } else {
+            NavigationLink(value: workout) { content }
+                .buttonStyle(.haptic)
+        }
+    }
+
+    private var content: some View {
+        HStack(spacing: Spacing.l) {
+            VStack(spacing: 0) {
+                Text(workout.date.date.formatted(.dateTime.weekday(.abbreviated)).uppercased())
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(.muted)
+                Text("\(workout.date.day)")
+                    .font(.title3.weight(.semibold))
+                    .monospacedDigit()
+            }
+            .frame(minWidth: 32)
+            VStack(alignment: .leading, spacing: Spacing.xxs) {
+                Text(workout.isRest ? "Rest" : workout.title)
+                    .font(.body.weight(.semibold))
+                if let detail {
+                    Text(detail).font(.detail).foregroundStyle(.muted)
+                }
+            }
+            Spacer(minLength: Spacing.s)
+            if !workout.isRest { RowChevron() }
+        }
+        .foregroundStyle(.ink)
+        .padding(.horizontal, Metrics.cardPadding)
+        .padding(.vertical, Spacing.m)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.wash)
+        .contentShape(.rect)
+        .accessibilityElement(children: .combine)
+    }
+
+    /// "Today · 2 mi", "2 mi", or "Done · 2 mi".
+    private var detail: String? {
+        let amount = workout.distanceM.map { Format.distance(Double($0), units) }
+            ?? workout.durationS.map { Format.minutes($0) }
+        let when: String? = workout.status == .completed ? "Done" : (workout.date == .today ? "Today" : nil)
+        let parts = [when, amount].compactMap { $0 }
+        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+    }
+}
+
 /// One day: its number in a circle styled by status. Days outside the plan
-/// or the month are gray; the selected day gets a soft ring.
+/// or the month are gray; the selected day sits on a soft square.
 private struct DayCell: View {
     let day: Day
     let workout: Workout?
@@ -157,11 +206,12 @@ private struct DayCell: View {
                 .font(.subheadline.weight(isRun || isToday ? .semibold : .regular))
                 .monospacedDigit()
                 .foregroundStyle(foreground)
-                .frame(width: 38, height: 38)
+                .frame(width: 34, height: 34)
                 .background { background }
-                .overlay {
-                    if isSelected && !isToday {
-                        Circle().strokeBorder(Color.muted.opacity(0.5), lineWidth: 1).padding(-3)
+                .padding(Spacing.xs)
+                .background {
+                    if isSelected {
+                        RoundedRectangle(cornerRadius: Radius.inner).fill(Color.wash)
                     }
                 }
                 .frame(maxWidth: .infinity, minHeight: 44)
