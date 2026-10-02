@@ -232,11 +232,22 @@ struct PageHeader: View {
 struct PageSection<Content: View>: View {
     let title: LocalizedStringKey
     var detail: String?
+    /// An optional link on the right of the title ("See plan").
+    var actionTitle: LocalizedStringKey?
+    var action: (() -> Void)?
     @ViewBuilder let content: Content
 
-    init(_ title: LocalizedStringKey, detail: String? = nil, @ViewBuilder content: () -> Content) {
+    init(
+        _ title: LocalizedStringKey,
+        detail: String? = nil,
+        actionTitle: LocalizedStringKey? = nil,
+        action: (() -> Void)? = nil,
+        @ViewBuilder content: () -> Content
+    ) {
         self.title = title
         self.detail = detail
+        self.actionTitle = actionTitle
+        self.action = action
         self.content = content()
     }
 
@@ -254,6 +265,12 @@ struct PageSection<Content: View>: View {
                         .font(.subheadline.weight(.medium))
                         .foregroundStyle(.muted)
                         .monospacedDigit()
+                }
+                if let actionTitle, let action {
+                    Button(actionTitle, action: action)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.ink)
+                        .buttonStyle(.haptic)
                 }
             }
             content

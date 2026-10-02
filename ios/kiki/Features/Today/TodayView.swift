@@ -45,6 +45,12 @@ struct TodayView: View {
                     }
                 }
 
+                if !store.workouts(inWeekOf: .today).isEmpty {
+                    PageSection("This week", actionTitle: "See plan", action: onViewPlan) {
+                        ThisWeekCard(units: units) { path.append($0) }
+                    }
+                }
+
                 if !upcoming.isEmpty {
                     PageSection("Upcoming") {
                         WeekSchedule(workouts: upcoming, units: units)
