@@ -158,9 +158,9 @@ private struct GoalProgressCard: View {
         .foregroundStyle(.ink)
         .padding(Metrics.cardPadding)
         .frame(maxWidth: .infinity, alignment: .topLeading)
-        // A faint finish flag in the corner, like a watermark.
+        // A faint finisher's medal in the corner, like a watermark.
         .overlay(alignment: .topTrailing) {
-            Image(systemName: "flag.checkered.2.crossed")
+            Image(systemName: "medal")
                 .font(.system(size: 40, weight: .bold))
                 .foregroundStyle(.ink.opacity(0.12))
                 .padding(Metrics.cardPadding)
