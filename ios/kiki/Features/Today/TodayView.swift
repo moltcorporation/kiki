@@ -4,6 +4,7 @@ import SwiftUI
 /// days, on the shared tab layout.
 struct TodayView: View {
     @Environment(TrainingStore.self) private var store
+    @Environment(RunTracker.self) private var tracker
 
     /// Switches to the Plan tab (the goal card's "View plan").
     var onViewPlan: () -> Void = {}
@@ -36,10 +37,15 @@ struct TodayView: View {
 
                 PageSection("Today") {
                     if let workout = store.workouts.first(where: { $0.date == .today }) {
-                        NavigationLink(value: workout) {
-                            TodayCard(workout: workout, run: store.run(for: workout), units: units, paces: store.plan?.paces)
-                        }
-                        .buttonStyle(.haptic)
+                        TodayCard(
+                            workout: workout,
+                            run: store.run(for: workout),
+                            units: units,
+                            paces: store.plan?.paces,
+                            onOpen: { path.append(workout) },
+                            onStart: { tracker.start(for: workout) },
+                            onAdjust: { sheet = .adjust }
+                        )
                     } else {
                         OutsidePlanCard(day: .today, plan: store.plan)
                     }
@@ -204,15 +210,38 @@ extension Plan {
 }
 
 /// Today's workout at a glance: what it is, how far and how fast (or what
-/// they actually ran, once logged), and how it should feel. The whole card
-/// opens the workout.
+/// they actually ran, once logged), and how it should feel. The top opens
+/// the workout; a run still to do also gets Start run and Adjust.
 struct TodayCard: View {
     let workout: Workout
     let run: Run?
     let units: Units
     let paces: PaceZones?
+    let onOpen: () -> Void
+    let onStart: () -> Void
+    let onAdjust: () -> Void
 
     var body: some View {
+        VStack(spacing: 0) {
+            Button(action: onOpen) { summary }
+                .buttonStyle(.haptic)
+                .accessibilityHint("Shows the workout")
+
+            // A run still to do: start it, or adjust the plan.
+            if !workout.isRest, run == nil, workout.status == .planned {
+                HStack(spacing: Spacing.m) {
+                    PrimaryButton("Start run", systemImage: "figure.run", action: onStart)
+                    SecondaryButton("Adjust", action: onAdjust)
+                }
+                .controlSize(.small)
+                .padding(.horizontal, Metrics.cardPadding)
+                .padding(.bottom, Metrics.cardPadding)
+            }
+        }
+        .elevatedCard()
+    }
+
+    private var summary: some View {
         HStack(spacing: Spacing.m) {
             VStack(alignment: .leading, spacing: Spacing.m) {
                 Text(workout.isRest ? "Rest day" : workout.title)
@@ -260,10 +289,8 @@ struct TodayCard: View {
         .foregroundStyle(.ink)
         .padding(Metrics.cardPadding)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .elevatedCard()
-        .contentShape(.rect(cornerRadius: Radius.card))
+        .contentShape(.rect)
         .accessibilityElement(children: .combine)
-        .accessibilityHint("Shows the workout")
     }
 
     /// A bold number with a small unit after it ("2.0 mi", "11:56 /mi").
