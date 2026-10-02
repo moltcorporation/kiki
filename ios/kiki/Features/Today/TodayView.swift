@@ -19,16 +19,21 @@ struct TodayView: View {
 
         NavigationStack(path: $path) {
             TabPage(.wordmark) {
-                // The goal: Home's header, with the plan actions in its footer.
-                if let plan = store.plan {
-                    GoalProgressCard(
-                        plan: plan,
-                        units: units,
-                        onOpen: { path.append(HomeRoute.goal) },
-                        onAdjust: { sheet = .adjust },
-                        onViewPlan: onViewPlan
-                    )
+                // The day and a greeting, then the goal (with the plan
+                // actions in its footer).
+                VStack(alignment: .leading, spacing: Metrics.sectionHeaderSpacing) {
+                    DayGreeting(name: store.profile?.firstName)
+                    if let plan = store.plan {
+                        GoalProgressCard(
+                            plan: plan,
+                            units: units,
+                            onOpen: { path.append(HomeRoute.goal) },
+                            onAdjust: { sheet = .adjust },
+                            onViewPlan: onViewPlan
+                        )
+                    }
                 }
+                .padding(.top, Spacing.s)
 
                 if let pending = store.pendingPlan, pending.status == .generating {
                     MessageCard(icon: "sparkles", title: "Building your new plan…", message: "This usually takes under a minute.")
@@ -66,6 +71,33 @@ struct TodayView: View {
     /// runner sees the shape of the week).
     private var upcoming: [Workout] {
         Array(store.workouts.filter { $0.date > .today }.prefix(5))
+    }
+}
+
+/// Above the goal card: today's date, small and gray, over a greeting for
+/// the time of day ("Thursday, Oct 1" / "Good evening, Stuart").
+private struct DayGreeting: View {
+    let name: String?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Spacing.xxs) {
+            Text(Date.now, format: .dateTime.weekday(.wide).month(.abbreviated).day())
+                .font(.eyebrow)
+                .foregroundStyle(.muted)
+            Text(greeting)
+                .font(.system(.title2, weight: .semibold))
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .accessibilityAddTraits(.isHeader)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .combine)
+    }
+
+    private var greeting: String {
+        let hour = Calendar.current.component(.hour, from: .now)
+        let part = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening"
+        return name.map { "\(part), \($0)" } ?? part
     }
 }
 
