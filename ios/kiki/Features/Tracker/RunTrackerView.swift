@@ -83,14 +83,19 @@ struct RunTrackerView: View {
                 if tracker.state != .finished {
                     // Before Start it just closes; during a run it asks first,
                     // so an accidental start is easy to throw away.
-                    Button(tracker.state == .ready ? "Close" : "Discard run", systemImage: "xmark") {
+                    Button {
                         if tracker.state == .ready { tracker.close() } else { confirmDiscard = true }
+                    } label: {
+                        // The whole circle is the tap target, not just the glyph.
+                        Image(systemName: "xmark")
+                            .font(.headline)
+                            .foregroundStyle(.ink)
+                            .frame(width: Metrics.minTapTarget, height: Metrics.minTapTarget)
+                            .contentShape(.circle)
                     }
-                        .labelStyle(.iconOnly)
-                        .font(.headline)
-                        .foregroundStyle(.ink)
-                        .frame(width: Metrics.minTapTarget, height: Metrics.minTapTarget)
-                        .glassEffect(.regular.interactive(), in: .circle)
+                    .buttonStyle(.haptic)
+                    .glassEffect(.regular.interactive(), in: .circle)
+                    .accessibilityLabel(tracker.state == .ready ? "Close" : "Discard run")
                 }
                 Spacer()
                 MapUserLocationButton(scope: mapScope)
