@@ -1,9 +1,7 @@
 import SwiftUI
 
-/// The Learn tab: a featured guide for the week, category chips, and short
-/// articles grouped by topic. Articles you've read get a Volt check.
+/// The Learn tab: category chips, then short articles grouped by topic. Articles you've read get a Volt check.
 struct LearnView: View {
-    @Environment(TrainingStore.self) private var store
     @State private var path: [Article] = []
     @State private var filter: Article.Category?
     @State private var read = ReadArticles.ids
@@ -11,10 +9,6 @@ struct LearnView: View {
     var body: some View {
         NavigationStack(path: $path) {
             TabPage("Learn") {
-                if filter == nil, let featured {
-                    FeaturedArticleCard(article: featured) { path.append(featured) }
-                }
-
                 CategoryChips(selection: $filter)
 
                 ForEach(filter.map { [$0] } ?? Article.Category.allCases) { category in
@@ -47,56 +41,6 @@ struct LearnView: View {
             }
         }
         .onAppear { Analytics.screen("Learn") }
-    }
-
-    /// One guide per plan week, rotating through `Article.featuredOrder`.
-    private var featured: Article? {
-        let order = Article.featuredOrder
-        let index = ((store.currentWeekNumber ?? 1) - 1) % order.count
-        return Article.library.first { $0.id == order[max(index, 0)] }
-    }
-}
-
-/// The dark card at the top: "Picked for your week".
-private struct FeaturedArticleCard: View {
-    let article: Article
-    let onRead: () -> Void
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.m) {
-            Text("Picked for your week")
-                .font(.eyebrow)
-                .foregroundStyle(.muted)
-            Text(article.title)
-                .font(.system(.title3, weight: .semibold))
-                .fixedSize(horizontal: false, vertical: true)
-            Text(article.summary)
-                .font(.detail)
-                .foregroundStyle(.muted)
-                .fixedSize(horizontal: false, vertical: true)
-            HStack {
-                Text("\(article.minutes) min read")
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(.muted)
-                Spacer()
-                Button(action: onRead) {
-                    Text("Read")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.paper)
-                        .padding(.horizontal, Spacing.l + Spacing.xs)
-                        .frame(minHeight: 36)
-                        .background(Color.ink, in: .capsule)
-                }
-                .buttonStyle(.haptic)
-            }
-            .padding(.top, Spacing.xs)
-        }
-        .foregroundStyle(.ink)
-        .padding(Metrics.cardPadding)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .elevatedCard(elevation: .raised)
-        // The standard card, flipped dark.
-        .invertedColorScheme()
     }
 }
 

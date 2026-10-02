@@ -42,7 +42,7 @@ struct Article: Identifiable, Hashable {
     let id: String
     let category: Category
     let title: String
-    /// One line for the featured card.
+    /// A one-line summary (for previews and sharing).
     let summary: String
     let icon: String
     let minutes: Int
@@ -51,9 +51,6 @@ struct Article: Identifiable, Hashable {
 }
 
 extension Article {
-    /// Featured on the Learn tab, one per plan week, in this order.
-    static let featuredOrder = ["easy-runs", "plan-builds-fitness", "rest", "missed-run", "pacing-race", "sleep"]
-
     static let library: [Article] = [
         // MARK: Running basics
         Article(

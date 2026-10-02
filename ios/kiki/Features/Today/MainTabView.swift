@@ -60,21 +60,34 @@ struct MainTabView: View {
 }
 
 extension MainTabView {
-    /// Outline icons, filled only for the selected tab.
+    /// Outline icons, filled only for the selected tab, drawn a touch
+    /// smaller and lighter than the system default.
     func tabLabel(_ title: LocalizedStringKey, _ symbol: String, _ value: AppTab) -> some View {
-        Label(title, systemImage: symbol)
-            .environment(\.symbolVariants, tab == value ? .fill : .none)
+        Label {
+            Text(title)
+        } icon: {
+            Image(uiImage: Self.tabIcon(symbol, filled: tab == value))
+        }
     }
 
-    /// The tab bar's run button: a Volt play glyph on a black circle, drawn
+    static func tabIcon(_ symbol: String, filled: Bool) -> UIImage {
+        let configuration = UIImage.SymbolConfiguration(pointSize: 15, weight: .regular)
+        let image = (filled ? UIImage(systemName: symbol + ".fill", withConfiguration: configuration) : nil)
+            ?? UIImage(systemName: symbol, withConfiguration: configuration)
+            ?? UIImage()
+        // Template, so the tab bar still tints selected and unselected.
+        return image.withRenderingMode(.alwaysTemplate)
+    }
+
+    /// The tab bar's run button: a white play glyph on a black circle, drawn
     /// in its own colors so the tab bar doesn't tint it.
     static let runIcon: UIImage = {
         let size = CGSize(width: 46, height: 46)
         let image = UIGraphicsImageRenderer(size: size).image { _ in
-            UIColor(Color.onHighlight).setFill()
+            UIColor(red: 0x15 / 255, green: 0x18 / 255, blue: 0x1D / 255, alpha: 1).setFill()
             UIBezierPath(ovalIn: CGRect(origin: .zero, size: size)).fill()
-            let play = UIImage(systemName: "play.fill", withConfiguration: UIImage.SymbolConfiguration(pointSize: 17, weight: .bold))?
-                .withTintColor(UIColor(Color.highlight), renderingMode: .alwaysOriginal)
+            let play = UIImage(systemName: "play.fill", withConfiguration: UIImage.SymbolConfiguration(pointSize: 16, weight: .semibold))?
+                .withTintColor(.white, renderingMode: .alwaysOriginal)
             if let play {
                 // Nudged right so the triangle looks centered.
                 let origin = CGPoint(x: (size.width - play.size.width) / 2 + 2, y: (size.height - play.size.height) / 2)
