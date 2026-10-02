@@ -106,3 +106,47 @@ struct MessageCard: View {
         .accessibilityElement(children: .combine)
     }
 }
+
+/// A card's footer: a hairline, then two (or more) equal actions split by
+/// short hairlines, each an icon and a label ("Adjust plan | View plan").
+struct CardActions: View {
+    struct Action: Identifiable {
+        let id = UUID()
+        let title: LocalizedStringKey
+        let systemImage: String
+        let perform: () -> Void
+
+        init(_ title: LocalizedStringKey, systemImage: String, perform: @escaping () -> Void) {
+            self.title = title
+            self.systemImage = systemImage
+            self.perform = perform
+        }
+    }
+
+    let actions: [Action]
+
+    init(_ actions: Action...) {
+        self.actions = actions
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Rectangle().fill(Color.hairline).frame(height: 1)
+            HStack(spacing: 0) {
+                ForEach(actions) { action in
+                    if action.id != actions.first?.id {
+                        Rectangle().fill(Color.hairline).frame(width: 1, height: Spacing.xl)
+                    }
+                    Button(action: action.perform) {
+                        Label(action.title, systemImage: action.systemImage)
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.ink)
+                            .frame(maxWidth: .infinity, minHeight: Metrics.buttonHeight)
+                            .contentShape(.rect)
+                    }
+                    .buttonStyle(.haptic)
+                }
+            }
+        }
+    }
+}

@@ -4,7 +4,6 @@ import SwiftUI
 /// at a glance, and Help Kiki grow, on the shared tab layout.
 struct TodayView: View {
     @Environment(TrainingStore.self) private var store
-    @Environment(RunTracker.self) private var tracker
 
     /// Switches to the Plan tab (the goal card's "View plan").
     var onViewPlan: () -> Void = {}
@@ -43,13 +42,8 @@ struct TodayView: View {
                             units: units,
                             paces: store.plan?.paces,
                             onOpen: { path.append(workout) },
-                            onStart: { tracker.start(for: workout) },
                             onLog: { sheet = .log(workout, store.run(for: workout)) },
-                            onAdjust: { sheet = .adjust },
-                            onSkip: {
-                                Haptics.success()
-                                store.setStatus(.skipped, for: workout)
-                            }
+                            onAdjust: { sheet = .adjust }
                         )
                     } else {
                         OutsidePlanCard(day: .today, plan: store.plan)
@@ -102,17 +96,10 @@ private struct GoalProgressCard: View {
             .accessibilityElement(children: .combine)
             .accessibilityHint("Shows your goal details")
 
-            Rectangle()
-                .fill(Color.hairline)
-                .frame(height: 1)
-
-            HStack(spacing: 0) {
-                footerAction("Adjust plan", systemImage: "sparkles", action: onAdjust)
-                Rectangle()
-                    .fill(Color.hairline)
-                    .frame(width: 1, height: Spacing.xl)
-                footerAction("View plan", systemImage: "calendar", action: onViewPlan)
-            }
+            CardActions(
+                .init("Adjust plan", systemImage: "sparkles", perform: onAdjust),
+                .init("View plan", systemImage: "calendar", perform: onViewPlan)
+            )
         }
         // Always dark: white type on the asphalt, in light and dark mode.
         .foregroundStyle(.ink)
@@ -172,18 +159,6 @@ private struct GoalProgressCard: View {
         }
         .contentShape(.rect)
     }
-
-    /// One half of the footer: icon + label, centered, full height.
-    private func footerAction(_ title: LocalizedStringKey, systemImage: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Label(title, systemImage: systemImage)
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.ink)
-                .frame(maxWidth: .infinity, minHeight: Metrics.buttonHeight)
-                .contentShape(.rect)
-        }
-        .buttonStyle(.haptic)
-    }
 }
 
 extension Plan {
@@ -203,107 +178,70 @@ extension Plan {
     }
 }
 
-/// Today's workout: the title (with a ••• menu), how far and how long (or
-/// what they ran, once logged), and Start run / Mark done. Rest days get a
-/// short note instead.
+/// Today's workout in one row (icon, title, "2.0 mi · 24 min", chevron to
+/// open it) with Mark done and Adjust day in the footer. Once logged it
+/// shows what they ran and Edit run; rest days have no footer.
 struct TodayCard: View {
     let workout: Workout
     let run: Run?
     let units: Units
     let paces: PaceZones?
     let onOpen: () -> Void
-    let onStart: () -> Void
     let onLog: () -> Void
     let onAdjust: () -> Void
-    let onSkip: () -> Void
 
     private var isDone: Bool { run != nil || workout.status == .completed }
-    private var isPlannedRun: Bool { !workout.isRest && !isDone && workout.status == .planned }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.l) {
-            HStack(alignment: .firstTextBaseline) {
-                Button(action: onOpen) {
-                    Text(workout.isRest ? "Rest day" : workout.title)
-                        .font(.cardTitle)
-                        .strikethrough(workout.status == .skipped)
-                        .multilineTextAlignment(.leading)
-                }
-                .buttonStyle(.haptic)
-                .accessibilityHint("Shows the workout")
-                Spacer(minLength: Spacing.s)
-                Menu {
-                    Button("View workout", systemImage: "doc.text", action: onOpen)
-                    if !workout.isRest {
-                        Button("Adjust today", systemImage: "sparkles", action: onAdjust)
+        VStack(spacing: 0) {
+            Button(action: onOpen) {
+                HStack(spacing: Spacing.m + Spacing.xs) {
+                    Image(systemName: workout.isRest ? "moon.zzz" : workout.type.symbol)
+                        .font(.title3.weight(.medium))
+                        .frame(width: 48, height: 48)
+                        .background(Color.wash, in: .rect(cornerRadius: Radius.inner))
+                        .accessibilityHidden(true)
+                    VStack(alignment: .leading, spacing: Spacing.xxs) {
+                        Text(workout.isRest ? "Rest day" : workout.title)
+                            .font(.rowTitle)
+                            .strikethrough(workout.status == .skipped)
+                        Text(detail)
+                            .font(.detail)
+                            .foregroundStyle(.muted)
                     }
-                    if isPlannedRun {
-                        Button("Skip today", systemImage: "forward", action: onSkip)
-                    }
-                } label: {
-                    Image(systemName: "ellipsis")
-                        .font(.body.weight(.semibold))
-                        .frame(width: Metrics.minTapTarget, height: 24)
-                        .contentShape(.rect)
+                    Spacer(minLength: Spacing.s)
+                    RowChevron()
                 }
-                .accessibilityLabel("More")
+                .foregroundStyle(.ink)
+                .padding(Metrics.cardPadding - Spacing.xs)
+                .contentShape(.rect)
             }
+            .buttonStyle(.haptic)
+            .accessibilityElement(children: .combine)
+            .accessibilityHint("Shows the workout")
 
-            if workout.isRest {
-                Text("Rest is training too. Recovery is when your body gets stronger.")
-                    .font(.detail)
-                    .foregroundStyle(.muted)
-                    .fixedSize(horizontal: false, vertical: true)
-            } else {
-                HStack(alignment: .firstTextBaseline, spacing: Spacing.l) {
-                    if let run {
-                        Figure(value: Format.distanceNumber(run.distanceM, units), unit: units.rawValue)
-                        Figure(value: "\(Int((Double(run.durationS) / 60).rounded()))", unit: "min")
-                    } else {
-                        if let meters = workout.distanceM {
-                            Figure(value: Format.distanceNumber(Double(meters), units), unit: units.rawValue)
-                        }
-                        if let minutes = plannedMinutes {
-                            Figure(value: "\(minutes)", unit: "min")
-                        }
-                    }
-                    if workout.status == .skipped {
-                        Text("Skipped").font(.subheadline.weight(.semibold)).foregroundStyle(.muted)
-                    }
-                }
-                .accessibilityElement(children: .combine)
-
-                if isPlannedRun {
-                    HStack(spacing: Spacing.m) {
-                        PrimaryButton("Start run", systemImage: "play.fill", action: onStart)
-                        Button(action: onLog) {
-                            Label("Mark done", systemImage: "checkmark")
-                                .font(.button)
-                                .foregroundStyle(.ink)
-                                .frame(maxWidth: .infinity, minHeight: Metrics.compactButtonHeight)
-                                .background(Color.wash, in: .capsule)
-                                .contentShape(.capsule)
-                        }
-                        .buttonStyle(.haptic)
-                    }
-                    .controlSize(.small)
-                } else if isDone {
-                    Button(action: onLog) {
-                        Label("Done · Edit run", systemImage: "checkmark")
-                            .font(.button)
-                            .foregroundStyle(.ink)
-                            .frame(maxWidth: .infinity, minHeight: Metrics.compactButtonHeight)
-                            .background(Color.wash, in: .capsule)
-                            .contentShape(.capsule)
-                    }
-                    .buttonStyle(.haptic)
-                }
+            if !workout.isRest {
+                CardActions(
+                    .init(isDone ? "Edit run" : "Mark done", systemImage: isDone ? "pencil" : "checkmark", perform: onLog),
+                    .init("Adjust day", systemImage: "slider.horizontal.3", perform: onAdjust)
+                )
             }
         }
-        .foregroundStyle(.ink)
-        .padding(Metrics.cardPadding)
-        .frame(maxWidth: .infinity, alignment: .leading)
         .elevatedCard()
+    }
+
+    /// "2.0 mi · 24 min", "Done · 3.0 mi · 30 min", "Skipped", or the rest
+    /// day note.
+    private var detail: String {
+        if workout.isRest { return "Recovery is part of training" }
+        if workout.status == .skipped { return "Skipped" }
+        if let run {
+            return "Done · \(Format.distance(run.distanceM, units)) · \(Int((Double(run.durationS) / 60).rounded())) min"
+        }
+        let distance = workout.distanceM.map { Format.distance(Double($0), units) }
+        let minutes = plannedMinutes.map { "\($0) min" }
+        let parts = [distance, minutes].compactMap { $0 }
+        return parts.isEmpty ? workout.type.label : parts.joined(separator: " · ")
     }
 
     /// Planned time, or distance at the type's target pace.
@@ -312,19 +250,6 @@ struct TodayCard: View {
         guard let meters = workout.distanceM, let zone = workout.type.paceZone, let range = paces?[zone] else { return nil }
         let pace = Double(range.min + range.max) / 2
         return Int((Double(meters) / 1000 * pace / 60).rounded())
-    }
-
-    /// A bold number with a small unit after it ("2.0 mi").
-    private struct Figure: View {
-        let value: String
-        let unit: String
-
-        var body: some View {
-            HStack(alignment: .firstTextBaseline, spacing: Spacing.xxs) {
-                Text(value).font(.metric(.title2))
-                Text(unit).font(.subheadline.weight(.semibold)).foregroundStyle(.muted)
-            }
-        }
     }
 }
 
