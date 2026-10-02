@@ -13,21 +13,24 @@ const inter = Inter({
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
   title: {
-    default: `${site.name}: ${site.tagline}`,
+    default: "Kiki: AI Running Coach for iPhone",
     template: `%s · ${site.name}`,
   },
   description: site.description,
   applicationName: site.name,
+  alternates: { canonical: "/" },
+  // Safari's Smart App Banner on iPhone.
+  itunes: { appId: site.appStoreId },
   openGraph: {
     type: "website",
     siteName: site.name,
-    title: `${site.name}: ${site.tagline}`,
+    title: "Kiki: AI Running Coach for iPhone",
     description: site.description,
     url: site.url,
   },
   twitter: {
     card: "summary_large_image",
-    title: `${site.name}: ${site.tagline}`,
+    title: "Kiki: AI Running Coach for iPhone",
     description: site.description,
   },
 };
