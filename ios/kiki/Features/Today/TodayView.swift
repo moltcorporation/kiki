@@ -64,9 +64,11 @@ struct TodayView: View {
         .onAppear { Analytics.screen("Home") }
     }
 
-    /// "Hello, Stuart!"
+    /// "Good morning, Stuart!", by time of day.
     private var greeting: String {
-        store.profile?.firstName.map { "Hello, \($0)!" } ?? "Hello!"
+        let hour = Calendar.current.component(.hour, from: .now)
+        let part = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening"
+        return store.profile?.firstName.map { "\(part), \($0)!" } ?? "\(part)!"
     }
 
     /// The next several days after today (rest days included, so the
