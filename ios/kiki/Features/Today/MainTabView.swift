@@ -129,7 +129,7 @@ private struct RunTabButton: View {
     let isHidden: Bool
     let action: () -> Void
     @State private var tabBarFrame: CGRect?
-    private static let glassOffset: CGFloat = 8
+    private static let glassOffset: CGFloat = 11
 
     var body: some View {
         GeometryReader { proxy in
@@ -137,11 +137,11 @@ private struct RunTabButton: View {
                 let origin = proxy.frame(in: .global).origin
                 Button(action: action) {
                     Image(systemName: "play.fill")
-                        .font(.system(.subheadline, weight: .bold))
+                        .font(.system(.body, weight: .bold))
                         .foregroundStyle(Color.highlight)
                         // Nudged right so the triangle looks centered.
                         .offset(x: 1.5)
-                        .frame(width: 44, height: 44)
+                        .frame(width: 50, height: 50)
                         .background(Color.onHighlight, in: .circle)
                         .contentShape(.circle)
                 }
