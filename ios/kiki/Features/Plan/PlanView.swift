@@ -1,7 +1,9 @@
 import SwiftUI
 
-/// The whole plan: the progress card, then each week as a title over its
-/// schedule (`WeekSchedule`). Opens scrolled to the current week.
+/// The whole plan: the progress card, past weeks collapsed under
+/// "Completed", then this week and the weeks ahead, each a title over its
+/// schedule (`WeekSchedule`). The current week is near the top, so there's
+/// no scrolling to find it.
 struct PlanView: View {
     @Environment(TrainingStore.self) private var store
     @State private var path: [Workout] = []
@@ -28,15 +30,26 @@ struct PlanView: View {
         return Format.distance(Double(meters), units)
     }
 
+    /// Weeks entirely before this one, shown collapsed under "Completed".
+    private var pastWeeks: [(week: Int, workouts: [Workout])] {
+        let monday = Day.today.mondayOfWeek
+        return store.weeks.filter { week in week.workouts.allSatisfy { $0.date < monday } }
+    }
+
     var body: some View {
         let units = store.units
+        let past = pastWeeks
+        let pastNumbers = Set(past.map(\.week))
         NavigationStack(path: $path) {
-            ScrollViewReader { proxy in
+            Group {
                 TabPage("Your plan") {
                     if let plan = store.plan {
                         ProgressCard(plan: plan, units: units)
                     }
-                    ForEach(store.weeks, id: \.week) { week, workouts in
+                    if !past.isEmpty {
+                        CompletedWeeks(weeks: past, units: units)
+                    }
+                    ForEach(store.weeks.filter { !pastNumbers.contains($0.week) }, id: \.week) { week, workouts in
                         PageSection("Week \(week)", detail: weekDetail(workouts, units: units)) {
                             WeekSchedule(workouts: workouts, units: units, onMove: moveWorkout)
                         }
@@ -53,11 +66,7 @@ struct PlanView: View {
                 }
                 .refreshable { await store.refresh() }
                 .hidesTabBar(!path.isEmpty)
-                .onAppear {
-                    if let current = store.currentWeekNumber, current > 1 {
-                        proxy.scrollTo(current, anchor: .top)
-                    }
-                }
+
             }
             .navigationDestination(for: Workout.self) { WorkoutDetailView(workoutID: $0.id) }
         }
@@ -232,5 +241,101 @@ private struct FinishLine: View {
         .padding(.top, Spacing.l)
         .padding(.bottom, Spacing.xxxl)
         .accessibilityElement(children: .combine)
+    }
+}
+
+/// Past weeks, folded away: a small "Completed" label, then one row per
+/// week (a check when every run was done, else "2/3"; the dates; runs done)
+/// that expands to its schedule.
+private struct CompletedWeeks: View {
+    let weeks: [(week: Int, workouts: [Workout])]
+    let units: Units
+
+    @State private var expanded: Set<Int> = []
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Spacing.s) {
+            Text("Completed")
+                .font(.eyebrow)
+                .foregroundStyle(.muted)
+                .accessibilityAddTraits(.isHeader)
+            ForEach(weeks, id: \.week) { week, workouts in
+                VStack(spacing: Spacing.s) {
+                    Button {
+                        withAnimation(.snappy) {
+                            if expanded.contains(week) { expanded.remove(week) } else { expanded.insert(week) }
+                        }
+                    } label: {
+                        CompletedWeekRow(week: week, workouts: workouts, isExpanded: expanded.contains(week))
+                    }
+                    .buttonStyle(.haptic)
+                    if expanded.contains(week) {
+                        WeekSchedule(workouts: workouts, units: units)
+                            .transition(.opacity.combined(with: .move(edge: .top)))
+                    }
+                }
+            }
+        }
+    }
+}
+
+private struct CompletedWeekRow: View {
+    let week: Int
+    let workouts: [Workout]
+    let isExpanded: Bool
+
+    var body: some View {
+        let runs = workouts.filter { !$0.isRest }
+        let done = runs.filter { $0.status == .completed }.count
+        let allDone = done == runs.count && !runs.isEmpty
+        HStack(spacing: Spacing.m) {
+            ZStack {
+                Circle().fill(allDone ? Color.ink : Color.wash)
+                if allDone {
+                    Image(systemName: "checkmark")
+                        .font(.footnote.weight(.bold))
+                        .foregroundStyle(.paper)
+                } else {
+                    Text("\(done)/\(runs.count)")
+                        .font(.caption2.weight(.bold))
+                        .monospacedDigit()
+                }
+            }
+            .frame(width: 34, height: 34)
+            .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: Spacing.xxs) {
+                Text("Week \(week)").font(.rowTitle)
+                Text(dateRange).font(.detail).foregroundStyle(.muted)
+            }
+            Spacer(minLength: Spacing.s)
+            Text("\(done) of \(runs.count) runs")
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(.muted)
+            Image(systemName: "chevron.down")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(.tertiary)
+                .rotationEffect(.degrees(isExpanded ? 180 : 0))
+                .accessibilityHidden(true)
+        }
+        .foregroundStyle(.ink)
+        .padding(.horizontal, RowMetrics.horizontalPadding)
+        .padding(.vertical, Spacing.m)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .elevatedCard()
+        .contentShape(.rect(cornerRadius: Radius.card))
+        .accessibilityElement(children: .combine)
+        .accessibilityValue(isExpanded ? "Expanded" : "Collapsed")
+        .accessibilityHint("Shows the week's workouts")
+    }
+
+    /// "Sep 28 – Oct 4" or "Oct 5 – 11".
+    private var dateRange: String {
+        guard let first = workouts.map(\.date).min() else { return "" }
+        let monday = first.mondayOfWeek
+        let sunday = monday.adding(days: 6)
+        let sameMonth = Calendar.current.isDate(monday.date, equalTo: sunday.date, toGranularity: .month)
+        return "\(monday.date.formatted(.dateTime.month(.abbreviated).day())) – "
+            + (sameMonth ? "\(sunday.day)" : sunday.date.formatted(.dateTime.month(.abbreviated).day()))
     }
 }

@@ -3,7 +3,7 @@ import SwiftUI
 /// One week of the plan as a schedule, like a calendar's list view: every
 /// day is an equal-height row split by hairlines, the date on the left and
 /// the day's workout as a tile (status circle, title, "2.0 mi · Easy", and a
-/// grip when it can be dragged). Done workouts get a filled check and are
+/// chevron to open it). Today's tile has a thin ink outline. Done workouts get a filled check and are
 /// struck through; rest days are just the word. Only the tile is interactive.
 struct WeekSchedule: View {
     let workouts: [Workout]
@@ -80,7 +80,7 @@ private struct DayRow: View {
                 .accessibilityLabel("\(workout.date.date.formatted(.dateTime.weekday(.wide))), rest")
         } else if isNavigable {
             let link = NavigationLink(value: workout) {
-                WorkoutEvent(workout: workout, units: units, showsGrip: onMove != nil && workout.status == .planned, showsChevron: true)
+                WorkoutEvent(workout: workout, units: units, showsChevron: true)
                     .contentShape(.rect(cornerRadius: Radius.inner))
             }
             .buttonStyle(.haptic)
@@ -125,11 +125,10 @@ private struct DayLabel: View {
 }
 
 /// A workout tile: a status circle (empty to do, filled check when done),
-/// the title over "2.0 mi · Easy", and a grip when it can be dragged.
+/// the title over "2.0 mi · Easy", and a chevron when it opens the workout.
 private struct WorkoutEvent: View {
     let workout: Workout
     let units: Units
-    var showsGrip = false
     /// A chevron when tapping the tile opens the workout.
     var showsChevron = false
 
@@ -150,21 +149,21 @@ private struct WorkoutEvent: View {
                     .lineLimit(1)
             }
             Spacer(minLength: Spacing.s)
-            HStack(spacing: Spacing.m) {
-                if showsGrip {
-                    Image(systemName: "line.3.horizontal")
-                        .font(.footnote.weight(.semibold))
-                        .foregroundStyle(.tertiary)
-                        .accessibilityHidden(true)
-                }
-                if showsChevron {
-                    RowChevron()
-                }
+            if showsChevron {
+                RowChevron()
             }
         }
         .padding(.horizontal, Spacing.m)
         .frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
         .background(Color.wash, in: .rect(cornerRadius: Radius.inner))
+        // Today's workout: a thin ink outline, like a calendar's today
+        // marker (the fill stays the same so it never looks selected).
+        .overlay {
+            if isToday {
+                RoundedRectangle(cornerRadius: Radius.inner)
+                    .strokeBorder(Color.ink, lineWidth: 1.5)
+            }
+        }
         .accessibilityElement(children: .combine)
         .accessibilityValue(workout.status == .completed ? "Done" : workout.status == .skipped ? "Skipped" : "")
     }
