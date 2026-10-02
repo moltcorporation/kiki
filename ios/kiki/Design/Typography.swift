@@ -6,7 +6,7 @@ import SwiftUI
 //
 //   display       black italic, the Kiki voice (wordmark, big moments)
 //   screenTitle   34pt bold: page and question titles
-//   heroTitle     22pt bold: the title on Home's goal card
+//   heroTitle     28pt bold: the title on Home's goal card
 //   cardTitle     20pt bold: titles inside cards, sheet titles
 //   sectionTitle  20pt semibold: headings above cards
 //   rowTitle      17pt semibold: content rows (workouts, goals)
@@ -32,7 +32,7 @@ extension Font {
     /// Page titles: tabs, pushed screens, onboarding questions.
     static let screenTitle = Font.system(.largeTitle, weight: .bold)
     /// The title on Home's goal card.
-    static let heroTitle = Font.system(.title2, weight: .bold)
+    static let heroTitle = Font.system(.title, weight: .bold)
     /// Titles inside cards and at the top of sheets.
     static let cardTitle = Font.system(.title3, weight: .bold)
     /// Sheet titles (same as card titles).
