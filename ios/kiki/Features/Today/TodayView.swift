@@ -119,14 +119,15 @@ private struct GoalProgressCard: View {
 
         return VStack(alignment: .leading, spacing: Spacing.xl) {
             VStack(alignment: .leading, spacing: Spacing.xs) {
-                Text(plan.goalHeadline(units: units))
+                Text(plan.displayName)
                     .font(.heroTitle)
                     .lineLimit(2)
                     .minimumScaleFactor(0.8)
                     .fixedSize(horizontal: false, vertical: true)
                     // Clear of the watermark.
-                    .padding(.trailing, 56)
-                Text(Plan.goalDate(timeline.endDate))
+                    .padding(.trailing, 64)
+                // The date, and the target time for time goals.
+                Text([Plan.goalDate(timeline.endDate), plan.goalTimeLabel].compactMap { $0 }.joined(separator: " · "))
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(.muted)
             }
@@ -148,10 +149,10 @@ private struct GoalProgressCard: View {
         .foregroundStyle(.ink)
         .padding(Metrics.cardPadding)
         .frame(maxWidth: .infinity, alignment: .topLeading)
-        // A faint runner in the corner, like a watermark.
+        // A faint running shoe in the corner, like a watermark.
         .overlay(alignment: .topTrailing) {
-            Image(systemName: "figure.run")
-                .font(.system(size: 52, weight: .bold))
+            Image(systemName: "shoe.fill")
+                .font(.system(size: 40, weight: .bold))
                 .foregroundStyle(.ink.opacity(0.12))
                 .padding(Metrics.cardPadding)
                 .accessibilityHidden(true)
@@ -173,24 +174,10 @@ private struct GoalProgressCard: View {
 }
 
 extension Plan {
-    /// What the runner is working toward, in plain words: "Finish the
-    /// Chicago Marathon", "10K in 45:00", "Run 30 minutes non-stop".
-    func goalHeadline(units: Units) -> String {
-        let distance = distanceLabel(units: units)
-        switch goalKind {
-        case .race:
-            if goalType == .time, let time = goalTimeS {
-                return "\(raceName ?? distance) in \(Format.duration(time))"
-            }
-            return "Finish the \(raceName ?? distance)"
-        case .faster:
-            if let time = goalTimeS { return "\(distance) in \(Format.duration(time))" }
-            return "A faster \(distance)"
-        case .start:
-            return "Run 30 minutes non-stop"
-        case .fit:
-            return "Run consistently"
-        }
+    /// "Goal 3:45:00" for goals with a target time, else nil.
+    var goalTimeLabel: String? {
+        guard goalKind == .faster || goalType == .time, let time = goalTimeS else { return nil }
+        return "Goal \(Format.duration(time))"
     }
 
     /// A goal's date: "December 16", with the year
