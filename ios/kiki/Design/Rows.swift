@@ -22,6 +22,8 @@ struct ListCard<Content: View>: View {
     /// Extra space above the first row and below the last, for rows that
     /// sit close to their edges (e.g. the Plan tab's day rows).
     var verticalPadding: CGFloat = 0
+    /// Off when the rows sit inside another card (no surface or shadow).
+    var isCard = true
     @ViewBuilder let content: Content
 
     var body: some View {
@@ -37,7 +39,13 @@ struct ListCard<Content: View>: View {
         }
         .padding(.vertical, verticalPadding)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .elevatedCard()
+        .background {
+            if isCard {
+                Color.surface
+                    .clipShape(.rect(cornerRadius: Radius.card))
+                    .elevation(.card)
+            }
+        }
     }
 }
 

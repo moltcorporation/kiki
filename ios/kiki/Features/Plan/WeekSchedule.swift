@@ -13,9 +13,11 @@ struct WeekSchedule: View {
     /// Called when a workout is dropped on another day. Nil turns dragging
     /// off (Home, onboarding).
     var onMove: ((_ workoutID: UUID, _ day: Day) -> Void)?
+    /// Off when the schedule sits inside another card (a completed week).
+    var isCard = true
 
     var body: some View {
-        ListCard(dividerInset: Spacing.m, verticalPadding: Spacing.xs) {
+        ListCard(dividerInset: Spacing.m, verticalPadding: Spacing.xs, isCard: isCard) {
             ForEach(workouts.sorted { $0.date < $1.date }) { workout in
                 DayRow(workout: workout, units: units, isNavigable: isNavigable, onMove: onMove)
             }

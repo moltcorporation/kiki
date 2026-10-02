@@ -260,20 +260,27 @@ private struct CompletedWeeks: View {
                 .foregroundStyle(.muted)
                 .accessibilityAddTraits(.isHeader)
             ForEach(weeks, id: \.week) { week, workouts in
-                VStack(spacing: Spacing.s) {
+                let isExpanded = expanded.contains(week)
+                // One card that grows: the week row, then its days revealed
+                // inside it (clipped to the card), like an accordion.
+                VStack(spacing: 0) {
                     Button {
-                        withAnimation(.snappy) {
-                            if expanded.contains(week) { expanded.remove(week) } else { expanded.insert(week) }
+                        withAnimation(.smooth(duration: 0.35)) {
+                            if isExpanded { expanded.remove(week) } else { expanded.insert(week) }
                         }
                     } label: {
-                        CompletedWeekRow(week: week, workouts: workouts, isExpanded: expanded.contains(week))
+                        CompletedWeekRow(week: week, workouts: workouts, isExpanded: isExpanded)
                     }
                     .buttonStyle(.haptic)
-                    if expanded.contains(week) {
-                        WeekSchedule(workouts: workouts, units: units)
-                            .transition(.opacity.combined(with: .move(edge: .top)))
+                    if isExpanded {
+                        Divider().padding(.horizontal, RowMetrics.horizontalPadding)
+                        WeekSchedule(workouts: workouts, units: units, isCard: false)
+                            .transition(.opacity)
                     }
                 }
+                .background(Color.surface)
+                .clipShape(.rect(cornerRadius: Radius.card))
+                .elevation(.card)
             }
         }
     }
@@ -322,8 +329,7 @@ private struct CompletedWeekRow: View {
         .padding(.horizontal, RowMetrics.horizontalPadding)
         .padding(.vertical, Spacing.m)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .elevatedCard()
-        .contentShape(.rect(cornerRadius: Radius.card))
+        .contentShape(.rect)
         .accessibilityElement(children: .combine)
         .accessibilityValue(isExpanded ? "Expanded" : "Collapsed")
         .accessibilityHint("Shows the week's workouts")
