@@ -132,8 +132,8 @@ struct PlanCalendar: View {
     private var legend: some View {
         HStack(spacing: Spacing.l) {
             legendItem("Done") { Circle().fill(Color.highlight) }
-            legendItem("Today") { Circle().fill(Color.ink) }
             legendItem("Run day") { Circle().strokeBorder(Color.ink, lineWidth: 1.5) }
+            legendItem("Today") { Circle().fill(Color.ink).frame(width: 5, height: 5) }
         }
         .font(.caption)
         .foregroundStyle(.muted)
@@ -208,7 +208,8 @@ private struct SelectedDay: View {
 }
 
 /// One day: its number in a circle styled by status. Days outside the plan
-/// or the month are gray; the selected day sits in a black-outlined square.
+/// or the month are gray; the selected day is a solid black circle and today
+/// has a dot under it, as in Apple Calendar.
 private struct DayCell: View {
     let day: Day
     let workout: Workout?
@@ -223,41 +224,41 @@ private struct DayCell: View {
     var body: some View {
         Button(action: action) {
             Text("\(day.day)")
-                .font(.subheadline.weight(isRun || isToday ? .semibold : .regular))
+                .font(.subheadline.weight(isSelected || isRun || isToday ? .semibold : .regular))
                 .monospacedDigit()
                 .foregroundStyle(foreground)
-                .frame(width: 34, height: 34)
+                .frame(width: 36, height: 36)
                 .background { background }
-                .padding(Spacing.xs)
-                .background {
-                    // Selected: a black outline on a gray square, clearly
-                    // apart from the round today / run-day markers.
-                    if isSelected {
-                        RoundedRectangle(cornerRadius: Radius.inner)
-                            .fill(Color.wash)
-                            .overlay(RoundedRectangle(cornerRadius: Radius.inner).strokeBorder(Color.ink, lineWidth: 1.5))
+                // Today: a small dot under the number, like Apple Calendar,
+                // so it's findable whichever day is selected.
+                .overlay(alignment: .bottom) {
+                    if isToday {
+                        Circle().fill(Color.ink).frame(width: 4, height: 4).offset(y: 7)
                     }
                 }
-                .frame(maxWidth: .infinity, minHeight: 44)
+                .frame(maxWidth: .infinity, minHeight: 46)
                 .contentShape(.rect)
         }
         .buttonStyle(.plain)
         .disabled(workout == nil)
         .opacity(isInMonth ? 1 : 0.35)
+        .animation(.snappy(duration: 0.2), value: isSelected)
         .accessibilityLabel(accessibilityText)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 
     private var foreground: Color {
-        if isToday { return .paper }
+        if isSelected { return .paper }
         if isDone { return .onHighlight }
-        if isRun { return .ink }
+        if isRun || isToday { return .ink }
         return .muted
     }
 
+    /// Selected: a solid black circle (as in Apple Calendar). Otherwise
+    /// done days are Volt and run days outlined.
     @ViewBuilder
     private var background: some View {
-        if isToday {
+        if isSelected {
             Circle().fill(Color.ink)
         } else if isDone {
             Circle().fill(Color.highlight)
