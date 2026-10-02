@@ -141,10 +141,9 @@ How you coach:
 - Only schedule runs on the runner's available days. Beginners often do best with 3 runs a week even if more days are available.
 - Follow the runner's coaching style for progression and tone, always within these safety rules.
 
-How you write (the app shows this on small cards, so less is more):
-- Titles: 1–3 words, e.g. "Easy Run", "Run/Walk", "Long Run", "Pickups", "Tempo Run".
-- Descriptions: one short sentence (max ~12 words) saying how it should feel. No numbers, paces, or jargon (never say taper, peak, phase, threshold, VO2, VDOT, zone).
-- Steps: only for run/walk intervals and faster sessions. Keep them compact: an optional warmup, one work step with a repeat count, its recovery step with the same repeat count, and an optional cooldown. Easy and long runs have no steps. Step notes are null unless essential (max 4 words).
+How you build each workout:
+- Pick each workout's type and its numbers; the app supplies titles and descriptions.
+- Steps: only for run/walk and faster sessions (tempo, intervals, hills, fartlek, progression, race pace). Always this shape: a warmup (easy), one work step with a repeat count (or a single block for tempo and progression), its recovery step with the same repeat count when there are repeats, and a cooldown (easy). Easy, recovery and long runs have no steps.
 - Use duration (seconds) for run/walk and beginner sessions; use distance (meters) for runners who can cover it.
 - All distances in meters, durations in seconds, paces in seconds per km.`;
 
@@ -216,14 +215,36 @@ const RUN_TYPES = [
   "race",
 ] as const;
 
+// The AI picks the type and the numbers only. Titles, descriptions and
+// step notes come from the app's fixed copy (WORKOUT_COPY), so every
+// workout of a type reads the same, day to day and plan to plan.
 const aiWorkoutSchema = z.object({
   type: z.enum(RUN_TYPES),
-  title: z.string(),
-  description: z.string(),
   distanceM: z.number().int().nullable(),
   durationS: z.number().int().nullable(),
-  steps: z.array(workoutStepSchema),
+  steps: z.array(workoutStepSchema.omit({ note: true })),
 });
+
+/** The title and one-line "how it should feel" for each workout type. */
+export const WORKOUT_COPY: Record<Exclude<WorkoutType, "rest" | "race">, { title: string; description: string }> = {
+  run_walk: { title: "Run/Walk", description: "Alternate easy running and walking. Keep every run relaxed." },
+  easy: { title: "Easy Run", description: "Relaxed the whole way. You should be able to talk in full sentences." },
+  recovery: { title: "Recovery Run", description: "Very easy and short. Just loosen up your legs." },
+  long: { title: "Long Run", description: "Slow and steady. Time on your feet builds your endurance." },
+  tempo: {
+    title: "Tempo Run",
+    description: "Easy, then comfortably hard in the middle. You can say a few words, not sentences.",
+  },
+  intervals: {
+    title: "Intervals",
+    description: "Short, fast repeats with easy recovery between. Run each one at the same pace.",
+  },
+  hills: { title: "Hill Repeats", description: "Run strong up the hill, then recover easy on the way down." },
+  fartlek: { title: "Fartlek", description: "An easy run with short, faster bursts mixed in by feel." },
+  progression: { title: "Progression Run", description: "Start easy and finish at a strong, steady pace." },
+  race_pace: { title: "Race Pace", description: "Practice your goal pace so it feels familiar on race day." },
+  cross_training: { title: "Cross-Train", description: "Low-impact cardio, like cycling or swimming, at an easy effort." },
+};
 
 const planSchema = z.object({
   title: z.string().describe("Short plan title, max ~30 characters, e.g. 'First 30 Minutes' or 'Brooklyn Half'"),
@@ -389,11 +410,10 @@ function toPlanned(
     date,
     week,
     type: w.type,
-    title: clip(w.title, 30),
-    description: clip(w.description, 120),
+    ...WORKOUT_COPY[w.type === "rest" || w.type === "race" ? "easy" : w.type],
     distanceM,
     durationS: distanceM == null && durationS == null ? 1800 : durationS,
-    steps: w.steps.slice(0, 6).map((s) => ({ ...s, note: s.note ? clip(s.note, 40) : null })),
+    steps: w.steps.slice(0, 6).map((s) => ({ ...s, note: null })),
   };
 }
 
