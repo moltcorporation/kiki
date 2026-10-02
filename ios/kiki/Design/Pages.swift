@@ -90,6 +90,29 @@ extension View {
     func hidesTabBar(_ hidden: Bool) -> some View {
         toolbarVisibility(hidden ? .hidden : .visible, for: .tabBar)
             .animation(.default, value: hidden)
+            .modifier(ReportsTabBarHidden(hidden: hidden))
+    }
+}
+
+/// Tab bar visibility shared with what's laid over the bar (the run button).
+@Observable
+final class TabBarState {
+    var isHidden = false
+}
+
+extension EnvironmentValues {
+    @Entry var tabBarState: TabBarState?
+}
+
+private struct ReportsTabBarHidden: ViewModifier {
+    let hidden: Bool
+    @Environment(\.tabBarState) private var state
+
+    func body(content: Content) -> some View {
+        content.onChange(of: hidden, initial: true) {
+            guard let state, state.isHidden != hidden else { return }
+            withAnimation(.default) { state.isHidden = hidden }
+        }
     }
 }
 

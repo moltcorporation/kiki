@@ -4,13 +4,15 @@ struct MainTabView: View {
     @Environment(TrainingStore.self) private var store
     @Environment(RunTracker.self) private var tracker
     @State private var tab: AppTab = .today
+    @State private var tabBar = TabBarState()
 
     enum AppTab: Hashable { case today, plan, run, learn, you }
 
     var body: some View {
         @Bindable var tracker = tracker
-        // The run button never becomes the selection: the setter opens the
-        // tracker instead, so the tab bar's highlight doesn't jump to it.
+        // Safety net: the glass bar lets you drag its highlight across tabs,
+        // so the middle slot could still be picked that way. It opens the
+        // tracker instead of becoming the selection.
         TabView(selection: Binding(
             get: { tab },
             set: { new in
@@ -27,6 +29,13 @@ struct MainTabView: View {
             } label: {
                 tabLabel("Plan", "calendar", .plan)
             }
+            // Holds the middle slot for the run button laid over it.
+            Tab(value: AppTab.run) {
+                Color.clear
+            } label: {
+                Text(verbatim: "")
+            }
+            .disabled(true)
             Tab(value: .learn) {
                 LearnView()
             } label: {
@@ -37,19 +46,14 @@ struct MainTabView: View {
             } label: {
                 tabLabel("Profile", "person.crop.circle", .you)
             }
-            // The run button: the search role gives it iOS's own floating
-            // circle beside the bar. It's not a page: selecting it starts a
-            // run instead (see the selection binding).
-            Tab(value: .run, role: .search) {
-                Color.clear
-            } label: {
-                Label {
-                    Text("Start a run")
-                } icon: {
-                    Image(uiImage: Self.runIcon)
-                }
-            }
         }
+        .tabBarMinimizeBehavior(.never)
+        // The run button sits over the empty middle tab, outside the tab bar,
+        // so the bar never sees the touch and its glass highlight stays put.
+        .overlay {
+            RunTabButton(isHidden: tabBar.isHidden, action: startRun)
+        }
+        .environment(\.tabBarState, tabBar)
         .onChange(of: tab) { Haptics.select() }
         .fullScreenCover(isPresented: $tracker.isPresented) {
             RunTrackerView()
@@ -83,24 +87,6 @@ extension MainTabView {
         return image.withRenderingMode(.alwaysTemplate)
     }
 
-    /// The run button: a Volt play triangle on a black circle that fills
-    /// iOS's floating glass circle, drawn in its own colors so the tab bar
-    /// doesn't tint it.
-    static let runIcon: UIImage = {
-        let size = CGSize(width: 60, height: 60)
-        let image = UIGraphicsImageRenderer(size: size).image { _ in
-            UIColor(Color.onHighlight).setFill()
-            UIBezierPath(ovalIn: CGRect(origin: .zero, size: size)).fill()
-            let play = UIImage(systemName: "play.fill", withConfiguration: UIImage.SymbolConfiguration(pointSize: 13, weight: .bold))?
-                .withTintColor(UIColor(Color.highlight), renderingMode: .alwaysOriginal)
-            if let play {
-                // Nudged right so the triangle looks centered.
-                play.draw(at: CGPoint(x: (size.width - play.size.width) / 2 + 1.5, y: (size.height - play.size.height) / 2))
-            }
-        }
-        return image.withRenderingMode(.alwaysOriginal)
-    }()
-
     /// Starts a run: linked to today's workout if there's one still to do,
     /// otherwise a free run (rest days, extra runs).
     func startRun() {
@@ -133,5 +119,71 @@ extension View {
                 AdjustMenuSheet()
             }
         }
+    }
+}
+
+/// The run button over the tab bar's middle slot: a black circle with a
+/// Volt play triangle. Placed where the tab bar is (`TabBarFrameReader`)
+/// and hidden with it on pushed screens.
+private struct RunTabButton: View {
+    let isHidden: Bool
+    let action: () -> Void
+    @State private var tabBarFrame: CGRect?
+    private static let glassOffset: CGFloat = 8
+
+    var body: some View {
+        GeometryReader { proxy in
+            if let frame = tabBarFrame {
+                let origin = proxy.frame(in: .global).origin
+                Button(action: action) {
+                    Image(systemName: "play.fill")
+                        .font(.system(.subheadline, weight: .bold))
+                        .foregroundStyle(Color.highlight)
+                        // Nudged right so the triangle looks centered.
+                        .offset(x: 1.5)
+                        .frame(width: 44, height: 44)
+                        .background(Color.onHighlight, in: .circle)
+                        .contentShape(.circle)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Start a run")
+                // The bar's frame runs into the home indicator area; its
+                // visible glass is centered a little higher.
+                .position(x: frame.midX - origin.x, y: frame.midY - origin.y - Self.glassOffset)
+                .opacity(isHidden ? 0 : 1)
+                .allowsHitTesting(!isHidden)
+                .accessibilityHidden(isHidden)
+            }
+        }
+        .ignoresSafeArea()
+        .background(TabBarFrameReader { tabBarFrame = $0 })
+    }
+}
+
+/// Reports the system tab bar's frame in window coordinates.
+private struct TabBarFrameReader: UIViewRepresentable {
+    let onChange: (CGRect) -> Void
+
+    func makeUIView(context: Context) -> UIView {
+        let view = UIView()
+        view.isUserInteractionEnabled = false
+        return view
+    }
+
+    func updateUIView(_ view: UIView, context: Context) {
+        DispatchQueue.main.async {
+            guard let tabBar = Self.tabBar(in: view.window?.rootViewController) else { return }
+            let frame = tabBar.convert(tabBar.bounds, to: nil)
+            onChange(frame)
+        }
+    }
+
+    private static func tabBar(in controller: UIViewController?) -> UITabBar? {
+        guard let controller else { return nil }
+        if let tabs = controller as? UITabBarController { return tabs.tabBar }
+        for child in controller.children {
+            if let found = tabBar(in: child) { return found }
+        }
+        return nil
     }
 }
