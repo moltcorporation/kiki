@@ -97,8 +97,8 @@ private struct GoalProgressCard: View {
             .accessibilityHint("Shows your goal details")
 
             CardActions(
-                .init("Adjust plan", systemImage: "sparkles", perform: onAdjust),
-                .init("View plan", systemImage: "calendar", perform: onViewPlan)
+                .init("Adjust with Kiki", systemImage: "sparkles", perform: onAdjust),
+                .init("Full schedule", systemImage: "calendar", perform: onViewPlan)
             )
         }
         // Always dark: white type on the asphalt, in light and dark mode.
@@ -117,25 +117,25 @@ private struct GoalProgressCard: View {
         case .finished: "Plan finished"
         }
 
-        return VStack(alignment: .leading, spacing: Spacing.xl) {
-            VStack(alignment: .leading, spacing: Spacing.xs) {
+        return VStack(alignment: .leading, spacing: Spacing.l) {
+            VStack(alignment: .leading, spacing: Spacing.xxs) {
                 Text(plan.displayName)
                     .font(.heroTitle)
                     .lineLimit(2)
                     .minimumScaleFactor(0.8)
                     .fixedSize(horizontal: false, vertical: true)
                     // Clear of the watermark.
-                    .padding(.trailing, 64)
-                // The date, and the target time for time goals.
-                Text([Plan.goalDate(timeline.endDate), plan.goalTimeLabel].compactMap { $0 }.joined(separator: " · "))
+                    .padding(.trailing, 56)
+                // The date ("Wed, Dec 16"), and the target time for time goals.
+                Text([shortGoalDate(timeline.endDate), plan.goalTimeLabel].compactMap { $0 }.joined(separator: " · "))
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(.ink.opacity(0.7))
             }
 
-            VStack(alignment: .leading, spacing: Spacing.m) {
+            VStack(alignment: .leading, spacing: Spacing.s) {
                 HStack(alignment: .firstTextBaseline) {
                     Text(countdown)
-                        .font(.headline)
+                        .font(.subheadline.weight(.semibold))
                     Spacer()
                     Text("Week \(timeline.week) of \(timeline.totalWeeks)")
                         .font(.subheadline.weight(.medium))
@@ -152,12 +152,20 @@ private struct GoalProgressCard: View {
         // A faint runner in the corner, like a watermark.
         .overlay(alignment: .topTrailing) {
             Image(systemName: "figure.run")
-                .font(.system(size: 52, weight: .bold))
+                .font(.system(size: 44, weight: .bold))
                 .foregroundStyle(.ink.opacity(0.12))
                 .padding(Metrics.cardPadding)
                 .accessibilityHidden(true)
         }
         .contentShape(.rect)
+    }
+
+    /// "Wed, Dec 16", with the year only when it isn't this year.
+    private func shortGoalDate(_ day: Day) -> String {
+        let isThisYear = Calendar.current.isDate(day.date, equalTo: .now, toGranularity: .year)
+        return isThisYear
+            ? day.date.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day())
+            : day.date.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day().year())
     }
 }
 

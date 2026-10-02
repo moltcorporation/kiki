@@ -141,7 +141,7 @@ struct CardActions: View {
                         Label(action.title, systemImage: action.systemImage)
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(.ink)
-                            .frame(maxWidth: .infinity, minHeight: Metrics.buttonHeight)
+                            .frame(maxWidth: .infinity, minHeight: Metrics.compactButtonHeight)
                             .contentShape(.rect)
                     }
                     .buttonStyle(.haptic)
