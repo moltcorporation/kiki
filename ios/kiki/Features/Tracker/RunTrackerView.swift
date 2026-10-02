@@ -9,11 +9,12 @@ struct RunTrackerView: View {
     @State private var draft: Run?
     @State private var confirmDiscard = false
     @State private var position: MapCameraPosition = .userLocation(followsHeading: false, fallback: .automatic)
+    @Namespace private var mapScope
 
     var body: some View {
         let units = store.units
         VStack(spacing: 0) {
-            Map(position: $position) {
+            Map(position: $position, scope: mapScope) {
                 UserAnnotation()
                 if tracker.locations.count > 1 {
                     MapPolyline(coordinates: tracker.locations.map(\.coordinate))
@@ -21,17 +22,9 @@ struct RunTrackerView: View {
                 }
             }
             .mapStyle(.standard(pointsOfInterest: .excludingAll))
-            .mapControls { MapUserLocationButton() }
-            .overlay(alignment: .topLeading) {
-                if tracker.state == .ready {
-                    Button("Close", systemImage: "xmark") { tracker.close() }
-                        .labelStyle(.iconOnly)
-                        .font(.headline)
-                        .frame(width: Metrics.minTapTarget, height: Metrics.minTapTarget)
-                        .glassEffect(.regular.interactive(), in: .circle)
-                        .padding()
-                }
-            }
+            .mapControls {}
+            // Only the map runs under the status bar.
+            .ignoresSafeArea(edges: .top)
 
             VStack(spacing: Spacing.xxl) {
                 if let title = tracker.workout?.title {
@@ -68,7 +61,27 @@ struct RunTrackerView: View {
             .padding(.bottom, Spacing.m)
             .background(Color.canvas)
         }
-        .ignoresSafeArea(edges: .top)
+        // Inside the safe area, clear of the clock and Dynamic Island:
+        // close on the left, recenter on the right.
+        .overlay(alignment: .top) {
+            HStack {
+                if tracker.state == .ready {
+                    Button("Close", systemImage: "xmark") { tracker.close() }
+                        .labelStyle(.iconOnly)
+                        .font(.headline)
+                        .foregroundStyle(.ink)
+                        .frame(width: Metrics.minTapTarget, height: Metrics.minTapTarget)
+                        .glassEffect(.regular.interactive(), in: .circle)
+                }
+                Spacer()
+                MapUserLocationButton(scope: mapScope)
+                    .buttonBorderShape(.circle)
+                    .tint(.ink)
+            }
+            .padding(.horizontal, Metrics.screenMargin)
+            .padding(.top, Spacing.s)
+        }
+        .mapScope(mapScope)
         .onAppear {
             tracker.setUnits(units)
             Analytics.screen("Run Tracker")
