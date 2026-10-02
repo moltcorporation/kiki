@@ -108,6 +108,11 @@ extension Color {
     /// backgrounds, where it's nearly invisible. Change it here to try
     /// another accent everywhere.
     static var highlight: Color { Color(red: 0xCE / 255, green: 0xFF / 255, blue: 0x00 / 255) }
+    /// The track behind a highlight progress fill: a softened near-black
+    /// (#2A2C30). Volt needs a dark background to be seen (about 11:1 here,
+    /// versus ~1.2:1 on white), and lifting it off pure black keeps an
+    /// early, mostly-empty bar from reading as a heavy black bar.
+    static var highlightTrack: Color { Color(red: 0x2A / 255, green: 0x2C / 255, blue: 0x30 / 255) }
     /// Content on a highlight fill: always near-black, in light and dark mode.
     static var onHighlight: Color { Color(red: 0x15 / 255, green: 0x18 / 255, blue: 0x1D / 255) }
 

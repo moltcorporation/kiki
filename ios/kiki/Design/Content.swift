@@ -151,15 +151,15 @@ struct CardActions: View {
     }
 }
 
-/// A progress bar: a volt fill on a black track (the highlight's job is
-/// progress). Works on white cards and on the dark goal card.
+/// A progress bar: a volt fill on the soft near-black `highlightTrack`
+/// (volt needs a dark track to be seen; see `Color.highlightTrack`).
 struct HighlightProgressBar: View {
     let progress: Double
 
     var body: some View {
         GeometryReader { proxy in
             ZStack(alignment: .leading) {
-                Capsule().fill(Color.onHighlight)
+                Capsule().fill(Color.highlightTrack)
                 Capsule()
                     .fill(Color.highlight)
                     .frame(width: max(0, min(progress, 1)) * proxy.size.width)
@@ -171,14 +171,14 @@ struct HighlightProgressBar: View {
     }
 }
 
-/// A progress ring: a volt arc on a black track.
+/// A progress ring: a volt arc on the same soft near-black track.
 struct HighlightProgressRing: View {
     let progress: Double
     var lineWidth: CGFloat = 8
 
     var body: some View {
         ZStack {
-            Circle().stroke(Color.onHighlight, lineWidth: lineWidth)
+            Circle().stroke(Color.highlightTrack, lineWidth: lineWidth)
             Circle()
                 .trim(from: 0, to: max(0, min(progress, 1)))
                 .stroke(Color.highlight, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
