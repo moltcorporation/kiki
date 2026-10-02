@@ -123,9 +123,6 @@ private struct GoalProgressCard: View {
 
         return VStack(alignment: .leading, spacing: Spacing.xl) {
             VStack(alignment: .leading, spacing: Spacing.xs) {
-                Text("Your goal")
-                    .font(.eyebrow)
-                    .foregroundStyle(.muted)
                 Text(plan.goalHeadline(units: units))
                     .font(.heroTitle)
                     .lineLimit(2)
