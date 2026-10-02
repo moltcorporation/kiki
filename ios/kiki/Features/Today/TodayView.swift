@@ -18,7 +18,7 @@ struct TodayView: View {
         let units = store.units
 
         NavigationStack(path: $path) {
-            TabPage(LocalizedStringKey(greeting)) {
+            TabPage(.wordmark) {
                 // The goal: Home's header, with the plan actions in its footer.
                 if let plan = store.plan {
                     GoalProgressCard(
@@ -60,11 +60,6 @@ struct TodayView: View {
             .overlay(alignment: .bottom) { OfflineBanner() }
         }
         .onAppear { Analytics.screen("Home") }
-    }
-
-    /// "Hello, Stuart!"
-    private var greeting: String {
-        store.profile?.firstName.map { "Hello, \($0)!" } ?? "Hello!"
     }
 
     /// The next several days after today (rest days included, so the
