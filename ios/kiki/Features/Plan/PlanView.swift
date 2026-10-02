@@ -39,13 +39,15 @@ struct PlanView: View {
         }
     }
 
-    /// The week's dates and planned distance ("Oct 5 – 11 · 6.5 mi"), so
-    /// weeks months ahead are easy to place.
+    /// The week's planned distance ("6.5 mi"). Weeks after next add their
+    /// dates ("Oct 19 – 25 · 6.5 mi") so they're easy to place; this week
+    /// and next week don't need them.
     private func weekDetail(_ workouts: [Workout], units: Units) -> String {
         let meters = workouts.filter { !$0.isRest }.compactMap(\.distanceM).reduce(0, +)
+        let distance = Format.distance(Double(meters), units)
         let days = workouts.map(\.date)
-        guard let first = days.min(), let last = days.max() else { return Format.distance(Double(meters), units) }
-        return "\(PlanPDF.weekRange(first, last)) · \(Format.distance(Double(meters), units))"
+        guard weekEyebrow(workouts) == nil, let first = days.min(), let last = days.max() else { return distance }
+        return "\(PlanPDF.weekRange(first, last)) · \(distance)"
     }
 
     private var headerButtons: AnyView? {
