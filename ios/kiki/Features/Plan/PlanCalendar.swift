@@ -143,14 +143,16 @@ struct PlanCalendar: View {
 private struct SelectedDay: View {
     let workout: Workout
     let units: Units
+    /// One fixed height for every day, so the card never changes size as
+    /// you pick days (it still grows with Dynamic Type).
+    @ScaledMetric(relativeTo: .body) private var height: CGFloat = 44
 
     var body: some View {
-        if workout.isRest {
-            content
-        } else {
-            NavigationLink(value: workout) { content }
-                .buttonStyle(.plain)
-        }
+        // One structure for every day (rest just can't be opened), so the
+        // footer is exactly the same size whichever day is picked.
+        NavigationLink(value: workout) { content }
+            .buttonStyle(.plain)
+            .disabled(workout.isRest)
     }
 
     private var content: some View {
@@ -174,6 +176,7 @@ private struct SelectedDay: View {
             Spacer(minLength: Spacing.s)
             if !workout.isRest { RowChevron() }
         }
+        .frame(height: height)
         .foregroundStyle(.ink)
         .padding(.horizontal, Metrics.cardPadding)
         .padding(.vertical, Spacing.l)
@@ -182,9 +185,10 @@ private struct SelectedDay: View {
         .accessibilityElement(children: .combine)
     }
 
-    /// "Today · 2 mi", "2 mi", or "Done · 2 mi".
+    /// "Today · 2 mi", "2 mi", "Done · 2 mi", or "Recovery day". Always a
+    /// line, so the card keeps its height from day to day.
     private var detail: String? {
-        let amount = workout.distanceM.map { Format.distance(Double($0), units) }
+        let amount = workout.isRest ? "Recovery day" : workout.distanceM.map { Format.distance(Double($0), units) }
             ?? workout.durationS.map { Format.minutes($0) }
         let when: String? = workout.status == .completed ? "Done" : (workout.date == .today ? "Today" : nil)
         let parts = [when, amount].compactMap { $0 }
