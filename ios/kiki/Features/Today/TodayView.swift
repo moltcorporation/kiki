@@ -77,7 +77,7 @@ struct TodayView: View {
     }
 }
 
-/// Home's header: today's date, a greeting, the goal, the countdown and
+/// Home's header: today's date and a greeting, then the countdown and
 /// progress on the asphalt (tap for the goal details), with the plan
 /// actions in its footer.
 private struct GoalProgressCard: View {
@@ -134,10 +134,6 @@ private struct GoalProgressCard: View {
                     .font(.heroTitle)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
-                Text("Your goal: \(plan.displayName)")
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(.muted)
-                    .fixedSize(horizontal: false, vertical: true)
             }
 
             VStack(alignment: .leading, spacing: Spacing.m) {
