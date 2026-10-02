@@ -33,8 +33,8 @@ struct PageBackground: View {
     }
 }
 
-/// The splash's asphalt texture with a faint white glow that drifts slowly
-/// across and back, so the card feels alive. Subtle by design. Still under Reduce Motion.
+/// The splash's asphalt texture with a faint volt glow in the top-right
+/// that drifts slowly, so the card feels alive. Subtle by design. Still under Reduce Motion.
 /// Used only behind Home's goal card.
 struct AsphaltBackground: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -50,18 +50,20 @@ struct AsphaltBackground: View {
                     .scaledToFill()
                     .frame(width: size.width, height: size.height)
                     .clipped()
+                // A faint volt glow, mostly in the top-right corner, drifting
+                // slowly. Subtle enough to read as light, not color.
                 RadialGradient(
-                    colors: [Color.glow.opacity(0.2), Color.glow.opacity(0.05), .clear],
-                    center: UnitPoint(x: -0.1 + 1.2 * phase, y: 0.1),
+                    colors: [Color.highlight.opacity(0.22), Color.highlight.opacity(0.05), .clear],
+                    center: UnitPoint(x: 0.75 + 0.3 * phase, y: -0.05 + 0.2 * phase),
                     startRadius: 0,
-                    endRadius: max(size.width, size.height) * 0.75
+                    endRadius: max(size.width, size.height) * 0.7
                 )
                 .blendMode(.screen)
             }
         }
         .accessibilityHidden(true)
         .onAppear {
-            guard !reduceMotion else { phase = 0.7; return }
+            guard !reduceMotion else { phase = 0.5; return }
             withAnimation(.easeInOut(duration: 12).repeatForever(autoreverses: true)) { phase = 1 }
         }
     }

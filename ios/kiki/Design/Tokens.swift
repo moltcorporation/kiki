@@ -110,9 +110,6 @@ extension Color {
     static var highlight: Color { Color(red: 0xCE / 255, green: 0xFF / 255, blue: 0x00 / 255) }
     /// Content on a highlight fill: always near-black, in light and dark mode.
     static var onHighlight: Color { Color(red: 0x15 / 255, green: 0x18 / 255, blue: 0x1D / 255) }
-    /// The faint off-white light drifting across the asphalt on Home's goal
-    /// card. Keep it subtle.
-    static var glow: Color { Color(white: 0.96) }
 
 }
 

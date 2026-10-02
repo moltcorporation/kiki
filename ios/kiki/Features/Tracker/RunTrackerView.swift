@@ -134,7 +134,7 @@ struct RunTrackerView: View {
     private var controls: some View {
         switch tracker.state {
         case .ready:
-            PrimaryButton("Start", isHighlighted: true) { tracker.begin() }
+            PrimaryButton("Start") { tracker.begin() }
                 .disabled(tracker.authorizationDenied)
         case .running:
             PrimaryButton("Pause") { tracker.pause() }

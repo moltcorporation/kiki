@@ -179,13 +179,7 @@ private struct PlanRing: View {
 
     var body: some View {
         ZStack {
-            Circle()
-                .stroke(Color.track, lineWidth: lineWidth)
-            Circle()
-                .trim(from: 0, to: timeline.progress)
-                .stroke(Color.ink, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
-                .rotationEffect(.degrees(-90))
-                .animation(.smooth, value: timeline.progress)
+            HighlightProgressRing(progress: timeline.progress, lineWidth: lineWidth)
             Group {
                 switch timeline.phase {
                 case .underway:

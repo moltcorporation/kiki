@@ -45,16 +45,13 @@ struct PrimaryButton: View {
     var systemImage: String?
     var isLoading = false
     var isEnabled = true
-    /// The highlight fill (volt) for the signature action, Start run.
-    var isHighlighted = false
     let action: () -> Void
 
-    init(_ title: LocalizedStringKey, systemImage: String? = nil, isLoading: Bool = false, isEnabled: Bool = true, isHighlighted: Bool = false, action: @escaping () -> Void) {
+    init(_ title: LocalizedStringKey, systemImage: String? = nil, isLoading: Bool = false, isEnabled: Bool = true, action: @escaping () -> Void) {
         self.title = title
         self.systemImage = systemImage
         self.isLoading = isLoading
         self.isEnabled = isEnabled
-        self.isHighlighted = isHighlighted
         self.action = action
     }
 
@@ -66,12 +63,12 @@ struct PrimaryButton: View {
                     Text(title)
                 }
                 .opacity(isLoading ? 0 : 1)
-                if isLoading { ProgressView().tint(isHighlighted ? .onHighlight : .paper) }
+                if isLoading { ProgressView().tint(.paper) }
             }
             .font(.button)
             .modifier(PillHeight())
-            .foregroundStyle(isHighlighted ? Color.onHighlight : Color.paper)
-            .background(!isEnabled ? Color.ink.opacity(0.25) : isHighlighted ? Color.highlight : Color.ink, in: .capsule)
+            .foregroundStyle(.paper)
+            .background(isEnabled ? Color.ink : Color.ink.opacity(0.25), in: .capsule)
             .contentShape(.capsule)
         }
         .buttonStyle(.haptic)

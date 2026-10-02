@@ -66,7 +66,7 @@ struct ConfettiBurst: View {
                 sway: .random(in: 2...5),
                 spin: .random(in: -8...8),
                 size: CGSize(width: .random(in: 6...10), height: .random(in: 10...16)),
-                color: [Color.ink, Color.ink, Color.muted, Color.glow, Color.glow].randomElement()!
+                color: [Color.ink, Color.ink, Color.muted, Color.highlight, Color.highlight].randomElement()!
             )
         }
     }

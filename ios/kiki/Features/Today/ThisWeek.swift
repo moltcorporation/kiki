@@ -41,9 +41,7 @@ struct ThisWeekCard: View {
                             .foregroundStyle(.muted)
                             .monospacedDigit()
                     }
-                    ProgressView(value: min(doneM, plannedM), total: max(plannedM, 1))
-                        .tint(.ink)
-                        .accessibilityHidden(true)
+                    HighlightProgressBar(progress: plannedM > 0 ? doneM / plannedM : 0)
                 }
                 .accessibilityElement(children: .combine)
             }
