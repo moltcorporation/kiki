@@ -37,13 +37,13 @@ struct HelpKikiGrowSection: View {
                     })
 
                 }
-                // Room for the cards' shadows inside the scroll view.
-                .padding(.vertical, Spacing.l)
             }
             // Scroll edge to edge, starting on the page margin.
             .contentMargins(.horizontal, Metrics.screenMargin, for: .scrollContent)
             .padding(.horizontal, -Metrics.screenMargin)
-            .padding(.vertical, -Spacing.l)
+            // Let the cards' shadows fade out instead of being cut off at
+            // the row's edge.
+            .scrollClipDisabled()
         }
         .sheet(isPresented: $showFeedback) { FeedbackSheet() }
     }
