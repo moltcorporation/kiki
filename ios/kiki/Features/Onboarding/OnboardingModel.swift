@@ -164,15 +164,17 @@ final class OnboardingModel {
             steps.append(.experience)
             // Runners who already run: where they are now, so the plan picks up from there.
             if let experience = answers.experience, experience != .new { steps += [.weeklyVolume, .longestRun] }
-            steps += [.runDays, .coachingStyle]
+            // Their name, then the personal "Nice to meet you" on coaching style.
+            steps += [.runDays, .name, .coachingStyle]
         }
         steps.append(.goalCheck)
 
         if mode == .full {
-            steps.append(.name)
+            // Show what Kiki does before asking for anything.
+            steps.append(.flexibility)
             if HealthService.isAvailable { steps.append(.health) }
             steps += [Step.age, .height, .weight].filter { !answers.fromHealth.contains($0) }
-            steps += [.flexibility, .referral, .notifications, .summary]
+            steps += [.referral, .notifications, .summary]
             if !isSignedIn { steps.append(.account) }
         }
         steps += [.generating, .preview]

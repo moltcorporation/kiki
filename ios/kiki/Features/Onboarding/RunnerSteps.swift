@@ -85,7 +85,9 @@ struct CoachingStyleStep: View {
 
     var body: some View {
         OnboardingScaffold(
-            title: "How do you like to be coached?",
+            // The greeting only the first time through, not when editing.
+            title: (model.isEditingFromSummary ? nil : model.firstName)
+                .map { "Nice to meet you, \($0)! How do you like to be coached?" } ?? "How do you like to be coached?",
             subtitle: "Kiki will match your style.",
             canContinue: model.answers.coachingStyle != nil
         ) {
@@ -103,7 +105,7 @@ struct NameStep: View {
     var body: some View {
         @Bindable var model = model
         OnboardingScaffold(
-            title: "What should Kiki call you?",
+            title: "What's your name?",
             canContinue: model.firstName != nil
         ) {
             TextField("First name", text: $model.answers.firstName)
@@ -127,7 +129,7 @@ struct AgeStep: View {
         @Bindable var model = model
         let age = Binding(get: { model.answers.age ?? Defaults.age }, set: { model.answers.age = $0 })
         OnboardingScaffold(
-            title: model.firstName.map { "Nice to meet you, \($0)! How old are you?" } ?? "How old are you?",
+            title: "How old are you?",
             subtitle: "It helps Kiki balance training and recovery.",
             onContinue: {
                 model.answers.age = age.wrappedValue
@@ -226,10 +228,25 @@ struct HealthStep: View {
             onContinue: connect,
             secondaryTitle: "Not now"
         ) {
-            InfoList {
-                InfoRow(symbol: "arrow.triangle.2.circlepath", text: "Runs from Strava, Garmin, Nike Run Club and more check off your plan")
-                InfoRow(symbol: "heart", text: "Runs you record in Kiki save to Apple Health")
-                InfoRow(symbol: "person.text.rectangle", text: "Skip questions Health already knows, like your age")
+            // Kiki ⇄ Apple Health, then what connecting does.
+            Card(padding: Spacing.xl) {
+                HStack(spacing: Spacing.l) {
+                    KikiLogo(size: 64)
+                        .clipShape(.rect(cornerRadius: 15))
+                    Image(systemName: "arrow.left.arrow.right")
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(.muted)
+                    HealthAppIcon(size: 64)
+                }
+                .frame(maxWidth: .infinity)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("Kiki and Apple Health")
+            }
+            ListCard {
+                ListRow(icon: "arrow.triangle.2.circlepath", title: Text("Sync your runs"),
+                        subtitles: ["From Apple Watch, Strava, Garmin and more"])
+                ListRow(icon: "heart", title: Text("Save runs to Apple Health"),
+                        subtitles: ["Runs you record in Kiki, with the route"])
             }
         }
     }
@@ -266,8 +283,8 @@ struct NotificationsStep: View {
 
     var body: some View {
         OnboardingScaffold(
-            title: model.firstName.map { "\($0), want a nudge on run days?" } ?? "Want a nudge on run days?",
-            subtitle: "We'll remind you on run days and before your free trial ends.",
+            title: "Want a nudge on run days?",
+            subtitle: "A reminder on the mornings you run.",
             continueTitle: "Turn on reminders",
             onContinue: {
                 Task {
@@ -302,5 +319,23 @@ private struct NotificationPreview: View {
         .padding(Spacing.l)
         .elevatedCard(cornerRadius: Radius.card)
         .accessibilityHidden(true)
+    }
+}
+
+/// The Apple Health app's mark: a pink heart on a white rounded square.
+struct HealthAppIcon: View {
+    var size: CGFloat = 64
+
+    var body: some View {
+        Image(systemName: "heart.fill")
+            .font(.system(size: size * 0.5, weight: .semibold))
+            .foregroundStyle(LinearGradient(
+                colors: [Color(red: 1, green: 0.37, blue: 0.47), Color(red: 1, green: 0.17, blue: 0.33)],
+                startPoint: .top, endPoint: .bottom))
+            .frame(width: size, height: size)
+            .background(Color.white, in: .rect(cornerRadius: size * 0.23))
+            .overlay(RoundedRectangle(cornerRadius: size * 0.23).strokeBorder(Color.black.opacity(0.08)))
+            .shadow(color: .black.opacity(0.08), radius: 6, y: 2)
+            .accessibilityLabel("Apple Health")
     }
 }

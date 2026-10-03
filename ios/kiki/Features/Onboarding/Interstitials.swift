@@ -93,113 +93,218 @@ struct GoalCheckStep: View {
             subtitle: LocalizedStringKey(summary.checkMessage),
             continueTitle: isRebuild ? "Build my new plan" : "Continue"
         ) {
-            Card(padding: Spacing.xxl) {
-                GoalJourney(weeks: summary.weeks, endLabel: summary.endLabel)
-            }
-            InfoList {
-                InfoRow(symbol: "target", text: LocalizedStringKey(summary.goalLine))
-                InfoRow(symbol: "calendar", text: "\(model.answers.runDays.count) \(model.answers.runDays.count == 1 ? "run" : "runs") a week on \(RunDaysSelector.summary(model.answers.runDays))")
-                InfoRow(symbol: "figure.run", text: "Starting from where you are today")
-                if isRebuild {
-                    InfoRow(symbol: "arrow.triangle.2.circlepath", text: "This replaces your current plan. Runs you've logged are kept.")
+            Card(padding: Spacing.l) {
+                VStack(spacing: Spacing.l) {
+                    PathChart(weeks: summary.weeks, kind: summary.kind, endLabel: summary.endLabel)
+                    Rectangle().fill(Color.hairline).frame(height: 1)
+                    HStack(spacing: Spacing.m) {
+                        PathStat(value: "\(summary.weeks)", label: "weeks")
+                        Rectangle().fill(Color.hairline).frame(width: 1, height: 32)
+                        PathStat(value: "\(model.answers.runDays.count)", label: model.answers.runDays.count == 1 ? "run a week" : "runs a week")
+                        Rectangle().fill(Color.hairline).frame(width: 1, height: 32)
+                        PathStat(value: (model.answers.experience ?? .new).title, label: "your level", isText: true)
+                    }
                 }
+            }
+            if isRebuild {
+                Footnote("This replaces your current plan. Runs you've logged are kept.")
             }
         }
     }
 }
 
-/// A simple rising path from today to the goal. Illustrative, no numbers.
-private struct GoalJourney: View {
-    let weeks: Int
-    let endLabel: String
-    @State private var drawn: CGFloat = 0
+/// One fact under the path: a bold value over a small label.
+private struct PathStat: View {
+    let value: String
+    let label: String
+    var isText = false
 
     var body: some View {
-        VStack(spacing: Spacing.m) {
-            GeometryReader { proxy in
-                let w = proxy.size.width, h = proxy.size.height
-                ZStack {
-                    Path { p in
-                        p.move(to: CGPoint(x: 8, y: h - 8))
-                        p.addCurve(
-                            to: CGPoint(x: w - 8, y: 8),
-                            control1: CGPoint(x: w * 0.45, y: h - 8),
-                            control2: CGPoint(x: w * 0.55, y: 8)
-                        )
-                    }
-                    .trim(from: 0, to: drawn)
-                    .stroke(Color.ink, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+        VStack(alignment: .leading, spacing: Spacing.xxs) {
+            Text(value)
+                .font(isText ? .headline : .metric(.title3))
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+            Text(label)
+                .font(.caption.weight(.medium))
+                .foregroundStyle(.muted)
+                .lineLimit(1)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .combine)
+    }
+}
 
-                    Circle().stroke(Color.ink, lineWidth: 3).background(Circle().fill(Color.surface))
-                        .frame(width: 16, height: 16)
-                        .position(x: 8, y: h - 8)
-                    Image(systemName: "flag.checkered")
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(.paper)
-                        .frame(width: 30, height: 30)
-                        .background(Color.ink, in: .circle)
-                        .position(x: w - 8, y: 8)
-                        .opacity(drawn == 1 ? 1 : 0)
+/// The plan's shape, week by week: running builds, eases off every few
+/// weeks, then (for a race or time trial) lightens before the big day,
+/// which stands tallest with a flag. Illustrative, from the answers.
+private struct PathChart: View {
+    let weeks: Int
+    let kind: GoalKind
+    let endLabel: String
+    @State private var grown = false
+
+    private var heights: [CGFloat] {
+        let n = min(max(weeks, 3), 24)
+        let hasFinale = kind == .race || kind == .faster || kind == .start
+        let build = hasFinale ? n - 1 : n
+        var bars: [CGFloat] = (0..<build).map { i in
+            let t = CGFloat(i) / CGFloat(max(build - 1, 1))
+            var h: CGFloat = kind == .fit ? 0.35 + 0.35 * min(t * 1.5, 1) : 0.22 + 0.58 * t
+            if (i + 1) % 4 == 0 && i < build - 1 { h *= 0.8 }          // easier week
+            if hasFinale && kind != .start && i == build - 1 && build > 3 { h *= 0.6 }  // lighter final week
+            return h
+        }
+        if hasFinale { bars.append(1) }
+        return bars
+    }
+
+    var body: some View {
+        let bars = heights
+        VStack(spacing: Spacing.s) {
+            GeometryReader { proxy in
+                let spacing: CGFloat = bars.count > 14 ? 3 : 5
+                let width = (proxy.size.width - spacing * CGFloat(bars.count - 1)) / CGFloat(bars.count)
+                HStack(alignment: .bottom, spacing: spacing) {
+                    ForEach(Array(bars.enumerated()), id: \.offset) { index, height in
+                        let isFinale = index == bars.count - 1 && kind != .fit
+                        RoundedRectangle(cornerRadius: min(width / 2, 5))
+                            .fill(isFinale ? Color.ink : Color.ink.opacity(0.14 + 0.4 * height))
+                            .frame(width: width, height: grown ? proxy.size.height * height : 4)
+                            .overlay(alignment: .top) {
+                                if isFinale {
+                                    Image(systemName: "flag.checkered")
+                                        .font(.caption.weight(.bold))
+                                        .foregroundStyle(.ink)
+                                        .offset(y: -20)
+                                        .opacity(grown ? 1 : 0)
+                                }
+                            }
+                            .animation(.smooth(duration: 0.6).delay(Double(index) * 0.035), value: grown)
+                    }
                 }
+                .frame(maxHeight: .infinity, alignment: .bottom)
             }
-            .frame(height: 130)
+            .frame(height: 120)
+            .padding(.top, Spacing.l)
 
             HStack {
                 Text("Today")
-                Spacer()
-                Text("\(weeks) weeks").foregroundStyle(.muted)
                 Spacer()
                 Text(endLabel)
             }
             .font(.subheadline.weight(.semibold))
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("From today to \(endLabel) in \(weeks) weeks")
-        .onAppear {
-            withAnimation(.easeInOut(duration: 1).delay(0.2)) { drawn = 1 }
-        }
+        .accessibilityLabel("Your plan builds week by week from today to \(endLabel)")
+        .onAppear { grown = true }
     }
 }
 
 struct FlexibilityStep: View {
-    @Environment(OnboardingModel.self) private var model
+    @State private var picked: Int?
+
+    /// Each Adjust option and what Kiki does with it (same as in the app).
+    private let options: [(icon: String, title: String, changes: [(day: String, before: String, after: String)])] = [
+        ("battery.25percent", "I'm tired", [("Thu", "Tempo Run · 4 mi", "Rest"), ("Sat", "Long Run · 9 mi", "Long Run · 7 mi")]),
+        ("arrow.down", "It's too hard", [("Thu", "Tempo Run · 4 mi", "Easy Run · 3 mi"), ("Sat", "Long Run · 9 mi", "Long Run · 8 mi")]),
+        ("arrow.right", "Can't make it", [("Thu", "Tempo Run · 4 mi", "Rest"), ("Fri", "Rest", "Tempo Run · 4 mi")]),
+        ("bandage", "Something hurts", [("Thu", "Tempo Run · 4 mi", "Rest"), ("Sat", "Long Run · 9 mi", "Easy Run · 4 mi")]),
+    ]
 
     var body: some View {
         OnboardingScaffold(
-            title: model.firstName.map { "\($0), life happens. Kiki adapts." } ?? "Life happens. Kiki adapts.",
-            subtitle: "Tired, busy, sore or ahead of schedule? Tell Kiki anytime and your plan updates in seconds."
+            title: "Life happens. Kiki adapts.",
+            subtitle: "Tired, busy or sore? Tap one to see how your plan changes."
         ) {
             VStack(spacing: Spacing.m) {
-                UserBubble(text: "I'm wiped out this week. Work has been brutal.")
-                CoachBubble(text: "No problem. I swapped Thursday's run for rest and eased up Saturday. We'll pick it back up next week.")
-            }
-            .accessibilityElement(children: .combine)
+                LazyVGrid(columns: [GridItem(.flexible(), spacing: Spacing.s), GridItem(.flexible(), spacing: Spacing.s)], spacing: Spacing.s) {
+                    ForEach(Array(options.enumerated()), id: \.offset) { index, option in
+                        let isOn = picked == index
+                        Button {
+                            Haptics.select()
+                            picked = index
+                        } label: {
+                            HStack(spacing: Spacing.s) {
+                                Image(systemName: option.icon)
+                                    .font(.footnote.weight(.bold))
+                                    .frame(width: 28, height: 28)
+                                    .background(isOn ? Color.paper.opacity(0.15) : Color.wash, in: .circle)
+                                Text(option.title)
+                                    .font(.subheadline.weight(.semibold))
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.85)
+                                Spacer(minLength: 0)
+                            }
+                            .foregroundStyle(isOn ? Color.paper : Color.ink)
+                            .padding(.horizontal, Spacing.m)
+                            .frame(minHeight: 52)
+                            .background(isOn ? Color.ink : Color.surface, in: .rect(cornerRadius: Radius.control))
+                            .overlay(RoundedRectangle(cornerRadius: Radius.control).strokeBorder(isOn ? Color.clear : Color.hairline))
+                            .contentShape(.rect)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityAddTraits(isOn ? .isSelected : [])
+                    }
+                }
 
-            FlowChips(items: ["Missed a run", "Feeling tired", "Something hurts", "Busy week", "Too easy"])
+                Image(systemName: "arrow.down")
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(.muted)
+
+                // What changed, for the option picked.
+                Card(padding: Spacing.l) {
+                    VStack(alignment: .leading, spacing: Spacing.m) {
+                        HStack(spacing: Spacing.s) {
+                            KikiLogo(size: 22)
+                            Text("Plan updated").font(.subheadline.weight(.semibold))
+                        }
+                        let changes = options[picked ?? 0].changes
+                        ForEach(Array(changes.enumerated()), id: \.offset) { index, change in
+                            if index > 0 { Rectangle().fill(Color.hairline).frame(height: 1) }
+                            ChangeRow(day: change.day, before: change.before, after: change.after)
+                        }
+                    }
+                    .id(picked)
+                    .transition(.opacity)
+                }
+                .opacity(picked == nil ? 0.35 : 1)
+            }
+            .animation(.smooth(duration: 0.35), value: picked)
+            .task {
+                // Show one example; then it's theirs to try.
+                try? await Task.sleep(for: .seconds(0.8))
+                if picked == nil { picked = 0 }
+            }
         }
     }
 }
 
-private struct FlowChips: View {
-    let items: [String]
+/// One adjusted day: the old workout struck through, then the new one.
+private struct ChangeRow: View {
+    let day: String
+    let before: String
+    let after: String
 
     var body: some View {
-        let rows = stride(from: 0, to: items.count, by: 3).map { Array(items[$0..<min($0 + 3, items.count)]) }
-        VStack(alignment: .leading, spacing: Spacing.s) {
-            ForEach(rows, id: \.self) { row in
-                HStack(spacing: Spacing.s) {
-                    ForEach(row, id: \.self) { item in
-                        Text(item)
-                            .font(.subheadline.weight(.medium))
-                            .padding(.horizontal, Spacing.m)
-                            .padding(.vertical, Spacing.s)
-                            .background(Color.surface, in: .capsule)
-                            .overlay(Capsule().strokeBorder(Color.hairline))
-                    }
-                }
-            }
+        HStack(spacing: Spacing.m) {
+            Text(day)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.muted)
+                .frame(width: 30, alignment: .leading)
+            Text(before)
+                .font(.subheadline)
+                .strikethrough()
+                .foregroundStyle(.muted)
+                .lineLimit(1)
+            Image(systemName: "arrow.right")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.muted)
+            Text(after)
+                .font(.subheadline.weight(.semibold))
+                .lineLimit(1)
+            Spacer(minLength: 0)
         }
-        .accessibilityHidden(true)
     }
 }
 

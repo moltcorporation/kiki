@@ -4,16 +4,19 @@ struct AccountStep: View {
     @Environment(OnboardingModel.self) private var model
 
     var body: some View {
+        let summary = GoalSummary(answers: model.answers, raceDate: model.answers.raceDate ?? model.suggestedRaceDate)
         OnboardingScaffold(
-            title: "Save your plan",
-            subtitle: "Create an account to keep your plan and progress.",
+            title: "Your plan is ready to build",
+            subtitle: "Create your account to save it.",
             showsContinue: false
         ) {
-            VStack(spacing: Spacing.xxxl + Spacing.s) {
-                InfoList {
-                    InfoRow(symbol: "sparkles", text: "A personalized plan, built just for you")
-                    InfoRow(symbol: "arrow.triangle.2.circlepath", text: "Adjust it anytime, like a real coach")
-                    InfoRow(symbol: "lock.fill", text: "Private and secure. We never sell your data.")
+            VStack(spacing: Spacing.xxl) {
+                // What they're about to get, in one card.
+                ListCard {
+                    ListRow(icon: "flag.checkered", title: Text(summary.goalLine), subtitles: [summary.timelineLine])
+                    ListRow(icon: "calendar", title: Text("\(model.answers.runDays.count) runs a week"),
+                            subtitles: [RunDaysSelector.summary(model.answers.runDays)])
+                    ListRow(icon: "lock", title: Text("Private and secure"), subtitles: ["We never sell your data"])
                 }
 
                 if model.isSignedIn {
