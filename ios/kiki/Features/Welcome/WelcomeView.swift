@@ -69,14 +69,20 @@ struct WelcomeView: View {
             // Centered at the bottom: headline, then the actions. 20pt side
             // margins, 8pt above the home indicator.
             VStack(spacing: Spacing.xxxl) {
-                Text("Your AI\nrunning coach.")
-                    .font(.system(size: headlineSize, weight: .black).italic())
-                    .tracking(-1.2)
-                    .multilineTextAlignment(.leading)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .minimumScaleFactor(0.7)
-                    .shadow(color: .black.opacity(0.25), radius: 12, y: 4)
-                    .accessibilityAddTraits(.isHeader)
+                VStack(alignment: .leading, spacing: Spacing.m) {
+                    Text("Your AI\nrunning coach.")
+                        .font(.system(size: headlineSize, weight: .black).italic())
+                        .tracking(-1.2)
+                        .minimumScaleFactor(0.7)
+                        .shadow(color: .black.opacity(0.25), radius: 12, y: 4)
+                        .accessibilityAddTraits(.isHeader)
+                    Text("Training plans built around you, from 5K to marathon.")
+                        .font(.body)
+                        .foregroundStyle(.white.opacity(0.8))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .multilineTextAlignment(.leading)
+                .frame(maxWidth: .infinity, alignment: .leading)
 
                 VStack(spacing: Spacing.xs) {
                     PrimaryButton("Get started", action: onGetStarted)
