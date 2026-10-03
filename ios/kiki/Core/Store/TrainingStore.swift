@@ -291,6 +291,13 @@ final class TrainingStore {
 
     // MARK: Coach adjustments
 
+    /// Emails a feature request to the team (online only).
+    func requestFeature(_ message: String) async throws {
+        struct Body: Encodable { let message: String; let appVersion: String }
+        let _: Empty = try await api.post("api/feedback", Body(message: message, appVersion: Bundle.main.appVersion))
+        Analytics.track("feature_requested", ["length": message.count])
+    }
+
     /// Asks the coach to adjust one day (`targetDate`) or the whole plan.
     func requestAdjustment(reason: AdjustReason, message: String?, targetDate: Day? = nil) async throws -> Adjustment {
         struct Body: Encodable { let id: UUID; let reason: AdjustReason; let message: String?; let targetDate: Day?; let today: Day }

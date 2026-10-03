@@ -21,6 +21,7 @@ struct YouView: View {
     @State private var showCustomerCenter = false
     @State private var confirmSignOut = false
     @State private var confirmDelete = false
+    @State private var showFeatureRequest = false
     /// Reminders were turned on but notifications are off for Kiki.
     @State private var notificationsOff = false
     @State private var isDeleting = false
@@ -54,6 +55,7 @@ struct YouView: View {
             }
             .navigationDestination(for: Run.self) { RunDetailView(run: $0) }
             .sheet(isPresented: $showCustomerCenter) { CustomerCenterView() }
+            .sheet(isPresented: $showFeatureRequest) { FeatureRequestSheet() }
             .goalEditFlow($goalFlow)
             .alert("Turn on notifications", isPresented: $notificationsOff) {
                 Button("Open Settings") {
@@ -200,6 +202,7 @@ struct YouView: View {
                     }
                 }
             }
+            SettingsRow(icon: "lightbulb", label: "Request a feature") { showFeatureRequest = true }
             SettingsRow(icon: "star", label: "Rate Kiki") { requestReview() }
             SettingsRow(icon: "envelope", label: "Contact support") {
                 openURL(URL(string: "mailto:\(Config.supportEmail)")!)

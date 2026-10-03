@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// The end of Home: "Help Kiki grow", a row of compact tiles that scrolls
-/// sideways (share feedback, invite a friend, leave a review).
+/// sideways (request a feature, invite a friend, leave a review).
 struct HelpKikiGrowSection: View {
     @Environment(\.openURL) private var openURL
     @State private var showFeedback = false
@@ -12,9 +12,9 @@ struct HelpKikiGrowSection: View {
                 HStack(spacing: Metrics.stackSpacing) {
                     Button {
                         showFeedback = true
-                        Analytics.track("help_kiki_grow_tapped", ["item": "feedback"])
+                        Analytics.track("help_kiki_grow_tapped", ["item": "feature_request"])
                     } label: {
-                        GrowTile(icon: "bubble.left.and.text.bubble.right", title: "Share feedback", subtitle: "Help shape Kiki")
+                        GrowTile(icon: "lightbulb", title: "Request a feature", subtitle: "Help shape Kiki")
                     }
                     .buttonStyle(.haptic)
 
@@ -45,7 +45,7 @@ struct HelpKikiGrowSection: View {
             // the row's edge.
             .scrollClipDisabled()
         }
-        .sheet(isPresented: $showFeedback) { FeedbackSheet() }
+        .sheet(isPresented: $showFeedback) { FeatureRequestSheet() }
     }
 }
 
@@ -82,29 +82,89 @@ struct GrowTile: View {
     }
 }
 
-/// Asks for feedback and opens an email to the team.
-private struct FeedbackSheet: View {
+/// "Request a feature": a fitted bottom sheet like the Adjust sheet. Write
+/// it, Send, and it's emailed to the team (replies go to the runner).
+struct FeatureRequestSheet: View {
+    @Environment(TrainingStore.self) private var store
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.openURL) private var openURL
+
+    private enum Phase: Equatable { case writing, sending, sent, failed(String) }
+
+    @State private var phase: Phase = .writing
+    @State private var message = ""
+    @State private var height: CGFloat = 360
+    @FocusState private var focused: Bool
+
+    private var trimmed: String { message.trimmingCharacters(in: .whitespacesAndNewlines) }
 
     var body: some View {
-        CompactSheet("Share feedback") {
-            Text("Kiki is brand new, and your feedback shapes what we build next. Tell us what's working, what isn't, or what you'd love to see. We read every message.")
-                .font(.body)
-                .foregroundStyle(.muted)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-            VStack(spacing: Spacing.xs) {
-                PrimaryButton("Share feedback", systemImage: "envelope") {
-                    Analytics.track("feedback_email_opened")
-                    if let url = URL(string: "mailto:\(Config.supportEmail)?subject=Kiki%20feedback") {
-                        openURL(url)
-                    }
-                    dismiss()
+        VStack(alignment: .leading, spacing: Spacing.xl) {
+            switch phase {
+            case .writing, .sending, .failed:
+                VStack(alignment: .leading, spacing: Spacing.xs) {
+                    Text("Request a feature")
+                        .font(.heroTitle)
+                        .accessibilityAddTraits(.isHeader)
+                    Text("What should Kiki do next? We read every request.")
+                        .font(.detail)
+                        .foregroundStyle(.muted)
                 }
-                TextButton("Not now") { dismiss() }
+                TextField("e.g. Show my heart rate on each run", text: $message, axis: .vertical)
+                    .lineLimit(3...6)
+                    .focused($focused)
+                    .inputField()
+                    .disabled(phase == .sending)
+                if case .failed(let error) = phase {
+                    Footnote(LocalizedStringKey(error))
+                }
+                PrimaryButton(phase == .sending ? "Sending…" : "Send", isEnabled: !trimmed.isEmpty && phase != .sending, action: send)
+            case .sent:
+                VStack(spacing: Spacing.m) {
+                    Image(systemName: "checkmark")
+                        .font(.title2.weight(.bold))
+                        .foregroundStyle(Color.onHighlight)
+                        .frame(width: 56, height: 56)
+                        .background(Color.highlight, in: .circle)
+                        .accessibilityHidden(true)
+                    Text("Thanks for the idea!")
+                        .font(.heroTitle)
+                    Text("It's on its way to the team.")
+                        .font(.detail)
+                        .foregroundStyle(.muted)
+                }
+                .frame(maxWidth: .infinity)
+                PrimaryButton("Done") { dismiss() }
             }
-            .padding(.top, Spacing.s)
+        }
+        .padding(.horizontal, Metrics.screenMargin)
+        .padding(.top, Spacing.xxxl)
+        .padding(.bottom, Spacing.l)
+        .fixedSize(horizontal: false, vertical: true)
+        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height = $0 }
+        .presentationDetents([.height(height)])
+        .presentationDragIndicator(.visible)
+        .presentationBackground(Color.surface)
+        .interactiveDismissDisabled(phase == .sending)
+        .animation(.smooth(duration: 0.35), value: phase)
+        .task {
+            try? await Task.sleep(for: .seconds(0.4))
+            focused = true
+        }
+        .onAppear { Analytics.screen("Feature Request") }
+    }
+
+    private func send() {
+        focused = false
+        phase = .sending
+        Task {
+            do {
+                try await store.requestFeature(trimmed)
+                Haptics.success()
+                phase = .sent
+            } catch {
+                Haptics.error()
+                phase = .failed("Couldn't send it. Check your connection and try again.")
+            }
         }
     }
 }
