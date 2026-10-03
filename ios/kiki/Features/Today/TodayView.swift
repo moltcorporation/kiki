@@ -305,7 +305,7 @@ struct RunSummaryLine: View {
                 Format.distance(run.distanceM, units),
                 Format.duration(run.durationS),
                 run.pace.map { Format.pace($0, units) },
-                run.feeling.map { "\($0.emoji) \($0.label)" },
+                run.feeling.map { $0.question },
             ].compactMap { $0 }.joined(separator: " · "))
         }
         .font(.subheadline.weight(.semibold))

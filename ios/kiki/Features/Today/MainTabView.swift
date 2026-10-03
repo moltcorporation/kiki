@@ -6,7 +6,7 @@ struct MainTabView: View {
     @State private var tab: AppTab = .today
     @State private var tabBar = TabBarState()
 
-    enum AppTab: Hashable { case today, plan, run, learn, you }
+    enum AppTab: Hashable { case today, plan, run, log, you }
 
     var body: some View {
         @Bindable var tracker = tracker
@@ -36,10 +36,10 @@ struct MainTabView: View {
                 Text(verbatim: "")
             }
             .disabled(true)
-            Tab(value: .learn) {
-                LearnView()
+            Tab(value: .log) {
+                RunLogView()
             } label: {
-                tabLabel("Learn", "book", .learn)
+                tabLabel("Log", "list.bullet.clipboard", .log)
             }
             Tab(value: .you) {
                 YouView()

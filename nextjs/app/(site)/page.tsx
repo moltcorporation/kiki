@@ -247,11 +247,15 @@ export default function Home() {
       />
 
       <Feature
-        eyebrow="Learn"
-        title="Run smarter, one short read at a time."
-        body="Short, practical guides inside the app: running form, breathing, race day, strength and the science of rest. Each one takes two or three minutes."
-        points={["Written for real runners, not experts", "Key takeaways at the end of every guide", "From your first run to your first marathon"]}
-        shot={<PhoneShot src="/screens/learn.png" alt="Kiki's Learn tab with guides on running basics and running form" />}
+        eyebrow="Your log"
+        title="Every run, in one place."
+        body="Runs you track in Kiki, log by hand or sync from Apple Health all land in your log, by month. Tap any run to see it, edit it or delete it. It's your log."
+        points={[
+          "Tracked, logged or synced, each run shows where it came from",
+          "One quick question after a run: how did it feel?",
+          "Edit or delete any run, anytime",
+        ]}
+        shot={<PhoneShot src="/screens/log.png" alt="Kiki's Log tab: every run in September with distance, time and pace" />}
         reverse
       />
 

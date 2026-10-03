@@ -15,18 +15,19 @@ struct YouView: View {
 
     @AppStorage("reminders.enabled") private var remindersEnabled = true
     @AppStorage(BodyUnits.storageKey) private var bodyUnitsStored = ""
-    /// Holds `Route`s and `Run`s (Run history opens a run).
+    /// Holds `Route`s and `Run`s.
     @State private var path = NavigationPath()
     @State private var goalFlow: OnboardingModel?
     @State private var showCustomerCenter = false
     @State private var confirmSignOut = false
     @State private var confirmDelete = false
+    /// Reminders were turned on but notifications are off for Kiki.
+    @State private var notificationsOff = false
     @State private var isDeleting = false
     @State private var message: String?
 
     enum Route: Hashable {
         case goal
-        case runs
         case edit(ProfileField)
     }
 
@@ -48,13 +49,21 @@ struct YouView: View {
             .navigationDestination(for: Route.self) { route in
                 switch route {
                 case .goal: GoalDetailView()
-                case .runs: RunsView()
                 case .edit(let field): ProfileFieldEditor(field: field)
                 }
             }
             .navigationDestination(for: Run.self) { RunDetailView(run: $0) }
             .sheet(isPresented: $showCustomerCenter) { CustomerCenterView() }
             .goalEditFlow($goalFlow)
+            .alert("Turn on notifications", isPresented: $notificationsOff) {
+                Button("Open Settings") {
+                    // Kiki's notification settings, one tap from the toggle.
+                    if let url = URL(string: UIApplication.openNotificationSettingsURLString) { openURL(url) }
+                }
+                Button("Not now", role: .cancel) {}
+            } message: {
+                Text("Allow notifications for Kiki to get run day reminders.")
+            }
             .alert(message ?? "", isPresented: .constant(message != nil)) {
                 Button("OK") { message = nil }
             }
@@ -126,10 +135,6 @@ struct YouView: View {
             SettingsRow(icon: (profile.coachingStyle ?? .balanced).icon, label: "Coaching style",
                           value: (profile.coachingStyle ?? .balanced).title) {
                 path.append(Route.edit(.coachingStyle))
-            }
-            SettingsRow(icon: "list.bullet", label: "Run history",
-                          value: store.runs.isEmpty ? "None yet" : "\(store.runs.count)") {
-                path.append(Route.runs)
             }
         }
     }
@@ -250,7 +255,7 @@ struct YouView: View {
         if enabled {
             guard await Notifications.requestPermission() else {
                 remindersEnabled = false
-                message = "Turn on notifications for Kiki in the Settings app to get reminders."
+                notificationsOff = true
                 return
             }
             await Notifications.scheduleWorkoutReminders(store.workouts, units: store.units)

@@ -1,142 +1,78 @@
-import Charts
 import MapKit
 import SwiftUI
 
-/// The runner's week, weekly distance and every logged or tracked run.
-/// Pushed from the Profile tab, which owns the navigation stack.
-struct RunsView: View {
+/// The Log tab: every run, logged, tracked or synced from other apps,
+/// newest first and grouped by month. The plan stays the plan; this is
+/// the record. Tap a run to see, edit or delete it; + logs one by hand.
+struct RunLogView: View {
     @Environment(TrainingStore.self) private var store
+    @State private var path = NavigationPath()
     @State private var sheet: AppSheet?
 
     var body: some View {
         let units = store.units
-        DetailPage("Run history") {
-            PageSection("This week") { thisWeek(units) }
-            PageSection("Weekly distance") { volumeChart(units) }
-            PageSection("Runs") { history(units) }
-        }
-        .refreshable { await store.refresh() }
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button("Log a run", systemImage: "plus") { sheet = .log(nil, nil) }
-            }
-        }
-        .appSheets($sheet)
-        .onAppear { Analytics.screen("Runs") }
-    }
-
-    private func thisWeek(_ units: Units) -> some View {
-        let week = store.workouts(inWeekOf: .today)
-        let planned = Double(week.compactMap(\.distanceM).reduce(0, +))
-        let monday = Day.today.mondayOfWeek
-        let done = store.runs
-            .filter { Day($0.startedAt) >= monday && Day($0.startedAt) <= monday.adding(days: 6) }
-            .reduce(0) { $0 + $1.distanceM }
-        let past = store.workouts.filter { !$0.isRest && $0.date < .today }
-        let completed = past.filter { $0.status == .completed }.count
-
-        return HStack(spacing: Metrics.stackSpacing) {
-            Card {
-                VStack(alignment: .leading, spacing: Spacing.s) {
-                    Text("Distance").font(.eyebrow).foregroundStyle(.muted)
-                    HStack(alignment: .firstTextBaseline, spacing: Spacing.xs) {
-                        Text(Format.distanceNumber(done, units)).font(.metric(.title))
-                        Text("/ \(Format.distance(planned, units, decimals: 0))").font(.detail).foregroundStyle(.muted)
-                    }
-                    ProgressView(value: min(done, planned), total: max(planned, 1)).tint(.ink)
-                }
-            }
-            Card {
-                VStack(alignment: .leading, spacing: Spacing.s) {
-                    Text("Plan completion").font(.eyebrow).foregroundStyle(.muted)
-                    Text(past.isEmpty ? "–" : "\(Int(Double(completed) / Double(past.count) * 100))%")
-                        .font(.metric(.title))
-                    Text("\(completed) of \(past.count) runs").font(.detail).foregroundStyle(.muted)
-                }
-            }
-        }
-    }
-
-    private func volumeChart(_ units: Units) -> some View {
-        let data = weeklyVolume(units)
-        return Card {
-            VStack(alignment: .leading, spacing: Spacing.m) {
-                if data.isEmpty {
-                    Text("Your weekly distance will appear here.").foregroundStyle(.muted)
+        NavigationStack(path: $path) {
+            TabPage("Log", accessory: AnyView(HeaderButton("Log a run", systemImage: "plus") { sheet = .log(nil, nil) })) {
+                if store.runs.isEmpty {
+                    MessageCard(icon: "figure.run", title: "No runs yet", message: "Runs you track, log or sync from other apps show up here.")
                 } else {
-                    Chart(data) { item in
-                        BarMark(x: .value("Week", item.label), y: .value("Planned", item.planned), width: .ratio(0.6))
-                            .foregroundStyle(Color.track)
-                        BarMark(x: .value("Week", item.label), y: .value("Done", item.done), width: .ratio(0.6))
-                            .foregroundStyle(Color.ink)
+                    ForEach(months, id: \.month) { month, runs in
+                        PageSection(LocalizedStringKey(month.date.formatted(.dateTime.month(.wide).year())),
+                                    detail: summary(runs, units)) {
+                            ListCard {
+                                ForEach(runs) { run in
+                                    NavigationLink(value: run) { RunRow(run: run, units: units) }
+                                        .buttonStyle(.haptic)
+                                }
+                            }
+                        }
                     }
-                    .chartYAxisLabel(units.rawValue)
-                    .frame(height: 180)
-                    HStack(spacing: Spacing.l) {
-                        Label("Done", systemImage: "square.fill").foregroundStyle(.ink)
-                        Label("Planned", systemImage: "square.fill").foregroundStyle(Color.track)
-                    }
-                    .font(.caption)
                 }
             }
+            .refreshable { await store.refresh() }
+            .hidesTabBar(!path.isEmpty)
+            .navigationDestination(for: Run.self) { RunDetailView(run: $0) }
+            .appSheets($sheet)
         }
+        .onAppear { Analytics.screen("Log") }
     }
 
-    private struct WeekVolume: Identifiable {
-        let id: Int
-        let label: String
-        let planned: Double
-        let done: Double
+    /// Runs grouped by month, newest first.
+    private var months: [(month: Day, runs: [Run])] {
+        Dictionary(grouping: store.runs) { Day($0.startedAt).firstOfMonth }
+            .map { ($0.key, $0.value.sorted { $0.startedAt > $1.startedAt }) }
+            .sorted { $0.month > $1.month }
     }
 
-    private func weeklyVolume(_ units: Units) -> [WeekVolume] {
-        guard let current = store.currentWeekNumber else { return [] }
-        return store.weeks
-            .filter { $0.week >= current - 6 && $0.week <= current + 1 }
-            .map { week, workouts in
-                let monday = workouts.map(\.date).min()!.mondayOfWeek
-                let sunday = monday.adding(days: 6)
-                let done = store.runs
-                    .filter { let d = Day($0.startedAt); return d >= monday && d <= sunday }
-                    .reduce(0) { $0 + $1.distanceM }
-                return WeekVolume(
-                    id: week,
-                    label: "W\(week)",
-                    planned: Format.distanceValue(Double(workouts.compactMap(\.distanceM).reduce(0, +)), units),
-                    done: Format.distanceValue(done, units)
-                )
-            }
-    }
-
-    @ViewBuilder
-    private func history(_ units: Units) -> some View {
-        if store.runs.isEmpty {
-            MessageCard(icon: "figure.run", title: "No runs yet", message: "Runs you log or track will show up here.")
-        } else {
-            ListCard {
-                ForEach(store.runs) { run in
-                    NavigationLink(value: run) {
-                        RunRow(run: run, units: units)
-                    }
-                    .buttonStyle(.haptic)
-                }
-            }
-        }
+    /// "8 runs · 32.4 mi"
+    private func summary(_ runs: [Run], _ units: Units) -> String {
+        let meters = runs.reduce(0) { $0 + $1.distanceM }
+        return "\(runs.count) \(runs.count == 1 ? "run" : "runs") · \(Format.distance(meters, units))"
     }
 }
 
+/// One run: what it was (the workout it checked off, or "Run"), the day
+/// and distance (plus "Apple Health" when synced), then time and pace. The
+/// icon says where it came from.
 struct RunRow: View {
+    @Environment(TrainingStore.self) private var store
     let run: Run
     let units: Units
 
+    private var title: String {
+        run.workoutId.flatMap { id in store.workouts.first { $0.id == id }?.title } ?? "Run"
+    }
+
+
     var body: some View {
         ListRow(
-            icon: run.source == .kiki ? "location.fill" : "figure.run",
-            title: Text(Format.distance(run.distanceM, units)),
-            subtitles: [
-                [run.startedAt.formatted(.dateTime.weekday(.abbreviated).month().day()), run.feeling?.emoji]
-                    .compactMap { $0 }.joined(separator: " "),
-            ],
+            icon: run.source.icon,
+            title: Text(title),
+            subtitles: [[
+                run.startedAt.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day()),
+                Format.distance(run.distanceM, units),
+                run.source.isSynced ? run.source.label : nil,
+            ].compactMap { $0 }.joined(separator: " · ")],
             showsChevron: true
         ) {
             VStack(alignment: .trailing, spacing: Spacing.xxs) {
@@ -158,6 +94,7 @@ struct RunDetailView: View {
     let run: Run
     @State private var full: Run?
     @State private var sheet: AppSheet?
+    @State private var confirmDelete = false
 
     var body: some View {
         let units = store.units
@@ -192,20 +129,20 @@ struct RunDetailView: View {
                                 if let pace = current.pace {
                                     MetricView(value: Format.pace(pace, units, withUnit: false), label: "avg pace /\(units.rawValue)")
                                 }
-                                if let effort = current.effort {
-                                    MetricView(value: "\(effort)/10", label: "effort")
-                                }
                             }
                         }
-                        if current.feeling != nil || current.notes?.isEmpty == false {
-                            Divider()
-                            VStack(alignment: .leading, spacing: Spacing.s) {
-                                if let feeling = current.feeling {
-                                    Text("Felt \(feeling.label.lowercased()) \(feeling.emoji)").font(.rowTitle)
-                                }
-                                if let notes = current.notes, !notes.isEmpty {
-                                    Text("“\(notes)”").font(.detail).foregroundStyle(.muted)
-                                }
+                        Divider()
+                        VStack(alignment: .leading, spacing: Spacing.s) {
+                            // Where it came from: tracked, synced or logged.
+                            Label(current.source == .appleHealth ? "Synced from Apple Health" : current.source.label,
+                                  systemImage: current.source.icon)
+                                .font(.detail)
+                                .foregroundStyle(.muted)
+                            if let feeling = current.feeling {
+                                Text("Felt: \(feeling.question)").font(.rowTitle)
+                            }
+                            if let notes = current.notes, !notes.isEmpty {
+                                Text("“\(notes)”").font(.detail).foregroundStyle(.muted)
                             }
                         }
                     }
@@ -228,22 +165,49 @@ struct RunDetailView: View {
                     }
                 }
         }
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Menu {
-                    Button("Edit", systemImage: "pencil") {
-                        sheet = .log(store.workouts.first { $0.id == current.workoutId }, current)
-                    }
-                    Button("Delete", systemImage: "trash", role: .destructive) {
+        // Actions at the bottom, like every other page (never in a menu).
+        .bottomActions {
+            SecondaryButton("Edit run", systemImage: "pencil") {
+                sheet = .log(store.workouts.first { $0.id == current.workoutId }, current)
+            }
+            Button("Delete run", role: .destructive) { confirmDelete = true }
+                .font(.body.weight(.semibold))
+                .foregroundStyle(Color.destructive)
+                .frame(maxWidth: .infinity, minHeight: Metrics.minTapTarget)
+                .buttonStyle(.haptic)
+                .confirmationDialog("Delete this run?", isPresented: $confirmDelete, titleVisibility: .visible) {
+                    Button("Delete run", role: .destructive) {
                         store.delete(current)
+                        Haptics.success()
                         dismiss()
                     }
-                } label: {
-                    Image(systemName: "ellipsis")
+                } message: {
+                    Text("It's removed from your log and your plan.")
                 }
-            }
         }
         .appSheets($sheet)
         .task { full = await store.fullRun(run) }
     }
+}
+
+extension RunSource {
+    /// Tracked in Kiki: a runner; synced: a heart; logged by hand: a pencil.
+    var icon: String {
+        switch self {
+        case .kiki: "figure.run"
+        case .appleHealth, .strava: "heart.fill"
+        case .manual: "pencil"
+        }
+    }
+
+    var label: String {
+        switch self {
+        case .kiki: "Tracked with Kiki"
+        case .appleHealth: "Apple Health"
+        case .strava: "Strava"
+        case .manual: "Logged by hand"
+        }
+    }
+
+    var isSynced: Bool { self == .appleHealth || self == .strava }
 }
