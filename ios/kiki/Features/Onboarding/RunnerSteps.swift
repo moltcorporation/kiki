@@ -85,9 +85,7 @@ struct CoachingStyleStep: View {
 
     var body: some View {
         OnboardingScaffold(
-            // The greeting only the first time through, not when editing.
-            title: (model.isEditingFromSummary ? nil : model.firstName)
-                .map { "Nice to meet you, \($0)! How do you like to be coached?" } ?? "How do you like to be coached?",
+            title: "How do you like to be coached?",
             subtitle: "Kiki will match your style.",
             canContinue: model.answers.coachingStyle != nil
         ) {
