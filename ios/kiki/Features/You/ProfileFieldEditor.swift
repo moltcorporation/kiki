@@ -56,7 +56,9 @@ struct ProfileFieldEditor: View {
             }
         }
         .sheet(item: $planNote, onDismiss: { dismiss() }) { note in
-            AdjustSheet(scope: .plan, autoSend: .init(reason: field == .runDays ? .schedule : .other, message: note.text))
+            ProOnly(title: "Update your plan with Kiki Pro", message: "Your change is saved. Kiki Pro updates your plan to match.", source: "profile_change") {
+                AdjustSheet(scope: .plan, autoSend: .init(reason: field == .runDays ? .schedule : .other, message: note.text))
+            }
         }
         .alert(error ?? "", isPresented: .constant(error != nil)) {
             Button("OK") { error = nil }

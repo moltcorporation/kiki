@@ -4,6 +4,7 @@ import SwiftUI
 /// at a glance, and Help Kiki grow, on the shared tab layout.
 struct TodayView: View {
     @Environment(TrainingStore.self) private var store
+    @Environment(Subscriptions.self) private var subscriptions
 
     /// Switches to the Plan tab (the goal card's "View plan").
     var onViewPlan: () -> Void = {}
@@ -53,7 +54,13 @@ struct TodayView: View {
                         action: onViewPlan
                     ) {
                         SwipePager(count: weekCount, index: $weekPage) { page in
-                            ThisWeekCard(units: units, week: page == 0 ? .today : nextWeek) { path.append($0) }
+                            let week = page == 0 ? Day.today : nextWeek
+                        if subscriptions.isLocked(week.mondayOfWeek.adding(days: 6), plan: store.plan)
+                            && subscriptions.isLocked(week.mondayOfWeek, plan: store.plan) {
+                            LockedCard(title: "See your next weeks", message: "Your full plan is ready with Kiki Pro.", source: "home_week")
+                        } else {
+                            ThisWeekCard(units: units, week: week) { path.append($0) }
+                        }
                         }
                     }
                 }
@@ -89,7 +96,9 @@ struct TodayView: View {
     /// One day's card: its workout, or a note when it's outside the plan.
     @ViewBuilder
     private func dayCard(_ day: Day, units: Units) -> some View {
-        if let workout = store.workouts.first(where: { $0.date == day }) {
+        if subscriptions.isLocked(day, plan: store.plan) {
+            LockedCard(title: "Keep training with Kiki Pro", message: "Unlock your full plan, every day to the finish.", source: "home_day")
+        } else if let workout = store.workouts.first(where: { $0.date == day }) {
             TodayCard(
                 workout: workout,
                 run: store.run(for: workout),

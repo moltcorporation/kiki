@@ -142,9 +142,13 @@ extension View {
             case .log(let workout, let run):
                 LogRunView(workout: workout, existing: run)
             case .adjustDay(let workout):
-                AdjustSheet(scope: .day(workout))
+                ProOnly(title: "Adjust with Kiki Pro", message: "Kiki reworks your runs when you're tired, busy or sore.", source: "adjust_day") {
+                    AdjustSheet(scope: .day(workout))
+                }
             case .adjustPlan:
-                AdjustSheet(scope: .plan)
+                ProOnly(title: "Adjust with Kiki Pro", message: "Kiki reworks your plan when life happens.", source: "adjust_plan") {
+                    AdjustSheet(scope: .plan)
+                }
             }
         }
     }

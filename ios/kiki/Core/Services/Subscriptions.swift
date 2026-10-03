@@ -10,6 +10,23 @@ final class Subscriptions {
     private(set) var activeExpiration: Date?
     private(set) var isInTrial = false
 
+    /// Pro, or the paywall is switched off (`Config.paywallEnabled`).
+    var hasAccess: Bool { isPremium || !Config.paywallEnabled }
+
+    /// The RevenueCat paywall, shown full screen over the app.
+    var isPaywallPresented = false
+    private(set) var paywallSource = ""
+
+    /// Opens the paywall (after onboarding, or from a locked feature).
+    func presentPaywall(_ source: String) {
+        guard Config.paywallEnabled, !isPremium else { return }
+        paywallSource = source
+        isPaywallPresented = true
+        Analytics.track("paywall_presented", ["source": source])
+    }
+
+    func closePaywall() { isPaywallPresented = false }
+
     static func configure() {
         #if DEBUG
         Purchases.logLevel = .warn
@@ -33,28 +50,6 @@ final class Subscriptions {
         } catch {
             // Offline with no cached info: don't block the app on RevenueCat.
             hasLoaded = true
-        }
-    }
-
-    func loadOffering() async {
-        guard offering == nil else { return }
-        do {
-            offering = try await Purchases.shared.offerings().current
-        } catch {
-            Analytics.captureError(error, context: ["step": "offerings"])
-        }
-    }
-
-    enum PurchaseOutcome { case purchased, cancelled }
-
-    func purchase(_ package: Package) async throws -> PurchaseOutcome {
-        do {
-            let result = try await Purchases.shared.purchase(package: package)
-            if result.userCancelled { return .cancelled }
-            apply(result.customerInfo)
-            return isPremium ? .purchased : .cancelled
-        } catch let error as ErrorCode where error == .purchaseCancelledError {
-            return .cancelled
         }
     }
 

@@ -7,7 +7,7 @@ export const ENTITLEMENT_ID = "premium";
  * and new plans are free for everyone). RevenueCat still knows every user.
  * Turn on together with `Config.paywallEnabled` in the app.
  */
-export const PAYWALL_ENABLED = false;
+export const PAYWALL_ENABLED = true;
 
 /**
  * Whether the user has an active Kiki subscription (including free trials),

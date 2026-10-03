@@ -6,6 +6,7 @@ import SwiftUI
 /// Opened from Home's goal card and from the Profile tab.
 struct GoalDetailView: View {
     @Environment(TrainingStore.self) private var store
+    @Environment(Subscriptions.self) private var subscriptions
 
     @State private var editingName = false
     @State private var goalFlow: OnboardingModel?
@@ -33,6 +34,8 @@ struct GoalDetailView: View {
     }
 
     private func onEdit(_ step: OnboardingModel.Step) {
+        // Changing the goal builds a new plan: Kiki Pro.
+        guard subscriptions.hasAccess else { return subscriptions.presentPaywall("change_goal") }
         goalFlow = .goalEdit(step, store: store) { goalFlow = nil }
     }
 

@@ -7,6 +7,9 @@ import SwiftUI
 struct PlanCalendar: View {
     let workouts: [Workout]
     let units: Units
+    /// Days behind the paywall (limited access): dimmed, tap opens it.
+    var isLocked: (Day) -> Bool = { _ in false }
+    var onLocked: () -> Void = {}
 
     @State private var month: Day = Day.today.firstOfMonth
     @State private var selected: Day = .today
@@ -120,9 +123,11 @@ struct PlanCalendar: View {
                             isInMonth: day.month == month.month,
                             isSelected: day == selected
                         ) {
+                            if isLocked(day) { return onLocked() }
                             Haptics.select()
                             selected = day
                         }
+                        .opacity(isLocked(day) ? 0.35 : 1)
                     }
                 }
             }

@@ -8,7 +8,7 @@ struct RootView: View {
     @Environment(OnboardingModel.self) private var onboarding
 
     private enum Route: Equatable {
-        case welcome, onboarding, loading, consent, needsPlan, paywall, main
+        case welcome, onboarding, loading, consent, needsPlan, main
     }
 
     private var route: Route {
@@ -18,7 +18,6 @@ struct RootView: View {
         if !store.hasLoaded || (Config.paywallEnabled && !subscriptions.hasLoaded) { return .loading }
         if store.needsConsent { return .consent }
         if store.plan == nil { return .needsPlan }
-        if Config.paywallEnabled && !subscriptions.isPremium { return .paywall }
         return .main
     }
 
@@ -47,8 +46,6 @@ struct RootView: View {
             case .loading, .needsPlan:
                 LaunchView()
                     .transition(.asymmetric(insertion: .identity, removal: .opacity.combined(with: .scale(scale: 1.08))))
-            case .paywall:
-                NavigationStack { PaywallView() }
             case .main:
                 MainTabView()
             }
@@ -78,7 +75,19 @@ struct RootView: View {
                 }
             }
         }
-        .onChange(of: route) { _, route in
+        // The RevenueCat paywall, over everything (closes via its own
+        // "Continue with limited access").
+        .fullScreenCover(isPresented: Bindable(subscriptions).isPaywallPresented) { KikiPaywall() }
+        .onChange(of: route) { old, route in
+            // Into the app: right after onboarding, and on later launches
+            // once the free week is over, offer Kiki Pro.
+            if route == .main, !subscriptions.isPremium {
+                if old == .onboarding {
+                    subscriptions.presentPaywall("onboarding")
+                } else if old == .loading, let plan = store.plan, Day.today > plan.freeThrough {
+                    subscriptions.presentPaywall("launch")
+                }
+            }
             // Signed in without a plan (e.g. a returning runner): build one.
             if route == .needsPlan {
                 onboarding.isSignedIn = true

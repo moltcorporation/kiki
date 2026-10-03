@@ -6,6 +6,7 @@ import SwiftUI
 /// no scrolling to find it.
 struct PlanView: View {
     @Environment(TrainingStore.self) private var store
+    @Environment(Subscriptions.self) private var subscriptions
     @State private var path = NavigationPath()
     /// Fires the confetti when the finish line scrolls into view.
     @State private var celebrations = 0
@@ -74,19 +75,40 @@ struct PlanView: View {
                         ProgressCard(plan: plan, units: units, onGoal: { path.append(PlanRoute.goal) })
                     }
                     if showsCalendar {
-                        PlanCalendar(workouts: store.workouts, units: units)
+                        PlanCalendar(workouts: store.workouts, units: units,
+                                     isLocked: { subscriptions.isLocked($0, plan: store.plan) },
+                                     onLocked: { subscriptions.presentPaywall("plan_calendar") })
                             .transition(.opacity)
                     } else {
                     if !past.isEmpty {
                         CompletedWeeks(weeks: past, units: units)
                     }
-                    ForEach(store.weeks.filter { !pastNumbers.contains($0.week) }, id: \.week) { week, workouts in
+                    let upcoming = store.weeks.filter { !pastNumbers.contains($0.week) }
+                    // Limited access: weeks after the free one stay locked.
+                    let open = upcoming.filter { week in !week.workouts.contains { subscriptions.isLocked($0.date, plan: store.plan) } }
+                    let locked = upcoming.first { week in !open.contains { $0.week == week.week } }
+                    ForEach(open, id: \.week) { week, workouts in
                         PageSection("Week \(week)", eyebrow: weekEyebrow(workouts), detail: weekDetail(workouts, units: units)) {
                             WeekSchedule(workouts: workouts, units: units, onMove: moveWorkout)
                         }
                         .id(week)
                     }
-                    if store.plan != nil, !store.weeks.isEmpty {
+                    if let locked {
+                        // A blurred peek at what's next, under the unlock card.
+                        ZStack {
+                            PageSection("Week \(locked.week)", detail: weekDetail(locked.workouts, units: units)) {
+                                WeekSchedule(workouts: locked.workouts, units: units, isNavigable: false)
+                            }
+                            .blur(radius: 8)
+                            .allowsHitTesting(false)
+                            .accessibilityHidden(true)
+                            LockedCard(title: "Unlock your full plan",
+                                       message: "Every week from here to \(store.plan?.displayName ?? "your goal") is ready for you.",
+                                       source: "plan_weeks")
+                                .padding(.horizontal, Spacing.s)
+                        }
+                    }
+                    if store.plan != nil, !store.weeks.isEmpty, locked == nil {
                         FinishLine()
                             .onScrollVisibilityChange(threshold: 0.8) { visible in
                                 guard visible else { return }
@@ -113,7 +135,9 @@ struct PlanView: View {
         .environment(\.scheduleDrag, drag)
         .sheet(isPresented: $showsShare) {
             if let plan = store.plan {
-                SharePlanSheet(plan: plan, workouts: store.workouts, units: store.units)
+                ProOnly(title: "Share with Kiki Pro", message: "Save or send your whole plan as a PDF.", source: "share_plan") {
+                    SharePlanSheet(plan: plan, workouts: store.workouts, units: store.units)
+                }
             }
         }
         .onAppear { Analytics.screen("Plan") }

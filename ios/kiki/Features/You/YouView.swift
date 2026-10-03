@@ -194,7 +194,11 @@ struct YouView: View {
                     Task { await updateReminders(enabled) }
                 }
             if Config.paywallEnabled {
-                SettingsRow(icon: "creditcard", label: "Subscription") { showCustomerCenter = true }
+                if subscriptions.isPremium {
+                    SettingsRow(icon: "creditcard", label: "Subscription", value: "Kiki Pro") { showCustomerCenter = true }
+                } else {
+                    SettingsRow(icon: "sparkles", label: "Upgrade to Kiki Pro") { subscriptions.presentPaywall("profile") }
+                }
                 SettingsRow(icon: "arrow.clockwise", label: "Restore purchases") {
                     Task {
                         let found = (try? await subscriptions.restore()) ?? false

@@ -95,7 +95,9 @@ struct LogRunView: View {
             Text("It's removed from your log and your plan.")
         }
         .sheet(isPresented: $showAdjust, onDismiss: { dismiss() }) {
-            AdjustSheet(scope: .plan, autoSend: followUp.map { .init(reason: $0) })
+            ProOnly(title: "Adjust with Kiki Pro", message: "Kiki eases your next few days so you recover.", source: "log_followup") {
+                AdjustSheet(scope: .plan, autoSend: followUp.map { .init(reason: $0) })
+            }
         }
         .onAppear(perform: prefill)
         .onAppear { Analytics.screen("Log Run", ["editing": existing != nil]) }
