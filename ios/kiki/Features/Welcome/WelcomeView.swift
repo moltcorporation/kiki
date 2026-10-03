@@ -51,10 +51,13 @@ struct WelcomeView: View {
                 VStack(alignment: .leading, spacing: Spacing.s) {
                     Text("Kiki")
                         .font(.system(size: 22, weight: .black).italic())
-                        .foregroundStyle(.white)
+                        // Slightly see-through, like a watermark, so it
+                        // doesn't compete with the headline.
+                        .foregroundStyle(.white.opacity(0.7))
                         .shadow(color: .black.opacity(0.3), radius: 8, y: 2)
                     Text("Your AI\nrunning coach.")
                         .font(.system(size: headlineSize, weight: .black).italic())
+                        .tracking(-1.2)
                         .multilineTextAlignment(.leading)
                         .minimumScaleFactor(0.7)
                         .shadow(color: .black.opacity(0.25), radius: 12, y: 4)
