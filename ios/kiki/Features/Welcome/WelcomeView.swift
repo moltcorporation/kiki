@@ -48,17 +48,18 @@ struct WelcomeView: View {
             // margins, 8pt above the home indicator.
             VStack(spacing: Spacing.xxxl) {
                 // The wordmark, small, right above the headline.
-                VStack(spacing: Spacing.s) {
+                VStack(alignment: .leading, spacing: Spacing.s) {
                     Text("Kiki")
                         .font(.system(size: 22, weight: .black).italic())
                         .foregroundStyle(.white)
                         .shadow(color: .black.opacity(0.3), radius: 8, y: 2)
                     Text("Your AI\nrunning coach.")
                         .font(.system(size: headlineSize, weight: .black).italic())
-                        .multilineTextAlignment(.center)
+                        .multilineTextAlignment(.leading)
                         .minimumScaleFactor(0.7)
                         .shadow(color: .black.opacity(0.25), radius: 12, y: 4)
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .accessibilityElement(children: .combine)
                 .accessibilityAddTraits(.isHeader)
 

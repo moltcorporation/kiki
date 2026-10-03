@@ -146,7 +146,12 @@ struct RunDaysSelector: View {
 
             if !days.isEmpty {
                 VStack(alignment: .leading, spacing: Spacing.m) {
-                    Text("Long run day").font(.sectionTitle)
+                    VStack(alignment: .leading, spacing: Spacing.xxs) {
+                        Text("Long run day").font(.sectionTitle)
+                        Text("Your longest run of the week.")
+                            .font(.detail)
+                            .foregroundStyle(.muted)
+                    }
                     // Same tiles and width as the days above, packed left.
                     HStack(spacing: Spacing.xs) {
                         ForEach(days.sorted(), id: \.self) { day in

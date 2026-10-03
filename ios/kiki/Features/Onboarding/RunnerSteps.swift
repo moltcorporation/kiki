@@ -21,10 +21,7 @@ struct ExperienceStep: View {
             title: "How would you rate your running ability?",
             subtitle: "Pick the closest fit. You can change this later.",
             canContinue: model.answers.experience != nil,
-            onContinue: {
-                if model.answers.runDays.isEmpty { model.answers.runDays = model.suggestedRunDays }
-                model.advance()
-            }
+            onContinue: { model.advance() }
         ) {
             ChoiceList(
                 options: Questions.experience(units: model.answers.units),

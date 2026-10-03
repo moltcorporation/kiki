@@ -381,16 +381,6 @@ final class OnboardingModel {
         return Defaults.goalTime(meters: meters)
     }
 
-    /// Typical training days for the runner's experience.
-    var suggestedRunDays: Set<Int> {
-        switch answers.experience ?? .new {
-        case .new: [2, 4, 6]
-        case .beginner: [2, 4, 6, 7]
-        case .intermediate: [1, 2, 4, 6, 7]
-        case .advanced: [1, 2, 3, 4, 6, 7]
-        }
-    }
-
     private struct Saved: Codable {
         let answers: Answers
         let path: [Step]
