@@ -89,6 +89,9 @@ struct ProfileFieldEditor: View {
             RunDaysSelector(days: Binding(
                 get: { Set(profile.wrappedValue.runDays) },
                 set: { profile.wrappedValue.runDays = $0.sorted() }
+            ), longRunDay: Binding(
+                get: { profile.wrappedValue.runDays.contains(profile.wrappedValue.longRunDay) ? profile.wrappedValue.longRunDay : nil },
+                set: { profile.wrappedValue.longRunDay = $0 ?? Questions.longRunDay(for: Set(profile.wrappedValue.runDays)) }
             ), experience: profile.wrappedValue.experience)
         case .coachingStyle:
             ChoiceList(options: Questions.coachingStyles, selection: profile.wrappedValue.coachingStyle ?? .balanced) {
@@ -162,7 +165,9 @@ struct ProfileFieldEditor: View {
                 profile.longestRunM = profile.experience.typicalLongestRunM
             }
         case .runDays:
-            profile.longRunDay = Questions.longRunDay(for: Set(profile.runDays))
+            if !profile.runDays.contains(profile.longRunDay) {
+                profile.longRunDay = Questions.longRunDay(for: Set(profile.runDays))
+            }
         case .name:
             profile.firstName = profile.firstName?.trimmingCharacters(in: .whitespaces)
         case .age:
@@ -203,8 +208,8 @@ struct ProfileFieldEditor: View {
             "I now run about \(Format.distance(Double(new.weeklyDistanceM), new.units, decimals: 0)) a week."
         case .longestRun where old.longestRunM != new.longestRunM:
             "My longest recent run is about \(Format.distance(Double(new.longestRunM), new.units, decimals: 0))."
-        case .runDays where old.runDays != new.runDays:
-            "I can now run on \(RunDaysSelector.summary(new.runDays))."
+        case .runDays where old.runDays != new.runDays || old.longRunDay != new.longRunDay:
+            "I can now run on \(RunDaysSelector.summary(new.runDays)), with my long run on \(RunDaysSelector.fullName(new.longRunDay))."
         case .coachingStyle where old.coachingStyle != new.coachingStyle:
             "Please change my coaching style to \((new.coachingStyle ?? .balanced).title.lowercased())."
         default:

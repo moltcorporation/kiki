@@ -46,6 +46,8 @@ final class OnboardingModel {
         /// Longest run in the last few weeks (runners who aren't new).
         var longestRunM: Int?
         var runDays: Set<Int> = []
+        /// Optional: nil lets Kiki pick (`Questions.longRunDay`).
+        var longRunDay: Int?
         var coachingStyle: CoachingStyle?
         var firstName = ""
         var age: Int?
@@ -127,6 +129,7 @@ final class OnboardingModel {
         answers.weeklyDistanceM = profile.weeklyDistanceM
         answers.longestRunM = profile.longestRunM
         answers.runDays = Set(profile.runDays)
+        answers.longRunDay = profile.longRunDay
         answers.coachingStyle = profile.coachingStyle ?? .balanced
         answers.firstName = profile.firstName ?? ""
         answers.age = profile.age
@@ -318,7 +321,8 @@ final class OnboardingModel {
             weeklyDistanceM: experience == .new ? 0 : (answers.weeklyDistanceM ?? 0),
             longestRunM: experience == .new ? 0 : (answers.longestRunM ?? experience.typicalLongestRunM),
             runDays: answers.runDays.sorted(),
-            longRunDay: Questions.longRunDay(for: answers.runDays),
+            longRunDay: answers.longRunDay.flatMap { answers.runDays.contains($0) ? $0 : nil }
+                ?? Questions.longRunDay(for: answers.runDays),
             extras: answers.referralSource.map { ["referralSource": $0] }
         )
     }

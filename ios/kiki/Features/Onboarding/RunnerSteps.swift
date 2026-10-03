@@ -78,7 +78,7 @@ struct RunDaysStep: View {
             subtitle: "Pick the days that fit your week.",
             canContinue: !model.answers.runDays.isEmpty
         ) {
-            RunDaysSelector(days: $model.answers.runDays, experience: model.answers.experience)
+            RunDaysSelector(days: $model.answers.runDays, longRunDay: $model.answers.longRunDay, experience: model.answers.experience)
         }
     }
 }
