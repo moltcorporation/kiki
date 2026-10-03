@@ -147,9 +147,14 @@ struct RunDaysSelector: View {
             if !days.isEmpty {
                 VStack(alignment: .leading, spacing: Spacing.m) {
                     Text("Long run day").font(.sectionTitle)
-                    HStack(spacing: Spacing.s) {
-                        ForEach(days.sorted(), id: \.self) { day in
-                            longRunChip(day)
+                    // Same tiles, same columns: each choice sits under its day.
+                    HStack(spacing: Spacing.xs) {
+                        ForEach(1...7, id: \.self) { day in
+                            if days.contains(day) {
+                                longRunTile(day)
+                            } else {
+                                Color.clear.frame(maxWidth: .infinity, minHeight: 56)
+                            }
                         }
                     }
                 }
@@ -166,45 +171,40 @@ struct RunDaysSelector: View {
 
     private func dayTile(_ day: Int) -> some View {
         let selected = days.contains(day)
-        return Button {
+        return tile(day, isSelected: selected) {
             Haptics.select()
             if selected { days.remove(day) } else { days.insert(day) }
-        } label: {
+        }
+        .accessibilityLabel(Self.fullName(day))
+    }
+
+    private func longRunTile(_ day: Int) -> some View {
+        // Kiki's pick (Saturday, else Sunday, else the last day) shows as
+        // selected until the runner picks another.
+        let selected = (longRunDay ?? Questions.longRunDay(for: days)) == day
+        return tile(day, isSelected: selected) {
+            Haptics.select()
+            longRunDay = day
+        }
+        .accessibilityLabel("Long run on \(Self.fullName(day))")
+    }
+
+    /// A day tile: the day's short name, black when selected.
+    private func tile(_ day: Int, isSelected: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
             Text(Calendar.current.shortWeekdaySymbols[day % 7])
                 .font(.subheadline.weight(.semibold))
-                .foregroundStyle(selected ? Color.paper : Color.ink)
+                .foregroundStyle(isSelected ? Color.paper : Color.ink)
                 .frame(maxWidth: .infinity, minHeight: 56)
-                .background(selected ? Color.ink : Color.surface, in: .rect(cornerRadius: Radius.inner))
+                .background(isSelected ? Color.ink : Color.surface, in: .rect(cornerRadius: Radius.inner))
                 .overlay {
                     RoundedRectangle(cornerRadius: Radius.inner)
-                        .strokeBorder(selected ? Color.clear : Color.hairline)
+                        .strokeBorder(isSelected ? Color.clear : Color.hairline)
                 }
                 .contentShape(.rect)
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(Self.fullName(day))
-        .accessibilityAddTraits(selected ? .isSelected : [])
-    }
-
-    private func longRunChip(_ day: Int) -> some View {
-        // Kiki's pick (Saturday, else Sunday, else the last day) shows as
-        // selected until the runner picks another.
-        let selected = (longRunDay ?? Questions.longRunDay(for: days)) == day
-        return Button {
-            Haptics.select()
-            longRunDay = day
-        } label: {
-            Text(Calendar.current.shortWeekdaySymbols[day % 7])
-                .font(.subheadline.weight(.medium))
-                .foregroundStyle(selected ? Color.paper : Color.ink)
-                .padding(.horizontal, Spacing.m)
-                .frame(minHeight: 36)
-                .background(selected ? Color.ink : Color.surface, in: .capsule)
-                .overlay(Capsule().strokeBorder(selected ? Color.clear : Color.hairline))
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Long run on \(Self.fullName(day))")
-        .accessibilityAddTraits(selected ? .isSelected : [])
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 
     /// Days a week coaches recommend at each level.
