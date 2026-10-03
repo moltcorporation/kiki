@@ -47,13 +47,13 @@ struct WelcomeView: View {
             // Soft vignette at the top so the wordmark reads over the sky.
             RadialGradient(
                 stops: [
-                    .init(color: .black.opacity(0.55), location: 0),
-                    .init(color: .black.opacity(0.25), location: 0.5),
+                    .init(color: .black.opacity(0.7), location: 0),
+                    .init(color: .black.opacity(0.35), location: 0.5),
                     .init(color: .black.opacity(0), location: 1),
                 ],
                 center: UnitPoint(x: 0.5, y: 0.06),
                 startRadius: 0,
-                endRadius: 240
+                endRadius: 280
             )
             .ignoresSafeArea()
 
@@ -72,7 +72,8 @@ struct WelcomeView: View {
                 Text("Your AI\nrunning coach.")
                     .font(.system(size: headlineSize, weight: .black).italic())
                     .tracking(-1.2)
-                    .multilineTextAlignment(.center)
+                    .multilineTextAlignment(.leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .minimumScaleFactor(0.7)
                     .shadow(color: .black.opacity(0.25), radius: 12, y: 4)
                     .accessibilityAddTraits(.isHeader)
