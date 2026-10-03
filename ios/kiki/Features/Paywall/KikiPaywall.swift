@@ -11,9 +11,18 @@ struct KikiPaywall: View {
 
     var body: some View {
         PaywallView()
-            .onPurchaseCompleted { _ in
+            .onPurchaseCompleted { transaction, info in
                 Haptics.success()
-                Analytics.track("paywall_purchased")
+                let entitlement = info.entitlements.active[Config.entitlementID]
+                let productID = transaction?.productIdentifier ?? entitlement?.productIdentifier ?? "unknown"
+                let isTrial = entitlement?.periodType == .trial
+                Analytics.track("paywall_purchased", ["product": productID, "trial": isTrial, "source": subscriptions.paywallSource])
+                // Ads attribution (SKAN): trial start or paid subscription.
+                if isTrial {
+                    Attribution.startedTrial(productID: productID, currency: nil)
+                } else {
+                    Attribution.subscribed(productID: productID, currency: nil)
+                }
                 Task { await subscriptions.refresh() }
                 subscriptions.closePaywall()
             }

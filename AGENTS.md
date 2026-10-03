@@ -83,7 +83,7 @@ Every screen is built from these files. Never use raw numbers, hex colors, fixed
 ## Services
 - App Store Connect: app ID `6817469393`, team `46696JNF4G`. Subscription group "Kiki Pro": `kiki_premium_yearly` ($59.99), `kiki_premium_monthly` ($11.99), 7-day free trial, all territories. Use the `asc` CLI (skills in `~/.agents/skills/asc-*`).
 - RevenueCat: project `proj49f9be7f`, iOS app `app7a71f33a94`, entitlement `premium` ("Kiki Pro"), offering `default` (`$rc_annual`, `$rc_monthly`). AppsFlyer and PostHog integrations are enabled (default event names, no sandbox).
-- PostHog: project 134644, US cloud. iOS app analytics + error tracking (session replay off) and server-side API error capture. Not used on the website.
+- PostHog: project 134644, US cloud. iOS app analytics + error tracking (auto-captured crashes plus `Analytics.captureError`; session replay off) and server-side API error capture (`withUser` → `captureServerError`). Not used on the website. Dashboard "Kiki Launch" (pinned): Signup funnel (`onboarding_started` → `signed_in` → `plan_ready` → `paywall_presented` → `paywall_purchased`), onboarding steps completed (`onboarding_step_completed` by `step`), daily active runners/runs/adjustments, errors (`$exception`, `plan_failed`). Keep events few and named in snake_case; `onboarding_completed` marks the end of onboarding. Trials/subscriptions from the RevenueCat paywall also go to AppsFlyer (`Attribution.startedTrial`/`subscribed`) for SKAN.
 - AppsFlyer: app `id6817469393`.
 - Video generation: Seedance 2.5 on Replicate. See `replicate-seedance-instructions.md`.
 - Image generation: Nano Banana Pro on Replicate. See `replicate-nano-banana-instructions.md`.

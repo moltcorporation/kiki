@@ -282,6 +282,8 @@ final class OnboardingModel {
         if mode != .full {
             onFinish?()
         } else {
+            // The end of the onboarding funnel: plan ready, into the app.
+            Analytics.track("onboarding_completed", ["goal_kind": answers.goalKind?.rawValue ?? "none", "experience": answers.experience?.rawValue ?? "none"])
             reset()
         }
     }
