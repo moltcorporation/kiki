@@ -51,18 +51,19 @@ struct WelcomeView: View {
                     .init(color: .black.opacity(0.35), location: 0.5),
                     .init(color: .black.opacity(0), location: 1),
                 ],
-                center: UnitPoint(x: 0.5, y: 0.06),
+                center: UnitPoint(x: 0.12, y: 0.06),
                 startRadius: 0,
                 endRadius: 280
             )
             .ignoresSafeArea()
 
-            // Wordmark centered at the top: bold, a little smaller.
+            // Wordmark at the top left, on the screen margin.
             Text("Kiki")
                 .font(.system(size: 24, weight: .black).italic())
                 .shadow(color: .black.opacity(0.25), radius: 10)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 .padding(.top, Metrics.topInset)
+                .padding(.horizontal, Metrics.screenMargin)
                 .opacity(appeared ? 1 : 0)
                 .accessibilityAddTraits(.isHeader)
 
@@ -76,10 +77,6 @@ struct WelcomeView: View {
                         .minimumScaleFactor(0.7)
                         .shadow(color: .black.opacity(0.25), radius: 12, y: 4)
                         .accessibilityAddTraits(.isHeader)
-                    Text("Training plans built around you, from 5K to marathon.")
-                        .font(.body)
-                        .foregroundStyle(.white.opacity(0.8))
-                        .fixedSize(horizontal: false, vertical: true)
                 }
                 .multilineTextAlignment(.leading)
                 .frame(maxWidth: .infinity, alignment: .leading)
