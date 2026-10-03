@@ -51,19 +51,18 @@ struct WelcomeView: View {
                     .init(color: .black.opacity(0.35), location: 0.5),
                     .init(color: .black.opacity(0), location: 1),
                 ],
-                center: UnitPoint(x: 0.12, y: 0.06),
+                center: UnitPoint(x: 0.5, y: 0.06),
                 startRadius: 0,
                 endRadius: 280
             )
             .ignoresSafeArea()
 
-            // Wordmark at the top left, on the screen margin.
+            // Wordmark centered at the top: bold, a little smaller.
             Text("Kiki")
                 .font(.system(size: 24, weight: .black).italic())
                 .shadow(color: .black.opacity(0.25), radius: 10)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                 .padding(.top, Metrics.topInset)
-                .padding(.horizontal, Metrics.screenMargin)
                 .opacity(appeared ? 1 : 0)
                 .accessibilityAddTraits(.isHeader)
 
