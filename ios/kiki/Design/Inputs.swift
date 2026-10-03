@@ -126,8 +126,8 @@ struct RulerPicker: View {
 /// beyond one day.
 struct RunDaysSelector: View {
     @Binding var days: Set<Int>
-    /// The long-run day, optional: nil lets Kiki pick (Saturday, else
-    /// Sunday, else the last run day).
+    /// The long-run day; nil shows Kiki's pick (Saturday, else Sunday,
+    /// else the last run day) as selected.
     @Binding var longRunDay: Int?
     /// Sets the recommended range for the hint.
     var experience: Experience?
@@ -146,13 +146,7 @@ struct RunDaysSelector: View {
 
             if !days.isEmpty {
                 VStack(alignment: .leading, spacing: Spacing.m) {
-                    VStack(alignment: .leading, spacing: Spacing.xxs) {
-                        Text("Long run day").font(.sectionTitle)
-                        Text(longRunCaption)
-                            .font(.detail)
-                            .foregroundStyle(.muted)
-                            .contentTransition(.opacity)
-                    }
+                    Text("Long run day").font(.sectionTitle)
                     HStack(spacing: Spacing.s) {
                         ForEach(days.sorted(), id: \.self) { day in
                             longRunChip(day)
@@ -193,10 +187,12 @@ struct RunDaysSelector: View {
     }
 
     private func longRunChip(_ day: Int) -> some View {
-        let selected = longRunDay == day
+        // Kiki's pick (Saturday, else Sunday, else the last day) shows as
+        // selected until the runner picks another.
+        let selected = (longRunDay ?? Questions.longRunDay(for: days)) == day
         return Button {
             Haptics.select()
-            longRunDay = selected ? nil : day
+            longRunDay = day
         } label: {
             Text(Calendar.current.shortWeekdaySymbols[day % 7])
                 .font(.subheadline.weight(.medium))
@@ -209,11 +205,6 @@ struct RunDaysSelector: View {
         .buttonStyle(.plain)
         .accessibilityLabel("Long run on \(Self.fullName(day))")
         .accessibilityAddTraits(selected ? .isSelected : [])
-    }
-
-    private var longRunCaption: String {
-        if let longRunDay { return "Your long run will be on \(Self.fullName(longRunDay))s." }
-        return "Optional. Kiki will use \(Self.fullName(Questions.longRunDay(for: days))) if you don't pick."
     }
 
     /// Days a week coaches recommend at each level.
