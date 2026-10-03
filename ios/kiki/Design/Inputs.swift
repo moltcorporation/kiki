@@ -147,14 +147,13 @@ struct RunDaysSelector: View {
             if !days.isEmpty {
                 VStack(alignment: .leading, spacing: Spacing.m) {
                     Text("Long run day").font(.sectionTitle)
-                    // Same tiles, same columns: each choice sits under its day.
+                    // Same tiles and width as the days above, packed left.
                     HStack(spacing: Spacing.xs) {
-                        ForEach(1...7, id: \.self) { day in
-                            if days.contains(day) {
-                                longRunTile(day)
-                            } else {
-                                Color.clear.frame(maxWidth: .infinity, minHeight: 56)
-                            }
+                        ForEach(days.sorted(), id: \.self) { day in
+                            longRunTile(day)
+                        }
+                        ForEach(0..<(7 - days.count), id: \.self) { _ in
+                            Color.clear.frame(maxWidth: .infinity, minHeight: 56)
                         }
                     }
                 }
